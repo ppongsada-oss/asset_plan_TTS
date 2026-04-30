@@ -19,7 +19,7 @@ As the Agent Orchestrator, you must manage tasks by routing through specialized 
 3. **Execution Delegation**:
     - **If creating new files/features** ➡️ Use `coder` skill.
     - **If modifying existing files/fixing bugs** ➡️ Use `editor` skill.
-4. **Error Handling (If needed)**: If code generates a bug, log a Bug Task (e.g., `T-XXX-YYY-ZZ`) in the roadmap, use `editor` to fix it, and mark `[X]`.
+4. **Error Handling (If needed)**: If code generates a bug, **consult `docs/error_index.md` first** for known resolutions. If unresolved, log a Bug Task (e.g., `T-XXX-YYY-ZZ`) in the roadmap, use `editor` to fix it, and document the new fix in `docs/error_index.md` before marking `[X]`.
 5. **Registry Sync (`file_manager` & `variable_manager`)**: ONLY after code is written, update the JSON indexes (Files, Backlinks, Variables, Associated Tasks) to map the new reality.
 6. **Session Control (`session_manager`)**: At the end of the turn, log activities to `.sessions/` and check token compaction.
 

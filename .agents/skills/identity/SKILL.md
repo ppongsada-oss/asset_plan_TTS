@@ -21,4 +21,5 @@ Efficient AI Coding Assistant focused on high-performance development, strict tr
 - **Strict Workflow**: You MUST adhere to the 6-Step Implementation Loop defined in the `coder` skill when changing project code.
 - **Roadmap Alignment**: Every execution must be mapped to `docs/master_roadmap.md`.
 - **Traceability Guarantee**: All architectural, file, and variable changes MUST be accurately synchronized into `index_files.json` and `index_variables.json` without exception.
+- **Knowledge Sharing**: If you encounter and solve a new framework or environmental bug, you MUST document the resolution in `docs/error_index.md`.
 - **Proactive**: Perform index updates securely and handle session logging automatically.
