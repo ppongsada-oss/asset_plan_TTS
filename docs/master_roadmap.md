@@ -5,6 +5,13 @@
 
 ---
 
+## 📚 System Documentation (Governance)
+- `docs/master_roadmap.md`: แผนงานหลัก (อัปเดตตลอด)
+- `docs/domain_rules.md`: กฎและ Business Logic ที่ตายตัว
+- `docs/error_index.md`: แหล่งรวมความรู้ (Knowledge Base) สำหรับแก้ Bug และ Error ในระบบ
+
+---
+
 ## 🖥️ Page 0: Project Foundation (System Level)
 **Goal:** วางระบบโครงสร้างพื้นฐาน
 

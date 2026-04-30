@@ -3,7 +3,7 @@ import { setupDevPlatform } from "@cloudflare/next-on-pages/next-dev";
 
 // Initialize Cloudflare local environment for Next.js dev server
 if (process.env.NODE_ENV === "development") {
-  setupDevPlatform();
+  setupDevPlatform({ persist: false });
 }
 
 const nextConfig: NextConfig = {
