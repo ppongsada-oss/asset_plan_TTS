@@ -133,6 +133,32 @@
       "description": "Store Center Container Page",
       "associated_tasks": ["T-010"],
       "backlinks": []
+    },
+    "docs/error_index.md": {
+      "description": "Error Resolution Knowledge Base for AI and Developers",
+      "associated_tasks": ["T-000"],
+      "backlinks": []
+    },
+    "src/app/api/equipment/route.ts": {
+      "description": "Master Data CRUD API",
+      "associated_tasks": ["T-008"],
+      "backlinks": [
+        "src/components/master-data/EquipmentTable.tsx"
+      ]
+    },
+    "src/app/api/equipment/template/route.ts": {
+      "description": "CSV Template Generation API",
+      "associated_tasks": ["T-008"],
+      "backlinks": [
+        "src/components/master-data/EquipmentTable.tsx"
+      ]
+    },
+    "src/app/api/equipment/upload/route.ts": {
+      "description": "CSV Bulk Upload and Parse API",
+      "associated_tasks": ["T-009"],
+      "backlinks": [
+        "src/components/master-data/EquipmentTable.tsx"
+      ]
     }
   }
 }
