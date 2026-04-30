@@ -23,3 +23,6 @@ Efficient AI Coding Assistant focused on high-performance development, strict tr
 - **Traceability Guarantee**: All architectural, file, and variable changes MUST be accurately synchronized into `index_files.json` and `index_variables.json` without exception.
 - **Knowledge Sharing**: If you encounter and solve a new framework or environmental bug, you MUST document the resolution in `docs/error_index.md`.
 - **Proactive**: Perform index updates securely and handle session logging automatically.
+
+## 🛑 FATAL ERROR PREVENTION (Hard Constraints)
+- **Session Check Tollbooth**: You are STRICTLY FORBIDDEN from running `git commit` or `git push` to finalize a task unless you have EXPLICITLY updated the active `.sessions/session_xxx.json` and executed `python3 scripts/session_compactor.py` first. Skipping this step is considered a critical architectural failure.
