@@ -1,3 +1,8 @@
+CREATE TABLE `categories` (
+	`code` text PRIMARY KEY NOT NULL,
+	`name` text NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE `center_decisions` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`plan_id` integer NOT NULL,
@@ -13,12 +18,15 @@ CREATE TABLE `equipment_items` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`item_code` text NOT NULL,
 	`name` text NOT NULL,
-	`category` text NOT NULL,
-	`sub_category` text NOT NULL,
+	`category_code` text NOT NULL,
+	`sub_category_code` text NOT NULL,
 	`unit` text NOT NULL,
 	`buy_price` integer DEFAULT 0 NOT NULL,
 	`rent_price` integer DEFAULT 0 NOT NULL,
-	`lead_time` text
+	`lead_time` text,
+	`remaining_stock` integer DEFAULT 0 NOT NULL,
+	FOREIGN KEY (`category_code`) REFERENCES `categories`(`code`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`sub_category_code`) REFERENCES `sub_categories`(`code`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `equipment_items_item_code_unique` ON `equipment_items` (`item_code`);--> statement-breakpoint
@@ -42,6 +50,13 @@ CREATE TABLE `project_roles` (
 	`project_id` text NOT NULL,
 	`role` text NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `sub_categories` (
+	`code` text PRIMARY KEY NOT NULL,
+	`category_code` text NOT NULL,
+	`name` text NOT NULL,
+	FOREIGN KEY (`category_code`) REFERENCES `categories`(`code`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE TABLE `users` (

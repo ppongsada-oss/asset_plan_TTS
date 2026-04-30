@@ -4,11 +4,11 @@ export const runtime = "edge";
 
 export async function GET() {
   // Define the CSV header matching the database schema
-  const csvHeaders = "item_code,name,category,sub_category,unit,buy_price,rent_price,lead_time\n";
+  const csvHeaders = "item_code,name,category_code,sub_category_code,unit,buy_price,rent_price,lead_time,remaining_stock\n";
   
   // Provide 2 mock lines as example format
-  const mockLine1 = "TC-001,Tower Crane 8t,A (เครื่องจักร),A1,ตัว,2500000,150000,30 Days\n";
-  const mockLine2 = "HM-022,High-Pressure Pump,A (เครื่องจักร),A3,เครื่อง,500000,45000,15 Days\n";
+  const mockLine1 = "TC-001,Tower Crane 8t,A,A1,ตัว,2500000,150000,30 Days,5\n";
+  const mockLine2 = "HM-022,High-Pressure Pump,A,A3,เครื่อง,500000,45000,15 Days,12\n";
 
   const csvContent = csvHeaders + mockLine1 + mockLine2;
 

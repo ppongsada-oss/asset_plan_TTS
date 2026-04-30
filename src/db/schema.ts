@@ -17,17 +17,30 @@ export const project_roles = sqliteTable("project_roles", {
   role: text("role", { enum: ["STORE_SITE", "PROJECT_MANAGER", "VIEWER"] }).notNull(),
 });
 
-// 2. Master Data: Equipment Catalog (Feature 2.1)
+// 2. Master Data: Categories & Sub-Categories
+export const categories = sqliteTable("categories", {
+  code: text("code").primaryKey(), // e.g., "A"
+  name: text("name").notNull(),    // e.g., "เครื่องจักร"
+});
+
+export const sub_categories = sqliteTable("sub_categories", {
+  code: text("code").primaryKey(), // e.g., "A1"
+  category_code: text("category_code").notNull().references(() => categories.code),
+  name: text("name").notNull(),    // e.g., "Tower Crane"
+});
+
+// 3. Master Data: Equipment Catalog (Feature 2.1)
 export const equipment_items = sqliteTable("equipment_items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   item_code: text("item_code").notNull().unique(),
   name: text("name").notNull(),
-  category: text("category").notNull(),
-  sub_category: text("sub_category").notNull(),
+  category_code: text("category_code").notNull().references(() => categories.code),
+  sub_category_code: text("sub_category_code").notNull().references(() => sub_categories.code),
   unit: text("unit").notNull(),
   buy_price: integer("buy_price").notNull().default(0),
   rent_price: integer("rent_price").notNull().default(0),
   lead_time: text("lead_time"),
+  remaining_stock: integer("remaining_stock").notNull().default(0), // Added for Inventory tracking
 });
 
 // 3. Project Asset Planning (Site Workflow - Feature 4.1)

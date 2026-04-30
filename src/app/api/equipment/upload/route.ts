@@ -32,12 +32,13 @@ export async function POST(request: NextRequest) {
         inserts.push({
           item_code: columns[0].trim(),
           name: columns[1].trim(),
-          category: columns[2].trim(),
-          sub_category: columns[3].trim(),
+          category_code: columns[2].trim(),
+          sub_category_code: columns[3].trim(),
           unit: columns[4].trim(),
           buy_price: Number(columns[5]) || 0,
           rent_price: Number(columns[6]) || 0,
-          lead_time: columns[7].trim()
+          lead_time: columns[7].trim(),
+          remaining_stock: Number(columns[8]) || 0,
         });
       }
     }

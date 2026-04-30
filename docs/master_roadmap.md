@@ -43,6 +43,7 @@
 ### Feature 2.1: Equipment Catalog
 - [X] T-007: สร้าง UI สำหรับจัดการรายการอุปกรณ์ 21 หมวดย่อย
 - [X] T-008: สร้าง Database Schema `equipment_items` และ API CRUD
+- [ ] T-008.5: ระบบลงทะเบียนหมวดหมู่ (Categories) และจัดการยอดคงเหลือ (Remaining Stock)
 
 ### Feature 2.2: Data Initialization & Import
 - [X] T-009: สร้างฟังก์ชัน Import/Migration ข้อมูลจาก Excel เข้า DB
