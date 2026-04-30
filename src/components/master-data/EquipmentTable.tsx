@@ -26,7 +26,7 @@ export default function EquipmentTable() {
     setLoading(true);
     try {
       const res = await fetch("/api/equipment");
-      const json = await res.json();
+      const json = (await res.json()) as any;
       if (json.success) setData(json.data);
     } catch (e) {
       console.error(e);
@@ -55,7 +55,7 @@ export default function EquipmentTable() {
         method: "POST",
         body: formData,
       });
-      const json = await res.json();
+      const json = (await res.json()) as any;
       if (json.success) {
         alert(json.message);
         fetchData(); // Refresh table

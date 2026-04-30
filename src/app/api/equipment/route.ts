@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   try {
     const env = getRequestContext().env;
     const db = getDb(env as any);
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const newItem = await db.insert(equipment_items).values({
       item_code: body.item_code,
