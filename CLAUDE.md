@@ -73,19 +73,39 @@ Boot selects a skill for the FIRST task only. Every new user message: extract ke
 | Phase | Name | What happens |
 |---|---|---|
 | 1 | Info Gather Loop | Repeat: identify missing context → R5 index-first → assess → emit [✓ gather] |
-| 2 | MECE Plan | Load mece/SKILL.md → plan (1:1 to Skill sections) → define Verify-N per section → user confirms → roadmap entries |
-| 3 | Execution Loop | SECTION LOOP → REACT LOOP (Select → Execute → Observe → Verify → Decide) → session_handoff.md |
+| 2 | MECE Plan | Load mece/SKILL.md → build plan (1:1 Skill sections) → define Verify-N per section → user confirms BOTH plan + criteria → roadmap entries → emit [✓ MECE] |
+| 3 | Execution Loop | SECTION LOOP → REACT LOOP → write session_handoff.md between sections |
 
-**REACT LOOP:** SELECT → EXECUTE → OBSERVE (fail → diagnose → retry once → BLOCKED) → VERIFY (Verify-N: pass→done, fail→diagnose→retry or BLOCKED) → DECIDE
+**Phase 2 DoD — define for each section before user confirm (required):**
+```
+Verify-<N>: `<runnable command>` → expected: <output or condition>
+```
+Examples: `` `grep -c "export default" src/app/page.tsx` → 1 `` | `` `npm run build` → exit 0 ``
 
-**BLOCKED:** halt → show error + completed + pending → wait for user.
-**TOKEN PAUSE:** save state → show progress → ask user → on confirm: reload config → resume.
+**Phase 3 REACT LOOP — execute per step in this order:**
+1. **TOKEN CHECK:** SESSION_TOTAL > 60k? → finish current step → PAUSE (save state · show progress · ask user)
+2. **SELECT** tool for current step (R2 budget · R5 index-first)
+3. **EXECUTE** → run tool
+4. **OBSERVE** → unexpected? diagnose → retry once → still wrong → BLOCKED
+5. **VERIFY** → run section's Verify-N → pass? emit `[✓ written]` → section eligible for done : diagnose → retry or BLOCKED
+6. **DECIDE** → more steps? emit [loop] · continue : section done → emit [loop] done
+
+**After each SECTION completes → write `.sessions/session_handoff.md`:**
+```
+sections_done: [S1, S2] · sections_pending: [S3, S4]
+last_step: <name> · latest_result: <summary>
+```
+
+**At each SECTION boundary — re-check skill:**
+Before starting next section: does task type change? → re-route via C1→C2→C3 (Per-Turn Routing).
+
+**BLOCKED:** halt remaining sections → show error + completed + pending → ask user → wait.
 
 **Completion Gate — NOT done until all pass:**
 ```
 □ All N sections executed (tool calls — not described)  □ Writes: [✓ written] grep verified
 □ R8 Index Sync done                                    □ Roadmap [X]
-□ active_thread.md → phase: done                        □ SESSION_TOTAL written
+□ active_thread.md → phase: done                        □ SESSION_TOTAL written → .sessions/session_tokens.md
 ```
 
 ---
@@ -143,6 +163,12 @@ Cannot fill Line? → grep not done yet → run grep first.
 - T1: `grep -A 8 '"Symbol"' knowledge/index_variables.json` or `index_files.json`
 - T2: `grep -B 2 -A 20 '"Symbol"' knowledge/index_variables.json`
 - T3: `grep -n "Symbol" src/path/to/file.ts`
+
+T1 partial match (path found but no line number) → proceed to T2. Still no line? → T3.
+
+**Config files load ONCE at Boot (B1–B3) — never re-read mid-session:**
+CLAUDE.md · index_files.json · index_variables.json → in working memory after Boot.
+Re-read only after TOKEN PAUSE + resume.
 
 | Prohibited | Required instead |
 |---|---|

@@ -51,7 +51,11 @@ Reply line 1: `**[Boot]** Thread: <done|in_progress> · Tasks: <N open> · Skill
 | 2 MECE Plan | Build plan (1:1 Skill sections) → Verify-N per section → user confirms → roadmap |
 | 3 Execution | REACT LOOP: Select → Execute → Observe → Verify → Decide |
 
-Completion Gate: □ All sections executed · □ Writes [✓ written] · □ R8 Index Sync · □ Roadmap [X] · □ phase: done
+Completion Gate:
+```
+□ All sections executed  □ Writes [✓ written]  □ R8 Index Sync
+□ Roadmap [X]           □ phase: done          □ SESSION_TOTAL written → .sessions/session_tokens.md
+```
 
 ---
 
