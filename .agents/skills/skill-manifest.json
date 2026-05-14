@@ -16,13 +16,13 @@
       "path": ".agents/skills/coder/SKILL.md",
       "trigger": "Creating new files, scaffolding features, adding new pages or API routes",
       "keywords": ["create", "new file", "scaffold", "add page", "add component", "new api", "new route", "build", "implement"],
-      "context_files": ["knowledge/index_files.json", "docs/master_roadmap.md"]
+      "context_files": ["knowledge/index_files.json", "docs/master_roadmap.md", "INVARIANTS.md", "REPO_MAP.md"]
     },
     "editor": {
       "path": ".agents/skills/editor/SKILL.md",
       "trigger": "Modifying, debugging, or fixing existing files",
       "keywords": ["fix", "bug", "error", "broken", "edit", "modify", "update", "change", "debug", "not working", "issue", "wrong", "fail"],
-      "context_files": ["knowledge/index_variables.json", "knowledge/index_files.json"]
+      "context_files": ["knowledge/index_variables.json", "knowledge/index_files.json", "INVARIANTS.md", "REPO_MAP.md", "CODING_FAILURE_PATTERNS.md"]
     },
     "file_manager": {
       "path": ".agents/skills/file_manager/SKILL.md",
