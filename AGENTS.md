@@ -81,6 +81,8 @@ Check `backlinks[]` — every file listed imports the file you are about to edit
 | DB changes | INVARIANTS.md §I2 — emit [db-gate] and HALT |
 | Error protocol | R9: error_index → symbol_index → file_index (all 3 in order) |
 | Roadmap | Every task logged before execution. `[ ]` → `[/]` → `[X]` |
+| Manual close | "ปิด/close/done" → route `session_manager` §3 — 5 file writes + SESSION_TOTAL reset to 0 |
+| Topic switch | New task = new session JSON — never carry raw History across tasks |
 
 ---
 
