@@ -1,0 +1,50 @@
+{
+  "session_id": "055",
+  "task": "Asset Plan UI & Workflow Refinement",
+  "timestamp": "2026-05-12T10:15:00Z",
+  "status": "completed",
+  "goals": [
+    "Finalize Read-Only mode for PM Approval history",
+    "Redesign Navbar with premium aesthetics",
+    "Improve Site Job Dashboard project identification",
+    "Restore Matrix Report tooltip styling",
+    "Fix Implicit Return logic for 100% stock returns",
+    "Resolve JWT and Duplicate Key warnings",
+    "Fix Store Center Hub tab count discrepancy"
+  ],
+  "changes": [
+    {
+      "file": "src/components/layout/Navbar.tsx",
+      "description": "Premium glassmorphism redesign and menu cleanup."
+    },
+    {
+      "file": "src/components/site-plan/PlanningWorksheet.tsx",
+      "description": "Modified handleQtyChange to treat blank as 0."
+    },
+    {
+      "file": "src/components/site-plan/PMReviewTable.tsx",
+      "description": "Implemented isReadOnly state based on job status."
+    },
+    {
+      "file": "src/app/api/center/requests/route.ts",
+      "description": "Added implicit return synthesis, fixed duplicate IDs, and implemented type-specific counts for tabs."
+    },
+    {
+      "file": "src/hooks/use-requests.ts",
+      "description": "Updated useCenterRequests to expose type-specific counts."
+    },
+    {
+      "file": "src/components/store-center/CenterDashboard.tsx",
+      "description": "Updated RequestItem type, composite row keys, and integrated API-provided counts for tabs."
+    },
+    {
+      "file": ".env.local",
+      "description": "Added JWT_SECRET_KEY."
+    }
+  ],
+  "unresolved": [
+    "JWT_SECRET_KEY in .env.local is a placeholder; needs production secret."
+  ],
+  "summary_context": "Fixed Store Center Hub tab count discrepancy by refactoring API to calculate counts before type-filtering and updating the frontend hook and dashboard UI.",
+  "tokens": "53.7k"
+}

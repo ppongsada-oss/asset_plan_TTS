@@ -1,0 +1,1 @@
+ALTER TABLE `center_decisions` ADD `qty` integer DEFAULT 0 NOT NULL;

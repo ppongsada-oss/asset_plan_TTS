@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Manual - คู่มือผู้ดูแลระบบ</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="index.html">หน้าแรก</a>
+            <a href="admin.html" class="active">Admin</a>
+            <a href="site.html">Store Site</a>
+            <a href="pm.html">PM</a>
+            <a href="center.html">Center</a>
+            <a href="reports.html">Reports</a>
+        </nav>
+
+        <header class="header">
+            <h1>คู่มือผู้ดูแลระบบ (Admin)</h1>
+            <p>การจัดการข้อมูลพื้นฐานและตั้งค่าระบบ</p>
+        </header>
+
+        <section class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>จัดการข้อมูลอุปกรณ์ (Master Data)</h3>
+                <p>เมนู Master Data ใช้สำหรับเพิ่ม/แก้ไขรายการอุปกรณ์ ราคาซื้อ/เช่า และการอัปโหลดข้อมูลสต็อกคงเหลือรวมของบริษัทผ่าน CSV</p>
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>จัดการงวดงาน (Planning Cycle)</h3>
+                <p>Admin หรือ Center สามารถสร้างงวดงานใหม่เพื่อกำหนดช่วงเวลาที่ต้องการให้ไซต์งานทำการวางแผน</p>
+                <img src="assets/admin_cycle_modal.png" alt="Admin Cycle Modal" class="screenshot">
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>จัดการผู้ใช้งานและสิทธิ์ (User & Roles)</h3>
+                <p>เมนู Admin -> Users และ Admin -> Project Roles ใช้สำหรับสร้างบัญชีผู้ใช้และกำหนดว่าใครมีสิทธิ์เข้าถึงโครงการใดในบทบาทอะไร</p>
+            </div>
+        </section>
+
+        <footer style="text-align: center; margin-top: 60px; color: var(--text-muted);">
+            <a href="index.html" class="btn">กลับหน้าหลัก</a>
+        </footer>
+    </div>
+</body>
+</html>

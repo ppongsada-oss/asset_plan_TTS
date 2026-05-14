@@ -1,0 +1,46 @@
+{
+  "session_id": "057",
+  "title": "Fix Store Center Reject Return Propagation Bug",
+  "start_time": "2026-05-11T16:49:32+07:00",
+  "end_time": "2026-05-11T17:24:00+07:00",
+  "task_id": "T-011-001-01",
+  "status": "completed",
+  "summary_context": "Fixed a bug in Store Center Hub where Rejecting a Return didn't propagate to future months, causing inconsistent deltas. Implemented requirement propagation in Decisions API and documented the resolution as ERR-021.",
+  "achievements": [
+    "Implemented required_qty propagation for REJECT_RETURN in Decisions API.",
+    "Ensured data consistency across the Asset Plan timeline for future months.",
+    "Resolved 'phantom' return request bug in Store Center Hub.",
+    "Documented resolution in knowledge/error_index.md (ERR-021)."
+  ],
+  "files_modified": [
+    "src/app/api/center/decisions/route.ts",
+    "docs/master_roadmap.md",
+    "knowledge/error_index.md",
+    "knowledge/index_variables.json"
+  ],
+  "tokens": {
+    "estimated_total": 35000
+  },
+  "History": [
+    {
+      "turn": 1,
+      "task": "Info gathering and planning",
+      "result": "Identified propagation issue in decisions/route.ts"
+    },
+    {
+      "turn": 2,
+      "task": "Implementation",
+      "result": "Applied propagation logic to POST and DELETE handlers"
+    },
+    {
+      "turn": 3,
+      "task": "Verification",
+      "result": "Verified DB structure and code with grep"
+    },
+    {
+      "turn": 4,
+      "task": "Documentation",
+      "result": "Updated error_index.md (ERR-021) and roadmap"
+    }
+  ]
+}

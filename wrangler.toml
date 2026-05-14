@@ -7,4 +7,7 @@ compatibility_date = "2024-03-29"
 binding = "DB"
 database_name = "asset-plan-db"
 database_id = "f40d3de1-ccdf-496e-9318-be957c8eecb8"
-migrations_dir = "./drizzle"
+migrations_dir = "./db_migrations"
+[[kv_namespaces]]
+binding = "CACHE_KV"
+id = "a70d8c7537a94f528076035d9059290b"

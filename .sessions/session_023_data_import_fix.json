@@ -1,0 +1,90 @@
+{
+  "session_id": "023",
+  "task_name": "data_import_fix",
+  "status": "completed",
+  "summary_context": "ตรวจสอบและแก้ไขระบบ Bulk Upload equipment จาก CSV พบ 6 bugs หลัก และทำการ Extract ข้อมูลอุปกรณ์จากไฟล์ Excel ต้นฉบับ (202603 Asset Plan ไตรมาศ 2.xlsx) ออกมาเป็น equipment_import.csv พร้อม import สำเร็จ 536 รายการ",
+  "history": [
+    {
+      "action": "analyze_excel",
+      "target": "/Users/dude/Downloads/202603 Asset Plan ไตรมาศ 2.xlsx",
+      "result": "success",
+      "observation": "ไฟล์มี 32 sheets ใช้ WH sheet เป็นต้นทาง เพราะรวมข้อมูลทุกอุปกรณ์ไว้ครบถ้วน ข้อมูลสำคัญอยู่ที่ col B(CODE), C(ชื่อ), D(lead_time), G(หน่วย), H(ราคาซื้อ), I(ราคาเช่า), J(คงคลัง)"
+    },
+    {
+      "action": "extract_csv",
+      "target": "/Users/dude/Downloads/equipment_import.csv",
+      "result": "success",
+      "observation": "Extract ได้ 536 รายการ unique — Category A(เครื่องจักร):13, B(เครื่องมือไฟฟ้า):247, C(วัสดุก่อสร้าง):98, D(อุปกรณ์ไฟฟ้า):68, E(อุปกรณ์อื่นๆ):110. Sub-categories: A1-A5, B1-B20, C1-C7, D1-D2, E1-E7. ใช้ Python csv.DictWriter ซึ่ง quote fields ที่มี comma อัตโนมัติ (RFC-4180)"
+    },
+    {
+      "action": "diagnose_upload_route",
+      "target": "src/app/api/equipment/upload/route.ts",
+      "result": "found_2_bugs",
+      "observation": "BUG-1: ไม่ auto-create categories/sub_categories ก่อน insert equipment — FK constraint จะ fail เพราะ DB ว่างเปล่า. BUG-2: ใช้ lines[i].split(',') แบบ naive — จะ parse ผิดสำหรับ rows ที่ชื่อมี comma เช่น 'รอกสลิงไฟฟ้า ขนาด 1,000 Kg.'"
+    },
+    {
+      "action": "fix_upload_route_initial",
+      "target": "src/app/api/equipment/upload/route.ts",
+      "result": "partial",
+      "observation": "แก้ไข 3 จุด: (1) เพิ่ม parseCSVRow() รองรับ RFC-4180 quoted fields (2) Strip UTF-8 BOM (0xFEFF) (3) Auto-upsert categories และ sub_categories ก่อน insert equipment_items เสมอ — ลำดับ categories→sub_categories→equipment_items. ใช้ onConflictDoNothing() ทั้งหมด อัพโหลดซ้ำได้ปลอดภัย"
+    },
+    {
+      "action": "fix_csv_empty_unit",
+      "target": "/Users/dude/Downloads/equipment_import.csv",
+      "result": "success",
+      "observation": "แก้ไข unit ว่าง 2 รายการ: E.MJ.CON.030.010.055 (แบบเสาเหล็กกลม) → 'ชุด', E.MJ.CON.060.040.022 (ถังบำบัดน้ำเสีย) → 'ใบ'. CSV พร้อม import 536 rows ครบถ้วน"
+    },
+    {
+      "action": "diagnose_onConflictDoNothing_failure",
+      "target": "Miniflare D1 local — sub_categories insert",
+      "result": "found_root_cause",
+      "observation": "BUG-3: Miniflare D1 local ไม่รองรับ INSERT ... ON CONFLICT DO NOTHING ทำให้เกิด 'Failed query' ทุกครั้งที่ record ซ้ำมีอยู่แล้ว. แก้ไข: เปลี่ยน onConflictDoNothing() เป็น SELECT existing → filter → plain INSERT pattern สำหรับ categories, sub_categories และ equipment_items ทั้งหมด"
+    },
+    {
+      "action": "diagnose_float_integer_error",
+      "target": "equipment_items.buy_price / rent_price columns",
+      "result": "found_root_cause",
+      "observation": "BUG-4 (พบหลัง fix BUG-3): ราคาในไฟล์ Excel มีทศนิยม เช่น 8596.03 แต่ schema กำหนด buy_price/rent_price เป็น integer('...') → Miniflare D1 enforce type อย่างเข้มงวด reject float ทันที. แก้ไข: เพิ่ม Math.round(Number(cols[5])) สำหรับ buy_price และ Math.round(Number(cols[6])) สำหรับ rent_price"
+    },
+    {
+      "action": "diagnose_drizzle_multirow_insert_failure",
+      "target": "equipment_items — db.insert().values(array) via Drizzle D1 edge runtime",
+      "result": "found_root_cause",
+      "observation": "BUG-5 (พบหลัง fix BUG-4): Drizzle ORM เพิ่ม id: null ให้ทุก row → 10 cols/row ไม่ใช่ 9 → SQLite 999 param limit = max 99 rows/batch จึงลด CHUNK_SIZE=99. แต่ยังคง fail. BUG-6 (root cause ที่แท้จริง): Drizzle D1 edge runtime layer ไม่รองรับ multi-row INSERT เลย ไม่ว่า batch จะเล็กแค่ไหน — ทดสอบ direct SQLite ผ่านปกติ จึงยืนยันว่าปัญหาอยู่ที่ Drizzle layer ไม่ใช่ SQLite. แก้ไขขั้นสุดท้าย: insert ทีละ 1 row เท่านั้น: for (const item of newInserts) { await db.insert(equipment_items).values(item); }"
+    },
+    {
+      "action": "verify_csv_duplicates",
+      "target": "/Users/dude/Downloads/equipment_import.csv",
+      "result": "success",
+      "observation": "ตรวจสอบด้วย Python Counter: ไม่พบ item_code ซ้ำในไฟล์ CSV เลย (0 duplicates). agent ตัวอื่นที่วินิจฉัยว่า 'CSV มี duplicates' เป็นการวินิจฉัยผิด — root cause จริงคือ Drizzle D1 multi-row insert failure ตามที่บันทึกไว้"
+    },
+    {
+      "action": "final_success",
+      "target": "Bulk Upload — http://localhost:3000",
+      "result": "success",
+      "observation": "Import สำเร็จครบ 536 รายการ ข้ามรายการซ้ำ: 0. หมวดหลักใหม่: 5 (A,B,C,D,E). หมวดย่อยใหม่: 40. ผู้ใช้ยืนยัน 'ได้แล้วครับ'"
+    },
+    {
+      "action": "update_documentation",
+      "target": "docs/error_index.md, docs/master_roadmap.md",
+      "result": "success",
+      "observation": "เพิ่ม ERR-007 (Bulk Upload Miniflare D1 Multi-Row Insert) ใน error_index.md พร้อม root cause table 4 bugs, final resolution steps, และ critical rule สำหรับ Miniflare D1. อัปเดต master_roadmap.md เพิ่ม T-009.1 ใน Feature 2.2"
+    }
+  ],
+  "files_changed": [
+    "src/app/api/equipment/upload/route.ts",
+    "/Users/dude/Downloads/equipment_import.csv",
+    "docs/error_index.md",
+    "docs/master_roadmap.md"
+  ],
+  "files_created": [
+    ".sessions/session_023_data_import_fix.json"
+  ],
+  "critical_rules_discovered": [
+    "Drizzle D1 edge runtime does NOT support multi-row INSERT — must insert one row at a time",
+    "Miniflare D1 local does NOT support onConflictDoNothing() — use SELECT+filter+INSERT pattern instead",
+    "Miniflare D1 strictly enforces column types — float values in integer columns are rejected",
+    "PapaParse (papaparse ^5.5.3) is the correct CSV parser — works in edge runtime, handles RFC-4180 fully"
+  ],
+  "estimated_tokens": 1240
+}

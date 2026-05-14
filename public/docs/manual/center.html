@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Center Manual - คู่มือศูนย์พัสดุกลาง</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="index.html">หน้าแรก</a>
+            <a href="admin.html">Admin</a>
+            <a href="site.html">Store Site</a>
+            <a href="pm.html">PM</a>
+            <a href="center.html" class="active">Center</a>
+            <a href="reports.html">Reports</a>
+        </nav>
+
+        <header class="header">
+            <h1>คู่มือเจ้าหน้าที่พัสดุส่วนกลาง (Store Center)</h1>
+            <p>การบริหารจัดการพัสดุรวมทั้งบริษัทและการตัดสินใจจัดหา</p>
+        </header>
+
+        <section class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>ดูความต้องการรวม (Net Demand)</h3>
+                <p>หน้า Dashboard จะแสดงรายการพัสดุที่โครงการต่างๆ ต้องการ (ที่ผ่านการอนุมัติจาก PM แล้ว) โดยแยกตามรายการอุปกรณ์และเดือนที่ต้องการใช้</p>
+                <img src="assets/center_net_demand.png" alt="Net Demand" class="screenshot">
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>บันทึกการตัดสินใจ (Decisions)</h3>
+                <p>เจ้าหน้าที่สามารถเลือกดำเนินการกับพัสดุแต่ละรายการได้ดังนี้:</p>
+                <ul>
+                    <li><strong>Dispatch</strong>: เบิกจ่ายจากสต็อกกลาง</li>
+                    <li><strong>Circulate</strong>: หมุนเวียนจากโครงการอื่น</li>
+                    <li><strong>Buy</strong>: สั่งซื้อใหม่</li>
+                    <li><strong>Rent</strong>: เช่ามาใช้งาน</li>
+                </ul>
+                <img src="assets/center_decision_modal.png" alt="Decision Modal" class="screenshot">
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>การเปิด/ปิดงวดงาน</h3>
+                <p>เจ้าหน้าที่สามารถจัดการสถานะของงวดงาน (Open/Closed) ในเมนู Job Management เพื่อควบคุมช่วงเวลาการวางแผนของแต่ละไซต์</p>
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h3>การส่งออกข้อมูล (Export)</h3>
+                <p>เจ้าหน้าที่สามารถส่งออกรายงานในรูปแบบ Excel เพื่อสรุปรายการความต้องการและผลการดำเนินการได้ 2 รูปแบบ:</p>
+                <ul class="manual-list">
+                    <li><strong>ส่งออกตามที่กรองไว้ (Filtered)</strong>: ดึงเฉพาะข้อมูลที่แสดงอยู่บนหน้าจอตามการค้นหาหรือ Filter ปัจจุบัน</li>
+                    <li><strong>ส่งออกทั้งหมด (Export All)</strong>: ดึงข้อมูลพัสดุทั้งหมดในงวดงานนั้นๆ เพื่อใช้ทำรายงานสรุปภาพรวม</li>
+                </ul>
+                <p><strong>ข้อมูลเพิ่มเติมในไฟล์ Excel:</strong> ไฟล์ที่ส่งออกจะมีคอลัมน์ <em>"สถานะการดำเนินการ"</em> (สรุป Action ทั้งหมด) และ <em>"หมายเหตุล่าสุด"</em> ช่วยให้ติดตามสถานะได้ทันทีโดยไม่ต้องเปิดระบบ</p>
+                <img src="assets/center_export.png" alt="Export Dropdown" class="screenshot">
+            </div>
+        </section>
+
+        <footer style="text-align: center; margin-top: 60px; color: var(--text-muted);">
+            <a href="index.html" class="btn">กลับหน้าหลัก</a>
+        </footer>
+    </div>
+</body>
+</html>

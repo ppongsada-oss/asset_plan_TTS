@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Site Manual - คู่มือเจ้าหน้าที่ไซต์</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="index.html">หน้าแรก</a>
+            <a href="admin.html">Admin</a>
+            <a href="site.html" class="active">Store Site</a>
+            <a href="pm.html">PM</a>
+            <a href="center.html">Center</a>
+            <a href="reports.html">Reports</a>
+        </nav>
+
+        <header class="header">
+            <h1>คู่มือเจ้าหน้าที่พัสดุไซต์งาน (Store Site)</h1>
+            <p>ขั้นตอนการวางแผนและส่งแผนความต้องการพัสดุรายงวด</p>
+        </header>
+
+        <section class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>เข้าสู่ใบงานแผนพัสดุ</h3>
+                <p>หลังจาก Login ด้วยสิทธิ์ Store Site ให้เลือกโครงการที่คุณรับผิดชอบ ระบบจะแสดงรายการ "งวดงาน (Cycle)" ที่กำลังเปิดให้วางแผน ให้คลิกเข้าสู่ใบงาน</p>
+                <img src="assets/site_dashboard.png" alt="Site Dashboard" class="screenshot">
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>บันทึกความต้องการและของคงเหลือ</h3>
+                <p>ในหน้าใบงาน (Worksheet) ให้ระบุจำนวนอุปกรณ์ที่ต้องการใช้ในแต่ละเดือน (Required Qty) และจำนวนของที่มีอยู่หน้างานจริง (Site Stock) เพื่อให้ระบบคำนวณความต้องการสุทธิ</p>
+                <img src="assets/site_worksheet.png" alt="Site Worksheet" class="screenshot">
+                <p class="text-muted"><i>หมายเหตุ: ระบบจะคำนวณยอดส่วนต่างอัตโนมัติว่าต้องขอเพิ่ม (+) หรือคืนของ (-)</i></p>
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>ส่งแผนให้ผู้จัดการโครงการ (PM)</h3>
+                <p>เมื่อกรอกข้อมูลครบถ้วนแล้ว ให้กดปุ่ม "Submit to PM" เพื่อส่งแผนงานให้ PM ทำการตรวจสอบและอนุมัติ</p>
+                <img src="assets/site_submit_modal.png" alt="Submit Modal" class="screenshot">
+                <p class="text-muted"><i>คำเตือน: หลังจากส่งแผนแล้ว คุณจะไม่สามารถแก้ไขข้อมูลได้จนกว่า PM จะตีกลับ (Reject)</i></p>
+            </div>
+        </section>
+
+        <footer style="text-align: center; margin-top: 60px; color: var(--text-muted);">
+            <a href="index.html" class="btn">กลับหน้าหลัก</a>
+        </footer>
+    </div>
+</body>
+</html>

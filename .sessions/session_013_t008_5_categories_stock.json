@@ -1,0 +1,14 @@
+{
+  "session_id": "session_013_t008_5_categories_stock",
+  "associated_tasks": ["T-008.5"],
+  "status": "completed",
+  "estimated_tokens": 3000,
+  "summary_context": "[Session Closed] Built Sub-Category registration form and Equipment Edit Modal. Connected to PUT /api/equipment.",
+  "History": [
+    "Initialized session for T-008.5.",
+    "Drafted implementation plan and confirmed Modal approach.",
+    "Added PUT method to /api/equipment.",
+    "Updated EquipmentTable.tsx with Sub-Category form and Edit Modal.",
+    "Session closed. [Tokens: +3000]"
+  ]
+}

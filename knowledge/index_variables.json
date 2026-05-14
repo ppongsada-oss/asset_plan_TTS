@@ -1,0 +1,726 @@
+{
+  "variables": {
+    "users": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 5,
+      "fields": [
+        "id",
+        "email",
+        "password_hash",
+        "global_role",
+        "created_at"
+      ],
+      "used_in": [
+        "src/app/api/auth/login/route.ts",
+        "src/app/api/auth/seed/route.ts",
+        "src/app/api/users/route.ts",
+        "src/app/api/users/[id]/route.ts",
+        "src/app/api/profile/route.ts"
+      ]
+    },
+    "project_roles": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 13,
+      "fields": [
+        "id",
+        "user_id",
+        "project_id",
+        "role"
+      ],
+      "used_in": [
+        "src/app/api/projects/roles/route.ts",
+        "src/app/api/auth/me/route.ts"
+      ]
+    },
+    "projects": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 20,
+      "fields": [
+        "id",
+        "code",
+        "name",
+        "password",
+        "status"
+      ],
+      "used_in": [
+        "src/app/api/admin/projects/route.ts",
+        "src/app/api/projects/route.ts"
+      ]
+    },
+    "categories": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 29,
+      "fields": [
+        "id",
+        "code",
+        "name"
+      ],
+      "used_in": [
+        "src/app/api/categories/route.ts",
+        "src/app/api/equipment/upload/route.ts"
+      ]
+    },
+    "sub_categories": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 34,
+      "fields": [
+        "id",
+        "code",
+        "category_code",
+        "name"
+      ],
+      "used_in": [
+        "src/app/api/categories/route.ts",
+        "src/app/api/equipment/upload/route.ts"
+      ]
+    },
+    "equipment_items": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 41,
+      "fields": [
+        "id",
+        "item_code",
+        "name",
+        "category_code",
+        "sub_category_code",
+        "unit",
+        "buy_price (integer)",
+        "rent_price (integer)",
+        "lead_time",
+        "remaining_stock"
+      ],
+      "used_in": [
+        "src/app/api/equipment/route.ts",
+        "src/app/api/equipment/upload/route.ts",
+        "src/app/api/center/requests/route.ts",
+        "src/app/api/reports/matrix/route.ts"
+      ]
+    },
+    "planning_cycles": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 55,
+      "fields": [
+        "id",
+        "cycle_number",
+        "start_date",
+        "end_date",
+        "target_months",
+        "created_by",
+        "created_at"
+      ],
+      "used_in": [
+        "src/app/api/center/cycles/route.ts",
+        "src/app/api/center/cycles/[id]/route.ts",
+        "src/app/site-plan/[job_id]/page.tsx"
+      ]
+    },
+    "planning_jobs": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 66,
+      "fields": [
+        "id",
+        "cycle_id",
+        "project_id",
+        "site_code",
+        "status",
+        "created_at"
+      ],
+      "used_in": [
+        "src/app/api/site/jobs/route.ts",
+        "src/app/api/site/jobs/[id]/route.ts",
+        "src/app/api/pm/jobs/approve/route.ts",
+        "src/app/api/pm/jobs/reject/route.ts",
+        "src/app/site-plan/[job_id]/page.tsx"
+      ]
+    },
+    "project_plans": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 76,
+      "fields": [
+        "id",
+        "project_id",
+        "equipment_id",
+        "month",
+        "required_qty",
+        "status",
+        "job_id",
+        "created_by",
+        "approved_by"
+      ],
+      "used_in": [
+        "src/app/api/site/plans/route.ts",
+        "src/app/api/pm/plans/save/route.ts",
+        "src/app/api/center/requests/route.ts",
+        "src/app/api/reports/matrix/route.ts"
+      ]
+    },
+    "project_inventory": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 93,
+      "fields": [
+        "id",
+        "project_id",
+        "equipment_id",
+        "cycle_id",
+        "qty"
+      ],
+      "used_in": [
+        "src/app/api/site/inventory/route.ts"
+      ]
+    },
+    "center_decisions": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 106,
+      "fields": [
+        "id",
+        "plan_id",
+        "action_type",
+        "qty",
+        "notes",
+        "action_by",
+        "created_at"
+      ],
+      "used_in": [
+        "src/app/api/center/decisions/route.ts",
+        "src/app/api/center/requests/route.ts"
+      ]
+    },
+    "planning_logs": {
+      "type": "DBTable",
+      "source": "src/db/schema.ts",
+      "line": 119,
+      "fields": [
+        "id",
+        "job_id",
+        "action",
+        "performed_by",
+        "created_at"
+      ],
+      "used_in": [
+        "src/app/api/pm/jobs/approve/route.ts",
+        "src/app/api/pm/jobs/reject/route.ts"
+      ]
+    },
+    "getDb": {
+      "type": "Function",
+      "source": "src/db/index.ts",
+      "line": 7,
+      "fields": [
+        "env: Env → D1Database"
+      ],
+      "used_in": [
+        "src/app/api/admin/projects/route.ts",
+        "src/app/api/auth/login/route.ts",
+        "src/app/api/auth/seed/route.ts",
+        "src/app/api/categories/route.ts",
+        "src/app/api/center/alerts/route.ts",
+        "src/app/api/center/cycles/route.ts",
+        "src/app/api/center/decisions/route.ts",
+        "src/app/api/center/requests/route.ts",
+        "src/app/api/equipment/route.ts",
+        "src/app/api/equipment/upload/route.ts",
+        "src/app/api/pm/jobs/approve/route.ts",
+        "src/app/api/pm/jobs/reject/route.ts",
+        "src/app/api/pm/plans/save/route.ts",
+        "src/app/api/profile/route.ts",
+        "src/app/api/projects/roles/route.ts",
+        "src/app/api/projects/route.ts",
+        "src/app/api/reports/matrix/route.ts",
+        "src/app/api/site/inventory/route.ts",
+        "src/app/api/site/jobs/route.ts",
+        "src/app/api/site/plans/route.ts",
+        "src/app/api/users/route.ts",
+        "src/app/site-plan/[job_id]/page.tsx"
+      ]
+    },
+    "signToken": {
+      "type": "Function",
+      "source": "src/lib/jwt.ts",
+      "line": 12,
+      "fields": [
+        "payload: AuthPayload → Promise<string>"
+      ],
+      "used_in": [
+        "src/app/api/auth/login/route.ts"
+      ]
+    },
+    "verifyToken": {
+      "type": "Function",
+      "source": "src/lib/jwt.ts",
+      "line": 27,
+      "fields": [
+        "token: string → Promise<AuthPayload>"
+      ],
+      "used_in": [
+        "src/proxy.ts",
+        "src/lib/auth-check.ts"
+      ]
+    },
+    "AuthPayload": {
+      "type": "Interface",
+      "source": "src/lib/jwt.ts",
+      "line": 4,
+      "fields": [
+        "userId",
+        "email",
+        "role",
+        "projectRoles"
+      ],
+      "used_in": [
+        "src/lib/auth-check.ts",
+        "src/proxy.ts"
+      ]
+    },
+    "hashPassword": {
+      "type": "Function",
+      "source": "src/lib/password.ts",
+      "line": 3,
+      "fields": [
+        "password: string → Promise<string> (WebCrypto SHA-256)"
+      ],
+      "used_in": [
+        "src/app/api/auth/seed/route.ts",
+        "src/app/api/users/route.ts",
+        "src/app/api/users/[id]/route.ts"
+      ]
+    },
+    "comparePassword": {
+      "type": "Function",
+      "source": "src/lib/password.ts",
+      "line": 11,
+      "fields": [
+        "plain: string, hash: string → Promise<boolean>"
+      ],
+      "used_in": [
+        "src/app/api/auth/login/route.ts",
+        "src/app/api/profile/route.ts"
+      ]
+    },
+    "getUserPayload": {
+      "type": "Function",
+      "source": "src/lib/auth-check.ts",
+      "line": 11,
+      "fields": [
+        "request: NextRequest → AuthPayload | null"
+      ],
+      "used_in": [
+        "src/app/api/auth/me/route.ts",
+        "src/app/api/profile/route.ts",
+        "src/app/api/users/route.ts",
+        "src/app/api/users/[id]/route.ts"
+      ]
+    },
+    "checkProjectAccess": {
+      "type": "Function",
+      "source": "src/lib/auth-check.ts",
+      "line": 19,
+      "fields": [
+        "request, projectId → boolean"
+      ],
+      "used_in": [
+        "src/app/api/projects/roles/route.ts"
+      ]
+    },
+    "proxy": {
+      "type": "Middleware",
+      "source": "src/proxy.ts",
+      "line": 8,
+      "fields": [
+        "NextRequest → NextResponse (JWT gate)"
+      ],
+      "used_in": []
+    },
+    "Navbar": {
+      "type": "ReactComponent",
+      "source": "src/components/layout/Navbar.tsx",
+      "line": 15,
+      "fields": [],
+      "used_in": [
+        "src/app/layout.tsx"
+      ]
+    },
+    "LoginForm": {
+      "type": "ReactComponent",
+      "source": "src/components/LoginForm.tsx",
+      "line": 7,
+      "fields": [
+        "email (string)",
+        "password (string)"
+      ],
+      "used_in": [
+        "src/app/login/page.tsx"
+      ]
+    },
+    "ProjectManagement": {
+      "type": "ReactComponent",
+      "source": "src/components/admin/ProjectManagement.tsx",
+      "line": 17,
+      "fields": [
+        "project list",
+        "create/edit/delete form"
+      ],
+      "used_in": [
+        "src/app/admin/projects/page.tsx"
+      ]
+    },
+    "EquipmentTable": {
+      "type": "ReactComponent",
+      "source": "src/components/master-data/EquipmentTable.tsx",
+      "line": 33,
+      "fields": [
+        "item_code",
+        "name",
+        "category_code",
+        "sub_category_code",
+        "unit",
+        "buy_price",
+        "rent_price",
+        "lead_time",
+        "remaining_stock"
+      ],
+      "used_in": [
+        "src/app/master-data/page.tsx"
+      ]
+    },
+    "StoreCenterTabs": {
+      "type": "ReactComponent",
+      "source": "src/components/store-center/StoreCenterTabs.tsx",
+      "line": 7,
+      "fields": [
+        "tabs: [CenterDashboard, JobManagement]"
+      ],
+      "used_in": [
+        "src/app/store-center/page.tsx"
+      ]
+    },
+    "CenterDashboard": {
+      "type": "ReactComponent",
+      "source": "src/components/store-center/CenterDashboard.tsx",
+      "line": 42,
+      "fields": [
+        "req.project",
+        "req.item_name",
+        "req.item_code",
+        "req.month",
+        "req.qty",
+        "req.status",
+        "req.urgency"
+      ],
+      "used_in": [
+        "src/components/store-center/StoreCenterTabs.tsx"
+      ]
+    },
+    "JobManagement": {
+      "type": "ReactComponent",
+      "source": "src/components/store-center/JobManagement.tsx",
+      "line": 35,
+      "fields": [
+        "cycle list",
+        "create cycle",
+        "assign jobs",
+        "handleBulkCancel"
+      ],
+      "used_in": [
+        "src/components/store-center/StoreCenterTabs.tsx"
+      ]
+    },
+    "handleBulkCancel": {
+      "type": "Function",
+      "source": "src/components/store-center/JobManagement.tsx",
+      "line": 140,
+      "fields": [
+        "selectedProjectIds → bulk delete planning jobs"
+      ],
+      "used_in": [
+        "src/components/store-center/JobManagement.tsx"
+      ]
+    },
+    "SiteJobDashboard": {
+      "type": "ReactComponent",
+      "source": "src/components/site-plan/SiteJobDashboard.tsx",
+      "line": 25,
+      "fields": [
+        "job list",
+        "status badges",
+        "navigate to [job_id]"
+      ],
+      "used_in": [
+        "src/app/site-plan/page.tsx"
+      ]
+    },
+    "PlanningWorksheet": {
+      "type": "ReactComponent",
+      "source": "src/components/site-plan/PlanningWorksheet.tsx",
+      "line": 23,
+      "fields": [
+        "plans.item_code",
+        "plans.name",
+        "plans.month_qty (array)",
+        "inventory.current_stock"
+      ],
+      "used_in": [
+        "src/app/site-plan/[job_id]/page.tsx"
+      ]
+    },
+    "PMReviewTable": {
+      "type": "ReactComponent",
+      "source": "src/components/site-plan/PMReviewTable.tsx",
+      "line": 32,
+      "fields": [
+        "job_id",
+        "plans matrix",
+        "approve/reject buttons"
+      ],
+      "used_in": [
+        "src/app/site-plan/pm-approval/page.tsx"
+      ]
+    },
+    "Modal": {
+      "type": "ReactComponent",
+      "source": "src/components/ui/Modal.tsx",
+      "line": 13,
+      "fields": [
+        "isOpen",
+        "onClose",
+        "title",
+        "children"
+      ],
+      "used_in": [
+        "src/components/ui/ConfirmModal.tsx"
+      ]
+    },
+    "ConfirmModal": {
+      "type": "ReactComponent",
+      "source": "src/components/ui/ConfirmModal.tsx",
+      "line": 18,
+      "fields": [
+        "isOpen",
+        "onClose",
+        "onConfirm",
+        "title",
+        "message",
+        "type"
+      ],
+      "used_in": [
+        "src/components/site-plan/PMReviewTable.tsx"
+      ]
+    },
+    "RootLayout": {
+      "type": "PageComponent",
+      "source": "src/app/layout.tsx",
+      "line": 21,
+      "fields": [],
+      "used_in": []
+    },
+    "Home": {
+      "type": "PageComponent",
+      "source": "src/app/page.tsx",
+      "line": 6,
+      "fields": [],
+      "used_in": []
+    },
+    "LoginPage": {
+      "type": "PageComponent",
+      "source": "src/app/login/page.tsx",
+      "line": 3,
+      "fields": [],
+      "used_in": []
+    },
+    "MasterDataPage": {
+      "type": "PageComponent",
+      "source": "src/app/master-data/page.tsx",
+      "line": 3,
+      "fields": [],
+      "used_in": []
+    },
+    "StoreCenterPage": {
+      "type": "PageComponent",
+      "source": "src/app/store-center/page.tsx",
+      "line": 4,
+      "fields": [],
+      "used_in": []
+    },
+    "SitePlanPage": {
+      "type": "PageComponent",
+      "source": "src/app/site-plan/page.tsx",
+      "line": 13,
+      "fields": [],
+      "used_in": []
+    },
+    "JobPlanPage": {
+      "type": "PageComponent",
+      "source": "src/app/site-plan/[job_id]/page.tsx",
+      "line": 12,
+      "fields": [],
+      "used_in": []
+    },
+    "PMApprovalPage": {
+      "type": "PageComponent",
+      "source": "src/app/site-plan/pm-approval/page.tsx",
+      "line": 1,
+      "fields": [],
+      "used_in": []
+    },
+    "MatrixReport": {
+      "type": "PageComponent",
+      "source": "src/app/matrix-report/page.tsx",
+      "line": 7,
+      "fields": [],
+      "used_in": []
+    },
+    "ProjectRolesPage": {
+      "type": "PageComponent",
+      "source": "src/app/admin/project-roles/page.tsx",
+      "line": 10,
+      "fields": [],
+      "used_in": []
+    },
+    "AdminProjectsPage": {
+      "type": "PageComponent",
+      "source": "src/app/admin/projects/page.tsx",
+      "line": 2,
+      "fields": [],
+      "used_in": []
+    },
+    "UsersManagementPage": {
+      "type": "PageComponent",
+      "source": "src/app/admin/users/page.tsx",
+      "line": 12,
+      "fields": [],
+      "used_in": []
+    },
+    "ProfilePage": {
+      "type": "PageComponent",
+      "source": "src/app/profile/page.tsx",
+      "line": 6,
+      "fields": [],
+      "used_in": []
+    },
+    "Env": {
+      "type": "Interface",
+      "source": "src/db/index.ts",
+      "line": 3,
+      "fields": [
+        "DB: D1Database"
+      ],
+      "used_in": [
+        "src/app/api/admin/projects/route.ts",
+        "src/app/api/auth/login/route.ts"
+      ]
+    },
+    "config": {
+      "type": "Unknown",
+      "source": "src/proxy.ts",
+      "line": 53,
+      "used_in": []
+    },
+    "metadata": {
+      "type": "Unknown",
+      "source": "src/app/layout.tsx",
+      "line": 16,
+      "used_in": []
+    },
+    "runtime": {
+      "type": "Unknown",
+      "source": "src/app/api/equipment/route.ts",
+      "line": 7,
+      "used_in": []
+    },
+    "GET": {
+      "type": "Unknown",
+      "source": "src/app/api/equipment/route.ts",
+      "line": 9,
+      "used_in": []
+    },
+    "POST": {
+      "type": "Unknown",
+      "source": "src/app/api/equipment/route.ts",
+      "line": 41,
+      "used_in": []
+    },
+    "PUT": {
+      "type": "Unknown",
+      "source": "src/app/api/equipment/route.ts",
+      "line": 66,
+      "used_in": []
+    },
+    "DELETE": {
+      "type": "Unknown",
+      "source": "src/app/api/categories/route.ts",
+      "line": 66,
+      "used_in": []
+    },
+    "PATCH": {
+      "type": "Unknown",
+      "source": "src/app/api/admin/projects/route.ts",
+      "line": 53,
+      "used_in": []
+    },
+    "PMApprovalDashboard": {
+      "type": "Unknown",
+      "source": "src/app/site-plan/pm-approval/page.tsx",
+      "line": 16,
+      "used_in": []
+    },
+    "PMReviewDetailPage": {
+      "type": "Unknown",
+      "source": "src/app/site-plan/pm-approval/[id]/page.tsx",
+      "line": 12,
+      "used_in": []
+    },
+    "useCenterRequests": {
+      "type": "Unknown",
+      "source": "src/hooks/use-requests.ts",
+      "line": 9,
+      "used_in": []
+    },
+    "useCenterAlerts": {
+      "type": "Unknown",
+      "source": "src/hooks/use-requests.ts",
+      "line": 49,
+      "used_in": []
+    },
+    "BreakdownTooltip": {
+      "type": "ReactComponent",
+      "source": "src/app/matrix-report/page.tsx",
+      "line": 142,
+      "fields": [
+        "items: any[]",
+        "title: string"
+      ],
+      "used_in": [
+        "src/app/matrix-report/page.tsx"
+      ]
+    },
+    "MatrixReportGET": {
+      "type": "APIRoute",
+      "source": "src/app/api/reports/matrix/route.ts",
+      "line": 9,
+      "fields": [
+        "cycleId",
+        "months",
+        "showArchived"
+      ],
+      "used_in": [
+        "src/app/matrix-report/page.tsx"
+      ]
+    },
+    "EquipmentListTable": {
+      "type": "Unknown",
+      "source": "src/components/master-data/EquipmentListTable.tsx",
+      "line": 28,
+      "used_in": []
+    }
+  }
+}

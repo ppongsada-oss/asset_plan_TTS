@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM Manual - คู่มือผู้จัดการโครงการ</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="index.html">หน้าแรก</a>
+            <a href="admin.html">Admin</a>
+            <a href="site.html">Store Site</a>
+            <a href="pm.html" class="active">PM</a>
+            <a href="center.html">Center</a>
+            <a href="reports.html">Reports</a>
+        </nav>
+
+        <header class="header">
+            <h1>คู่มือผู้จัดการโครงการ (Project Manager)</h1>
+            <p>ขั้นตอนการตรวจสอบ แก้ไข และอนุมัติแผนงานจากหน้างาน</p>
+        </header>
+
+        <section class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>ตรวจสอบแผนงานที่ส่งมา (Review)</h3>
+                <p>ในหน้า PM Approval คุณจะเห็นรายการโครงการที่ Store Site ส่งมาให้ตรวจสอบ ให้คลิกปุ่ม Review เพื่อดูรายละเอียดพัสดุรายตัว</p>
+                <img src="assets/pm_review.png" alt="PM Review" class="screenshot">
+                <p class="text-muted"><i>PM สามารถแก้ไขตัวเลขได้โดยตรงในหน้านี้ หากเห็นว่าจำนวนที่ขอมาไม่เหมาะสม</i></p>
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>อนุมัติแผนงาน (Approve)</h3>
+                <p>หากตรวจสอบข้อมูลแล้วถูกต้อง ให้กดปุ่ม "Approve" เพื่อยืนยันแผนงาน แผนจะถูกส่งต่อไปยังศูนย์พัสดุกลาง (Store Center) ทันที</p>
+                <img src="assets/pm_approve_modal.png" alt="Approve Modal" class="screenshot">
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>การตีกลับแผน (Reject)</h3>
+                <p>หากต้องการให้หน้างานแก้ไขแผนงานใหม่ ให้กดปุ่ม "Reject" พร้อมระบุเหตุผล เพื่อให้ Store Site นำไปปรับปรุงและส่งกลับมาใหม่</p>
+                <img src="assets/pm_reject_modal.png" alt="Reject Modal" class="screenshot">
+            </div>
+        </section>
+
+        <footer style="text-align: center; margin-top: 60px; color: var(--text-muted);">
+            <a href="index.html" class="btn">กลับหน้าหลัก</a>
+        </footer>
+    </div>
+</body>
+</html>

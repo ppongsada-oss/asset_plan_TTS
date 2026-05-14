@@ -2,17 +2,45 @@
 
 import { Lock, Mail, ArrowRight, Building2 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Connect to backend API (T-005)
-    setTimeout(() => setIsLoading(false), 1000);
+    setErrorMsg("");
+    
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        throw new Error("ระบบตอบกลับผิดพลาด (Non-JSON)");
+      }
+      
+      if (!res.ok || !data.success) {
+        setErrorMsg(data.error || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      } else {
+        router.push("/");
+      }
+    } catch (err) {
+      setErrorMsg("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -27,6 +55,12 @@ export default function LoginForm() {
         <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Asset Plan</h1>
         <p className="text-slate-400 text-sm">เข้าสู่ระบบเพื่อจัดการทรัพย์สินโครงการ</p>
       </div>
+
+      {errorMsg && (
+        <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/50 text-red-400 text-sm text-center">
+          {errorMsg}
+        </div>
+      )}
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div className="space-y-1">
@@ -76,7 +110,33 @@ export default function LoginForm() {
         </button>
       </form>
 
-      <div className="mt-6 text-center text-xs text-slate-500">
+      <div className="mt-8 pt-6 border-t border-white/5 flex flex-col gap-3">
+        <div className="flex items-center justify-center gap-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          <span className="h-px w-8 bg-white/5"></span>
+          วิธีใช้งานระบบ
+          <span className="h-px w-8 bg-white/5"></span>
+        </div>
+        <div className="flex gap-2">
+          <a 
+            href="/docs/manual/index.html" 
+            target="_blank" 
+            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white transition-all text-xs"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+            คู่มือการใช้งาน (Manual)
+          </a>
+          <a 
+            href="/docs/presentation/index.html" 
+            target="_blank" 
+            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white transition-all text-xs"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+            แนะนำระบบ
+          </a>
+        </div>
+      </div>
+
+      <div className="mt-6 text-center text-[10px] text-slate-600">
         <p>Copyright © 2026 TTS Construction</p>
       </div>
     </div>

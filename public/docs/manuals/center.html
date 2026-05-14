@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Center Manual | Asset Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #020617; color: #f8fafc; }
+        .sidebar { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); border-right: 1px solid rgba(255,255,255,0.05); }
+        .content-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .prose h2 { color: #f8fafc; font-weight: 700; font-size: 1.875rem; margin-top: 2.5rem; margin-bottom: 1.25rem; }
+        .prose p { color: #94a3b8; line-height: 1.75; margin-bottom: 1.25rem; }
+        .step-number { background: #a855f7; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-72 fixed h-full p-6 flex flex-col">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-xl">C</div>
+            <span class="font-bold text-xl tracking-tight text-white">Manuals</span>
+        </div>
+        
+        <nav class="flex-1 space-y-2">
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="home" class="w-5 h-5"></i> หน้าแรก
+            </a>
+            <div class="pt-4 pb-2 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest">บทบาทการใช้งาน</div>
+            <a href="admin.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="shield-check" class="w-5 h-5"></i> Admin System
+            </a>
+            <a href="site.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="construction" class="w-5 h-5"></i> Store Site
+            </a>
+            <a href="pm.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="user-check" class="w-5 h-5"></i> Project Manager
+            </a>
+            <a href="center.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <i data-lucide="warehouse" class="w-5 h-5"></i> Store Center
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-72 flex-1 p-12 max-w-5xl">
+        
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4">คู่มือสำหรับ <span class="text-purple-400">Store Center (ส่วนกลาง)</span></h1>
+            <p class="text-xl text-slate-400 font-light">การบริหารยอด Demand รวมและการตัดสินใจจัดสรรทรัพยากรระดับองค์กร</p>
+        </header>
+
+        <div class="prose max-w-none">
+            
+            <section id="intro" class="content-card p-8 rounded-3xl mb-8">
+                <h2 class="mt-0">1. บทบาทและกลยุทธ์การบริหาร</h2>
+                <p>ในฐานะ Store Center คุณคือ "หอควบคุม" ที่รวบรวมข้อมูลแผนงานจากทุกโครงการมาวิเคราะห์เพื่อตัดสินใจว่าบริษัทต้อง จัดส่งจากสโตร์กลาง, โยกย้ายอุปกรณ์ระหว่างไซต์ (Circulation), หรือจัดซื้อ/เช่าใหม่เพื่อให้เกิดความคุ้มค่าที่สุด</p>
+            </section>
+
+            <section id="hub" class="content-card p-8 rounded-3xl mb-8">
+                <h2>2. การใช้งาน Store Center Hub</h2>
+                <p>หน้าจอนี้คือศูนย์รวมข้อมูลยอดค้างส่งสะสมจากทุกไซต์งานก่อสร้าง</p>
+                
+                <div class="mb-6 rounded-2xl overflow-hidden border border-white/10">
+                    <img src="../presentation/screenshots/store_center.png" alt="Store Center Hub" class="w-full">
+                </div>
+
+                <div class="space-y-4">
+                    <div class="p-6 bg-purple-500/5 border border-purple-500/10 rounded-2xl">
+                        <h4 class="font-bold text-purple-400 mb-2 flex items-center gap-2">
+                            <i data-lucide="calculator" class="w-4 h-4"></i> การดูยอด Net Demand
+                        </h4>
+                        <p class="text-sm text-slate-400 leading-relaxed">
+                            ยอดที่คุณเห็นคือยอดที่ PM อนุมัติแล้วแต่บริษัท "ยังไม่มีของให้" หน้าที่ของคุณคือใช้เครื่องมือทางขวามือเพื่อจัดการยอดค้างส่งเหล่านี้
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="decisions" class="content-card p-8 rounded-3xl mb-8">
+                <h2>3. ประเภทการตัดสินใจ (Action Decisions)</h2>
+                <p>ในหน้า Hub คุณจะมี 4 ปุ่มหลักในการดำเนินการสำหรับแต่ละรายการ:</p>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 glass rounded-xl">
+                        <span class="text-blue-400 font-bold text-sm block mb-1">Dispatch (จัดส่ง)</span>
+                        <p class="text-xs text-slate-500 italic">เลือกเมื่อคุณมีของพร้อมส่งจากคลังกลาง</p>
+                    </div>
+                    <div class="p-4 glass rounded-xl">
+                        <span class="text-cyan-400 font-bold text-sm block mb-1">Circulate (โยกย้าย)</span>
+                        <p class="text-xs text-slate-500 italic">เลือกเพื่อดึงของจากไซต์งานอื่นที่ว่างอยู่มาให้ไซต์นี้</p>
+                    </div>
+                    <div class="p-4 glass rounded-xl">
+                        <span class="text-emerald-400 font-bold text-sm block mb-1">Buy (จัดซื้อ)</span>
+                        <p class="text-xs text-slate-500 italic">เลือกเมื่อต้องซื้ออุปกรณ์ใหม่เข้าบริษัท</p>
+                    </div>
+                    <div class="p-4 glass rounded-xl">
+                        <span class="text-amber-400 font-bold text-sm block mb-1">Rent (เช่า)</span>
+                        <p class="text-xs text-slate-500 italic">เลือกเมื่อต้องการเช่าอุปกรณ์จากภายนอก</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="alerts" class="content-card p-8 rounded-3xl mb-8">
+                <h2>4. การแจ้งเตือนสต็อกไม่เพียงพอ (Shortage Alerts)</h2>
+                <p>ระบบจะทำการคำนวณอัตโนมัติหากพบว่ายอดสต็อกในคลังกลาง (Warehouse Stock) ต่ำกว่ายอด Demand รวมที่ขอมา และจะแสดงเป็น <span class="text-red-400 font-bold">Alert สีแดง</span> เพื่อให้คุณรีบตัดสินใจจัดซื้อหรือเช่าให้ทันตามกำหนดงาน</p>
+            </section>
+
+        </div>
+
+        <footer class="mt-20 pt-8 border-t border-white/5 text-slate-500 text-sm">
+            Asset Plan User Manual - Store Center (ส่วนกลาง)
+        </footer>
+
+    </main>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>

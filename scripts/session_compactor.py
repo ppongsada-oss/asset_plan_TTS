@@ -6,7 +6,10 @@ TOKEN_THRESHOLD = 1200
 HISTORY_TO_KEEP = 5
 
 def calculate_tokens(text):
-    return len(str(text)) // 4
+    # UTF-8 byte count divided by 3 gives a more accurate token estimate
+    # for mixed-language text (English ~4 chars/token, Thai/CJK ~1-2 chars/token).
+    # Simple char/4 formula underestimates non-ASCII content by 4-8x.
+    return len(str(text).encode('utf-8')) // 3
 
 def evaluate_session(filepath):
     if not os.path.exists(filepath):

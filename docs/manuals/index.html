@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Plan | User Manuals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #020617; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .card-hover:hover { border-color: rgba(59, 130, 246, 0.5); transform: translateY(-4px); transition: all 0.3s; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-8">
+    
+    <div class="max-w-4xl w-full text-center mb-16">
+        <div class="mb-6 inline-block px-4 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-semibold uppercase tracking-widest">
+            Learning Center
+        </div>
+        <h1 class="text-6xl font-bold mb-6">คู่มือการใช้งาน <span class="text-blue-500">ASSET PLAN</span></h1>
+        <p class="text-xl text-slate-400 font-light">เลือกบทบาทของคุณเพื่อเริ่มต้นเรียนรู้วิธีการใช้งานระบบอย่างละเอียด</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl w-full">
+        
+        <!-- Admin Manual -->
+        <a href="admin.html" class="glass p-8 rounded-3xl card-hover group">
+            <div class="flex items-start gap-6">
+                <div class="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center text-red-400 shrink-0 group-hover:bg-red-500/30 transition-colors">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">System Administrator</h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">การตั้งค่าระบบ, จัดการผู้ใช้, ข้อมูลโครงการ และการบริหารจัดการ Master Data อุปกรณ์กลาง</p>
+                    <div class="mt-4 flex items-center gap-2 text-red-400 font-semibold text-sm">
+                        เปิดคู่มือ <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Store Site Manual -->
+        <a href="site.html" class="glass p-8 rounded-3xl card-hover group">
+            <div class="flex items-start gap-6">
+                <div class="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 shrink-0 group-hover:bg-blue-500/30 transition-colors">
+                    <i data-lucide="construction" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Store Site (หน้างาน)</h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">ขั้นตอนการวางแผนความต้องการอุปกรณ์รายเดือน, การบันทึกสต็อก และการส่งงานเพื่ออนุมัติ</p>
+                    <div class="mt-4 flex items-center gap-2 text-blue-400 font-semibold text-sm">
+                        เปิดคู่มือ <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Project Manager Manual -->
+        <a href="pm.html" class="glass p-8 rounded-3xl card-hover group">
+            <div class="flex items-start gap-6">
+                <div class="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400 shrink-0 group-hover:bg-emerald-500/30 transition-colors">
+                    <i data-lucide="user-check" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Project Manager</h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">กระบวนการตรวจสอบแผนงาน, การปรับแก้ไขจำนวน และการอนุมัติ/ปฏิเสธงาน (Governance)</p>
+                    <div class="mt-4 flex items-center gap-2 text-emerald-400 font-semibold text-sm">
+                        เปิดคู่มือ <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Store Center Manual -->
+        <a href="center.html" class="glass p-8 rounded-3xl card-hover group">
+            <div class="flex items-start gap-6">
+                <div class="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center text-purple-400 shrink-0 group-hover:bg-purple-500/30 transition-colors">
+                    <i data-lucide="warehouse" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Store Center (ส่วนกลาง)</h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">การวิเคราะห์ Demand รวม, การบริหารจัดการสต็อกส่วนกลาง, และการตัดสินใจจัดซื้อ/เช่าอุปกรณ์</p>
+                    <div class="mt-4 flex items-center gap-2 text-purple-400 font-semibold text-sm">
+                        เปิดคู่มือ <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+    </div>
+
+    <div class="mt-20 text-slate-600 text-sm flex items-center gap-2">
+        <i data-lucide="info" class="w-4 h-4"></i>
+        คู่มือนี้ถูกสร้างขึ้นโดยอัตโนมัติเพื่อให้สอดคล้องกับระบบเวอร์ชันล่าสุด
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>

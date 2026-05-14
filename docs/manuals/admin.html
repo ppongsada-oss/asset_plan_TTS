@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Manual | Asset Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #020617; color: #f8fafc; }
+        .sidebar { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); border-right: 1px solid rgba(255,255,255,0.05); }
+        .content-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .prose h2 { color: #f8fafc; font-weight: 700; font-size: 1.875rem; margin-top: 2.5rem; margin-bottom: 1.25rem; }
+        .prose p { color: #94a3b8; line-height: 1.75; margin-bottom: 1.25rem; }
+        .step-number { background: #ef4444; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-72 fixed h-full p-6 flex flex-col">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-xl">A</div>
+            <span class="font-bold text-xl tracking-tight text-white">Manuals</span>
+        </div>
+        
+        <nav class="flex-1 space-y-2">
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="home" class="w-5 h-5"></i> หน้าแรก
+            </a>
+            <div class="pt-4 pb-2 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest">บทบาทการใช้งาน</div>
+            <a href="admin.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20">
+                <i data-lucide="shield-check" class="w-5 h-5"></i> Admin System
+            </a>
+            <a href="site.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="construction" class="w-5 h-5"></i> Store Site
+            </a>
+            <a href="pm.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="user-check" class="w-5 h-5"></i> Project Manager
+            </a>
+            <a href="center.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="warehouse" class="w-5 h-5"></i> Store Center
+            </a>
+        </nav>
+
+        <div class="mt-auto p-4 glass rounded-2xl text-xs text-slate-500">
+            Version 2.0 (Role-Based)
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-72 flex-1 p-12 max-w-5xl">
+        
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4">คู่มือสำหรับ <span class="text-red-500">System Administrator</span></h1>
+            <p class="text-xl text-slate-400 font-light">การบริหารจัดการสิทธิ์ ข้อมูลโครงการ และฐานข้อมูลอุปกรณ์กลาง</p>
+        </header>
+
+        <div class="prose max-w-none">
+            
+            <section id="intro" class="content-card p-8 rounded-3xl mb-8">
+                <h2 class="mt-0">1. บทนำ (Introduction)</h2>
+                <p>ในฐานะ System Administrator คุณคือผู้ควบคุมโครงสร้างหลักของระบบ Asset Plan หน้าที่หลักของคุณคือการดูแลความถูกต้องของข้อมูลพื้นฐาน (Master Data) และการจัดการสิทธิ์ของผู้ใช้งานเพื่อให้กระบวนการวางแผนดำเนินไปได้อย่างราบรื่น</p>
+                <div class="flex gap-4 items-center p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                    <i data-lucide="alert-triangle"></i>
+                    <span>คำเตือน: การลบข้อมูลในส่วน Admin อาจส่งผลกระทบต่อแผนงานที่กำลังดำเนินการอยู่ โปรดตรวจสอบก่อนทุกครั้ง</span>
+                </div>
+            </section>
+
+            <section id="user-mgmt" class="content-card p-8 rounded-3xl mb-8">
+                <h2>2. การจัดการผู้ใช้งาน (User Management)</h2>
+                <p>คุณสามารถเพิ่ม แก้ไข หรือระงับสิทธิ์ผู้ใช้งานได้จากหน้าจอ <strong>Admin > Users</strong></p>
+                <div class="space-y-6">
+                    <div class="flex gap-4">
+                        <div class="step-number">1</div>
+                        <div>
+                            <p class="font-bold text-white mb-1">การเพิ่มผู้ใช้ใหม่</p>
+                            <p class="text-sm">กรอก Email และกำหนดรหัสผ่านเบื้องต้น พร้อมเลือก Global Role (ADMIN หรือ USER)</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="step-number">2</div>
+                        <div>
+                            <p class="font-bold text-white mb-1">การเปลี่ยนรหัสผ่าน</p>
+                            <p class="text-sm">หากผู้ใช้ลืมรหัสผ่าน คุณสามารถใช้ปุ่ม Edit เพื่อ Reset รหัสผ่านใหม่ได้</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="project-mgmt" class="content-card p-8 rounded-3xl mb-8">
+                <h2>3. การจัดการโครงการและสิทธิ์ (Projects & Roles)</h2>
+                <p>ระบบ Asset Plan ใช้การควบคุมสิทธิ์ระดับโครงการ (Project-based Access) หมายความว่า Site Planner หรือ PM จะมองเห็นเฉพาะโครงการที่ได้รับมอบหมายเท่านั้น</p>
+                
+                <div class="mb-6 rounded-2xl overflow-hidden border border-white/10">
+                    <img src="../presentation/screenshots/admin.png" alt="Admin Dashboard" class="w-full">
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="p-6 bg-white/5 rounded-2xl">
+                        <h4 class="font-bold text-white mb-2 flex items-center gap-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4 text-blue-400"></i> สร้างโครงการ
+                        </h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">กำหนดรหัสโครงการ (Project Code) และชื่อโครงการ เพื่อเริ่มวงจรการวางแผน</p>
+                    </div>
+                    <div class="p-6 bg-white/5 rounded-2xl">
+                        <h4 class="font-bold text-white mb-2 flex items-center gap-2">
+                            <i data-lucide="user-plus" class="w-4 h-4 text-emerald-400"></i> มอบหมายบทบาท
+                        </h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">ในหน้า Project Roles ให้เลือกโครงการและระบุว่าใครคือ PM หรือ Site Planner</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="master-data" class="content-card p-8 rounded-3xl mb-8">
+                <h2>4. การจัดการ Master Data อุปกรณ์</h2>
+                <p>ข้อมูลอุปกรณ์ก่อสร้างทั้งหมดจะถูกเก็บไว้ที่ <strong>Master Data</strong> เพื่อเป็นมาตรฐานเดียวกันทั้งองค์กร</p>
+                <div class="space-y-4">
+                    <div class="p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
+                        <p class="font-bold text-blue-400 text-sm mb-1">Bulk Upload (CSV)</p>
+                        <p class="text-xs">แนะนำให้ใช้ปุ่ม "Download Template" เพื่อดาวน์โหลดรูปแบบไฟล์ที่ถูกต้องก่อนทำการ Upload ข้อมูลอุปกรณ์จำนวนมาก</p>
+                    </div>
+                    <div class="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
+                        <p class="font-bold text-emerald-400 text-sm mb-1">Stock Calibration</p>
+                        <p class="text-xs">ทุกครั้งที่มีการเริ่มรอบการวางแผนใหม่ (Cycle) แอดมินต้องทำการ Update ยอดสต็อกตั้งต้นผ่านระบบ Import เพื่อให้หน้างานมีฐานข้อมูลที่แม่นยำ</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <footer class="mt-20 pt-8 border-t border-white/5 flex justify-between items-center text-slate-500 text-sm">
+            <span>Asset Plan User Manual - System Administrator</span>
+            <div class="flex gap-4">
+                <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>

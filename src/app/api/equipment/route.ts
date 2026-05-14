@@ -62,3 +62,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Failed to create equipment" }, { status: 500 });
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const env = getRequestContext().env;
+    const db = getDb(env as any);
+    const body = (await request.json()) as any;
+
+    if (!body.id) {
+      return NextResponse.json({ success: false, error: "Missing equipment ID" }, { status: 400 });
+    }
+
+    await db.update(equipment_items)
+      .set({
+        name: body.name,
+        category_code: body.category_code,
+        sub_category_code: body.sub_category_code,
+        unit: body.unit,
+        buy_price: Number(body.buy_price) || 0,
+        rent_price: Number(body.rent_price) || 0,
+        lead_time: body.lead_time || "",
+        remaining_stock: Number(body.remaining_stock) || 0,
+      })
+      .where(eq(equipment_items.id, body.id));
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("PUT Equipment Error:", error);
+    return NextResponse.json({ success: false, error: "Failed to update equipment" }, { status: 500 });
+  }
+}

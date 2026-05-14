@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Manual - คู่มือรายงาน</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav">
+            <a href="index.html">หน้าแรก</a>
+            <a href="admin.html">Admin</a>
+            <a href="site.html">Store Site</a>
+            <a href="pm.html">PM</a>
+            <a href="center.html">Center</a>
+            <a href="reports.html" class="active">Reports</a>
+        </nav>
+
+        <header class="header">
+            <h1>รายงานและข้อมูลการจัดหา (Reports & Export)</h1>
+            <p>การดูภาพรวมและการนำข้อมูลออกไปใช้งานต่อ</p>
+        </header>
+
+        <section class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>รายงาน Matrix Report</h3>
+                <p>รายงาน Matrix แสดงความต้องการพัสดุในรูปแบบตารางเปรียบเทียบระหว่างอุปกรณ์และโครงการ โดยแบ่งยอดตามเดือนที่ต้องการใช้ ช่วยให้เห็นภาพรวมทรัพยากรทั้งบริษัท</p>
+                <img src="assets/matrix_report.png" alt="Matrix Report" class="screenshot">
+            </div>
+        </section>
+
+        <section class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>การส่งออกข้อมูล (Export)</h3>
+                <p>คุณสามารถ Export ข้อมูลจากหน้า Matrix Report เพื่อนำไปใช้งานต่อได้ โดยระบบมีตัวเลือก 2 รูปแบบหลัก ดังนี้:</p>
+                <ul class="export-details" style="list-style: none; padding: 0; margin-bottom: 20px;">
+                    <li style="margin-bottom: 15px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <strong style="color: #0f172a; display: block; margin-bottom: 5px;">1. Export ทั้งหมด (Comprehensive Export)</strong>
+                        <span style="font-size: 0.9em; color: #64748b;">
+                            <b>ใช้เมื่อ:</b> ต้องการข้อมูลดิบทั้งหมดของทุกโครงการ รวมถึงยอดสต็อกในคลังสินค้า (Store Center) <br>
+                            <b>ลักษณะข้อมูล:</b> เป็นตารางขนาดใหญ่ที่แสดงจำนวนอุปกรณ์แยกตามโครงการและเดือน เหมาะสำหรับการทำสรุปรายงานภาพรวมบริษัท (Management Report)
+                        </span>
+                    </li>
+                    <li style="padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <strong style="color: #0f172a; display: block; margin-bottom: 5px;">2. Export รายการจัดซื้อ/เช่า (Procurement/Rental List)</strong>
+                        <span style="font-size: 0.9em; color: #64748b;">
+                            <b>ใช้เมื่อ:</b> ต้องการรายการที่บริษัทต้อง "จ่ายเงิน" เพื่อจัดหาเพิ่มเติม (Buy/Rent) เท่านั้น <br>
+                            <b>ลักษณะข้อมูล:</b> ระบบจะดึงเฉพาะรายการที่มีความต้องการสุทธิ (Net Requirement) ที่ผ่านการอนุมัติแล้ว และสรุปยอดที่ต้องจัดหาแยกตามเดือน เหมาะสำหรับส่งให้แผนกจัดซื้อ (Purchasing) ดำเนินการต่อทันที
+                        </span>
+                    </li>
+                </ul>
+                <div style="margin-top: 20px; padding: 15px; background: #f0fdf4; border-radius: 12px; border: 1px solid #bbf7d0; font-size: 0.9em; color: #166534;">
+                    <strong>✨ ใหม่: Export จากหน้า Store Center Hub</strong><br>
+                    สามารถส่งออกข้อมูลสถานะการดำเนินการ (Action Status) และหมายเหตุ (Notes) ของพัสดุแต่ละรายการได้โดยละเอียด ช่วยให้ทีมบริหารพัสดุติดตามสถานะได้แม่นยำขึ้น
+                </div>
+                <img src="assets/report_export.png" alt="Report Export" class="screenshot">
+            </div>
+        </section>
+
+        <footer style="text-align: center; margin-top: 60px; color: var(--text-muted);">
+            <a href="index.html" class="btn">กลับหน้าหลัก</a>
+        </footer>
+    </div>
+</body>
+</html>

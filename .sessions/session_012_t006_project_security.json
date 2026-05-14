@@ -1,0 +1,16 @@
+{
+  "session_id": "session_012_t006_project_security",
+  "associated_tasks": ["T-006"],
+  "status": "completed",
+  "estimated_tokens": 4000,
+  "summary_context": "[Session Closed] Built Project Security Control. Added /admin/project-roles UI, project-level JWT middleware check, and API endpoints.",
+  "History": [
+    "Initialized session for T-006.",
+    "Drafted implementation plan and confirmed Option A.",
+    "Modified login route to embed project roles in JWT.",
+    "Created auth-check.ts and updated proxy.ts for edge middleware.",
+    "Built roles and users API endpoints.",
+    "Built Admin UI for project roles assignment.",
+    "Updated index_files.json and closed session. [Tokens: +4000]"
+  ]
+}

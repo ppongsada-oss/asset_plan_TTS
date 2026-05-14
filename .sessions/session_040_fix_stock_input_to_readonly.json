@@ -1,0 +1,21 @@
+{
+  "session_id": "040",
+  "task_name": "fix_stock_input_to_readonly_and_ux_refinement",
+  "status": "completed",
+  "summary_context": "Implemented read-only Stock column, integrated Project Names into headers of Site Planning and PM Approval pages, and optimized Planning Worksheet UX (auto-select text, Enter key navigation, and compact layout).",
+  "history": [
+    "Integrated project names into headers using DB joins",
+    "Optimized table layout (compact mode, wrap text)",
+    "Added auto-select on focus for inputs",
+    "Added Enter key navigation (next row, first month)"
+  ],
+  "files_changed": [
+    "src/app/site-plan/[job_id]/page.tsx",
+    "src/app/site-plan/pm-approval/[id]/page.tsx",
+    "src/components/site-plan/PlanningWorksheet.tsx",
+    "src/components/site-plan/PMReviewTable.tsx",
+    "knowledge/index_files.json"
+  ],
+  "files_created": [],
+  "estimated_tokens": 2250
+}

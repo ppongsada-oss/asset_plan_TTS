@@ -1,34 +1,40 @@
 ---
 name: Agent Core
-description: central configuration and orchestration for the AI agent.
+description: Fallback orchestration skill. Loaded when no keyword matches. Re-routes to correct skill via registry. Does not run main work loop directly.
+---
+
+## Sections
+```
+- id: 1
+  name: "Route & Orchestrate"
+  steps: ["read registry.md fast-match table", "re-evaluate user intent", "load correct skill → hand off"]
+```
+
 ---
 
 # Agent Core
 
-## System Overview
-Main entry point for AI Agent configuration and process orchestration.
+## Role
+Fallback orchestrator only. All task execution follows **CLAUDE.md Loop Architecture** (Phases 1–3). This skill re-routes when no other skill keyword matches.
 
-## Primary Directives & Skill Routing (The 6-Step Implementation Loop)
-As the Agent Orchestrator, you must manage tasks by routing through specialized skills in this EXACT order:
+## Routing Protocol
+```
+1. Read .agents/skills/registry.md → fast-match table
+2. Re-evaluate user intent against all skill keywords[]
+3. Load matched skill SKILL.md → hand off to Phase 1 (Info Gather Loop)
+4. If still no match → ask user to clarify intent
+```
 
-0. **Memory Recall & Context Switch (`session_manager`)**:
-   - MUST DO: Read the active `.sessions/session_xxx.json` file using `view_file` to understand the current progress before acting. 
-   - Check: Does the User's request belong to a NEW task? If yes, command Session Manager to close the old JSON and initialize a new Session JSON.
-1. **Search & Impact (Pre-Execution)**: Query `index_files.json` & `index_variables.json` using `grep_search`. Trace `backlinks` to evaluate impact.
-2. **Roadmap Mapping**: Open `docs/master_roadmap.md`. Change target task from `[ ]` to `[/]`.
-3. **Execution Delegation**:
-    - **If creating new files/features** ➡️ Use `coder` skill.
-    - **If modifying existing files/fixing bugs** ➡️ Use `editor` skill.
-4. **Error Handling (If needed)**: If code generates a bug, **consult `docs/error_index.md` first** for known resolutions. If unresolved, log a Bug Task (e.g., `T-XXX-YYY-ZZ`) in the roadmap, use `editor` to fix it, and document the new fix in `docs/error_index.md` before marking `[X]`.
-5. **Registry Sync (`file_manager` & `variable_manager`)**: ONLY after code is written, update the JSON indexes (Files, Backlinks, Variables, Associated Tasks) to map the new reality.
-6. **Session Control (`session_manager`)**: At the end of the turn, log activities to `.sessions/` and check token compaction.
+## Delegation Rules
+- Creating new files/features → `coder` skill
+- Modifying/fixing existing files → `editor` skill
+- Any file created/moved/deleted → also trigger `file_manager`
+- Any symbol created/renamed/deleted → also trigger `variable_manager`
+- NEVER write code or run modifying Bash directly — always delegate to correct skill
 
-## Environment & External Paths
-- **Libraries/Dependencies**: `/Volumes/BriteBrain/Libraries` (npm, python packages, etc.)
-- **IDE Context**: `/Volumes/BriteBrain/IDE`
-
-## Command Patterns
-- **Python Install**: `pip install <package> --target=/Volumes/BriteBrain/Libraries/python`
-- **NPM Install**: `npm install <package> --prefix=/Volumes/BriteBrain/Libraries/npm`
-- **Execution**: When running code, ensure `PYTHONPATH` or `PATH` points to these directories.
-    - Example: `export PYTHONPATH=$PYTHONPATH:/Volumes/BriteBrain/Libraries/python`
+## Environment & Paths
+- Libraries: `/Volumes/BriteBrain/Libraries`
+- IDE Context: `/Volumes/BriteBrain/IDE`
+- Python install: `pip install <pkg> --target=/Volumes/BriteBrain/Libraries/python`
+- NPM install: `npm install <pkg> --prefix=/Volumes/BriteBrain/Libraries/npm`
+- Execution: `export PYTHONPATH=$PYTHONPATH:/Volumes/BriteBrain/Libraries/python`

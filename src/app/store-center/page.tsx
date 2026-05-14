@@ -1,4 +1,4 @@
-import CenterDashboard from "@/components/store-center/CenterDashboard";
+import StoreCenterTabs from "@/components/store-center/StoreCenterTabs";
 import { Factory } from "lucide-react";
 
 export default function StoreCenterPage() {
@@ -22,8 +22,8 @@ export default function StoreCenterPage() {
           </div>
         </div>
 
-        {/* Dynamic Matrix Component */}
-        <CenterDashboard />
+        {/* Tabbed Interface */}
+        <StoreCenterTabs />
 
       </div>
     </main>

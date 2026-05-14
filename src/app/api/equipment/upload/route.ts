@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { equipment_items } from "@/db/schema";
+import { equipment_items, categories, sub_categories } from "@/db/schema";
 import { getRequestContext } from "@cloudflare/next-on-pages";
+import Papa from "papaparse";
 
 export const runtime = "edge";
 
@@ -17,40 +18,110 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "No file provided" }, { status: 400 });
     }
 
-    const text = await file.text();
-    const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-    
-    if (lines.length <= 1) {
+    // Strip UTF-8 BOM if present
+    let text = await file.text();
+    if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+
+    const parsed = Papa.parse(text, {
+      header: false,
+      skipEmptyLines: true,
+    });
+
+    const rows = parsed.data as string[][];
+
+    if (rows.length <= 1) {
       return NextResponse.json({ success: false, error: "File is empty or missing data rows" }, { status: 400 });
     }
 
-    // Skip header, parse rows
-    const inserts = [];
-    for (let i = 1; i < lines.length; i++) {
-      const columns = lines[i].split(",");
-      if (columns.length >= 8) {
-        inserts.push({
-          item_code: columns[0].trim(),
-          name: columns[1].trim(),
-          category_code: columns[2].trim(),
-          sub_category_code: columns[3].trim(),
-          unit: columns[4].trim(),
-          buy_price: Number(columns[5]) || 0,
-          rent_price: Number(columns[6]) || 0,
-          lead_time: columns[7].trim(),
-          remaining_stock: Number(columns[8]) || 0,
-        });
+    // Parse rows and collect unique categories/sub-categories
+    const inserts: {
+      item_code: string; name: string; category_code: string; sub_category_code: string;
+      unit: string; buy_price: number; rent_price: number; lead_time: string; remaining_stock: number;
+    }[] = [];
+    const uniqueCategories = new Map<string, string>();
+    const uniqueSubCategories = new Map<string, { code: string; category_code: string; name: string }>();
+
+    for (let i = 1; i < rows.length; i++) {
+      const cols = rows[i];
+      if (cols.length < 8) continue;
+
+      const item_code       = cols[0];
+      const name            = cols[1];
+      const category_code   = cols[2];
+      const sub_category_code = cols[3];
+      const unit            = cols[4];
+      const buy_price       = Math.round(Number(cols[5])) || 0;
+      const rent_price      = Math.round(Number(cols[6])) || 0;
+      const lead_time       = cols[7];
+      const remaining_stock = Number(cols[8]) || 0;
+
+      if (!item_code || !name || !category_code || !sub_category_code || !unit) continue;
+
+      if (!uniqueCategories.has(category_code)) {
+        uniqueCategories.set(category_code, category_code);
       }
+      if (!uniqueSubCategories.has(sub_category_code)) {
+        uniqueSubCategories.set(sub_category_code, { code: sub_category_code, category_code, name: sub_category_code });
+      }
+
+      inserts.push({ item_code, name, category_code, sub_category_code, unit, buy_price, rent_price, lead_time, remaining_stock });
     }
 
     if (inserts.length === 0) {
       return NextResponse.json({ success: false, error: "No valid rows found to insert" }, { status: 400 });
     }
 
-    // Bulk Insert (Drizzle supports array insert natively)
-    await db.insert(equipment_items).values(inserts).onConflictDoNothing();
+    const catValues = Array.from(uniqueCategories.entries()).map(([code, name]) => ({ code, name }));
+    const subCatValues = Array.from(uniqueSubCategories.values());
 
-    return NextResponse.json({ success: true, message: `Successfully inserted ${inserts.length} items.` });
+    // 1. Insert only categories that don't exist yet
+    const existingCats = await db.select({ code: categories.code }).from(categories);
+    const existingCatSet = new Set(existingCats.map((c) => c.code));
+    const newCats = catValues.filter((c) => !existingCatSet.has(c.code));
+    if (newCats.length > 0) {
+      for (const cat of newCats) {
+        await db.insert(categories).values(cat);
+      }
+    }
+
+    // 2. Insert only sub-categories that don't exist yet
+    const existingSubs = await db.select({ code: sub_categories.code }).from(sub_categories);
+    const existingSubSet = new Set(existingSubs.map((s) => s.code));
+    const newSubs = subCatValues.filter((s) => !existingSubSet.has(s.code));
+    if (newSubs.length > 0) {
+      for (const sub of newSubs) {
+        await db.insert(sub_categories).values(sub);
+      }
+    }
+
+    // 3. Insert only equipment items that don't exist yet
+    // — avoids onConflictDoNothing which fails silently in Miniflare D1
+    // — Drizzle includes `id` col → 10 cols/row, so SQLite 999-param limit = max 99 rows/batch
+    const existingItems = await db.select({ item_code: equipment_items.item_code }).from(equipment_items);
+    
+    // Use a Set to track both existing DB items AND duplicates within the CSV itself
+    const seenItemCodes = new Set(existingItems.map((e) => e.item_code));
+    const newInserts = [];
+    let duplicateCsvCount = 0;
+
+    for (const item of inserts) {
+      if (!seenItemCodes.has(item.item_code)) {
+        seenItemCodes.add(item.item_code);
+        newInserts.push(item);
+      } else {
+        duplicateCsvCount++;
+      }
+    }
+
+    // Drizzle D1 edge runtime ไม่รองรับ multi-row insert → insert ทีละ 1 row
+    for (const item of newInserts) {
+      await db.insert(equipment_items).values(item);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `นำเข้าสำเร็จ: ${newInserts.length} รายการ | ข้ามรายการซ้ำในระบบ/ในไฟล์: ${inserts.length - newInserts.length} | หมวดหลักใหม่: ${newCats.length} | หมวดย่อยใหม่: ${newSubs.length}`,
+    });
   } catch (error) {
     console.error("Upload Equipment Error:", error);
     return NextResponse.json({ success: false, error: "Failed to process upload" }, { status: 500 });

@@ -1,0 +1,24 @@
+{
+  "session_id": "session_061",
+  "title": "Store Center Export Base Implementation",
+  "tasks": [
+    {
+      "id": "T-018.8",
+      "description": "Add Excel export functionality for Store Center Hub (Demand & Return)",
+      "status": "completed"
+    },
+    {
+      "id": "T-018.9",
+      "description": "Refine Export with Filtered/All options and detailed columns",
+      "status": "completed"
+    }
+  ],
+  "files_modified": [
+    "src/components/store-center/CenterDashboard.tsx",
+    "docs/master_roadmap.md",
+    ".sessions/active_thread.md"
+  ],
+  "token_usage": 135000,
+  "status": "completed",
+  "summary_context": "Refined Export functionality in Store Center Hub. Added a dropdown menu for Filtered vs All export. Enhanced Excel report with 'Action Status' and 'Notes' columns. Updated User Manuals (center.html, reports.html) with detailed instructions and a new screenshot mockup."
+}

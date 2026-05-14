@@ -1,0 +1,10 @@
+{
+  "session_id": "025",
+  "task_name": "worksheet_search_sort",
+  "status": "completed",
+  "summary_context": "เพิ่มระบบค้นหา (Search) และเรียงลำดับ (Sorting) ในหน้า Planning Worksheet สำเร็จ โดยใช้ useMemo เพื่อประสิทธิภาพสูงสุด รองรับการเรียงตามทุกคอลัมน์สำคัญ พร้อมปรับปรุง UI ให้ใช้งานง่ายขึ้น",
+  "history": [],
+  "files_changed": [],
+  "files_created": [".sessions/session_025_worksheet_search_sort.json"],
+  "estimated_tokens": 500
+}

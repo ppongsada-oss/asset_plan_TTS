@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Site Manual | Asset Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #020617; color: #f8fafc; }
+        .sidebar { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); border-right: 1px solid rgba(255,255,255,0.05); }
+        .content-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .prose h2 { color: #f8fafc; font-weight: 700; font-size: 1.875rem; margin-top: 2.5rem; margin-bottom: 1.25rem; }
+        .prose p { color: #94a3b8; line-height: 1.75; margin-bottom: 1.25rem; }
+        .step-number { background: #3b82f6; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar w-72 fixed h-full p-6 flex flex-col">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-xl">S</div>
+            <span class="font-bold text-xl tracking-tight text-white">Manuals</span>
+        </div>
+        
+        <nav class="flex-1 space-y-2">
+            <a href="index.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="home" class="w-5 h-5"></i> หน้าแรก
+            </a>
+            <div class="pt-4 pb-2 px-4 text-xs font-bold text-slate-500 uppercase tracking-widest">บทบาทการใช้งาน</div>
+            <a href="admin.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="shield-check" class="w-5 h-5"></i> Admin System
+            </a>
+            <a href="site.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <i data-lucide="construction" class="w-5 h-5"></i> Store Site
+            </a>
+            <a href="pm.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="user-check" class="w-5 h-5"></i> Project Manager
+            </a>
+            <a href="center.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 transition-all">
+                <i data-lucide="warehouse" class="w-5 h-5"></i> Store Center
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-72 flex-1 p-12 max-w-5xl">
+        
+        <header class="mb-12">
+            <h1 class="text-5xl font-bold mb-4">คู่มือสำหรับ <span class="text-blue-400">Store Site (หน้างาน)</span></h1>
+            <p class="text-xl text-slate-400 font-light">ขั้นตอนการวางแผนและจัดการความต้องการอุปกรณ์ระดับโครงการ</p>
+        </header>
+
+        <div class="prose max-w-none">
+            
+            <section id="intro" class="content-card p-8 rounded-3xl mb-8">
+                <h2 class="mt-0">1. บทบาทและหน้าที่ (Role & Responsibilities)</h2>
+                <p>ในฐานะ Store Site คุณคือผู้เชื่อมโยงความต้องการจากหน้างานจริงเข้าสู่ระบบ หน้าที่หลักของคุณคือการวางแผนการใช้อุปกรณ์รายเดือน (Monthly Planning) และควบคุมยอดสต็อกหน้างานให้สอดคล้องกับแผนงานก่อสร้าง</p>
+            </section>
+
+            <section id="access" class="content-card p-8 rounded-3xl mb-8">
+                <h2>2. การเข้าสู่ใบงานแผนพัสดุ (Accessing Worksheet)</h2>
+                <p>เลือกโครงการและรอบการทำงานที่ต้องการเพื่อเริ่มการวางแผนอุปกรณ์</p>
+                
+                <div class="mb-6 rounded-2xl overflow-hidden border border-white/10">
+                    <img src="../presentation/screenshots/site_dashboard.png" alt="Site Dashboard" class="w-full">
+                </div>
+
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="flex gap-4 items-start p-4 bg-white/5 rounded-2xl">
+                        <div class="step-number shrink-0">1</div>
+                        <div>
+                            <p class="font-bold text-white mb-1 text-sm">การเลือกรายการงาน (Select Job)</p>
+                            <p class="text-xs text-slate-400 leading-relaxed">ในหน้า Dashboard จะแสดงรายการโครงการที่คุณได้รับมอบหมาย ให้คลิกที่ชื่อโครงการหรือปุ่ม "Open Plan" เพื่อเข้าสู่ใบงาน</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 items-start p-4 bg-white/5 rounded-2xl">
+                        <div class="step-number shrink-0">2</div>
+                        <div>
+                            <p class="font-bold text-white mb-1 text-sm">ตรวจสอบสถานะ (Status Check)</p>
+                            <p class="text-xs text-slate-400 leading-relaxed">สังเกตสถานะของงาน (เช่น DRAFT, SUBMITTED, REJECTED) เพื่อทราบว่าต้องดำเนินการต่ออย่างไร</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="worksheet" class="content-card p-8 rounded-3xl mb-8">
+                <h2>3. การใช้งาน Interactive Worksheet</h2>
+                <p>Worksheet คือหัวใจสำคัญที่คุณต้องระบุจำนวนความต้องการอุปกรณ์ในแต่ละเดือน</p>
+                
+                <div class="mb-6 rounded-2xl overflow-hidden border border-white/10">
+                    <img src="../presentation/screenshots/site_worksheet.png" alt="Planning Worksheet" class="w-full">
+                </div>
+
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="flex gap-4 items-start p-4 bg-white/5 rounded-2xl">
+                        <div class="step-number shrink-0">1</div>
+                        <div>
+                            <p class="font-bold text-white mb-1 text-sm">การระบุจำนวน (Input Quantity)</p>
+                            <p class="text-xs text-slate-400 leading-relaxed">คลิกที่ช่องเดือนที่ต้องการ แล้วพิมพ์จำนวนอุปกรณ์ที่ต้องใช้ ระบบจะคำนวณยอดรวมและตรวจสอบความพร้อมของสต็อกเบื้องต้นให้ทันที</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 items-start p-4 bg-white/5 rounded-2xl">
+                        <div class="step-number shrink-0">2</div>
+                        <div>
+                            <p class="font-bold text-white mb-1 text-sm">การบันทึกฉบับร่าง (Save Draft)</p>
+                            <p class="text-xs text-slate-400 leading-relaxed">หากยังวางแผนไม่เสร็จ คุณสามารถกด Save Draft เพื่อกลับมาทำต่อภายหลังได้ ข้อมูลนี้จะยังไม่ถูกส่งไปให้ PM ตรวจสอบ</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="submission" class="content-card p-8 rounded-3xl mb-8">
+                <h2>4. กระบวนการส่งงาน (Submission Workflow)</h2>
+                <p>เมื่อมั่นใจในตัวเลขการวางแผนแล้ว ให้ดำเนินการส่งแผนงานเพื่อให้ PM พิจารณาอนุมัติ</p>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4 p-4 glass rounded-2xl">
+                        <i data-lucide="send" class="w-6 h-6 text-blue-500"></i>
+                        <div>
+                            <p class="font-bold text-sm">ปุ่ม Submit Planning</p>
+                            <p class="text-xs text-slate-400 italic">หลังจากกดแล้ว สถานะของงานจะเปลี่ยนเป็น "SUBMITTED" และคุณจะไม่สามารถแก้ไขข้อมูลได้จนกว่า PM จะส่งกลับมา (Reject)</p>
+                        </div>
+                    </div>
+                    <div class="p-6 bg-amber-500/5 border border-amber-500/10 rounded-2xl text-xs leading-relaxed text-amber-200">
+                        <p class="font-bold mb-2 flex items-center gap-2 uppercase tracking-widest"><i data-lucide="info" class="w-3 h-3"></i> ข้อควรระวัง</p>
+                        โปรดตรวจสอบจำนวนอุปกรณ์ให้ถูกต้องตามแผนงานจริง เนื่องจากข้อมูลนี้จะถูกนำไปคำนวณยอดจัดซื้อของบริษัทในภาพรวม
+                    </div>
+                </div>
+            </section>
+
+            <section id="stock" class="content-card p-8 rounded-3xl mb-8">
+                <h2>5. การตรวจสอบยอดค้างรับ-ค้างส่ง</h2>
+                <p>ในตาราง Matrix ระบบจะแสดงคอลัมน์พิเศษที่ช่วยให้คุณบริหารจัดการหน้างานได้ง่ายขึ้น:</p>
+                <ul class="list-disc ml-6 text-sm text-slate-400 space-y-2">
+                    <li><strong class="text-white">Site Stock:</strong> จำนวนอุปกรณ์ที่มีอยู่จริงที่หน้างานปัจจุบัน</li>
+                    <li><strong class="text-white">Pending Receipt:</strong> ยอดอุปกรณ์ที่รอรับเข้าตามแผนการอนุมัติ</li>
+                    <li><strong class="text-white">Net Requirement:</strong> ยอดความต้องการสุทธิที่บริษัทต้องจัดหาเพิ่มเติมให้คุณ</li>
+                </ul>
+            </section>
+
+        </div>
+
+        <footer class="mt-20 pt-8 border-t border-white/5 text-slate-500 text-sm">
+            Asset Plan User Manual - Store Site (หน้างาน)
+        </footer>
+
+    </main>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
