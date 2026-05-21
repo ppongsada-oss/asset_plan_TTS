@@ -16,6 +16,14 @@
 → Load SESSION_TOTAL from B1 into working memory (no further file reads for tokens this session)
 → If SESSION_TOTAL > 60k → warn user immediately before proceeding
 
+[B4] Platform Probe (run only if `.agents/platform/detected.md` has `platform: unknown`):
+     → List available tools → match against known platforms (see detected.md Known Platform Mappings)
+     → Found match → update detected.md with correct values → proceed
+     → No match → emit [platform-unknown] → ask 4 co-development questions (see R4)
+     → B4 is skipped if detected.md already has a known platform value
+
+→ Boot ends after B3 (B4 only if platform unknown) — emit Reply line 1 immediately.
+
 Reply line 1 — Boot trace:
 ```
 **[Boot]** Thread: <done|in_progress> · Tasks: <N open> · Skill: `<name>` · Sections: <N> · Tokens: ~<N>k
@@ -158,20 +166,34 @@ Max 5 tool calls/turn. Retry max 2×; diagnose on 2nd fail.
 ## R4 · Sub-agent Decision
 Run 1 Bash scope probe before any task.
 
-**Spawn patterns (3 types):**
+**Spawn patterns (3 types) — use `<spawn_tool>` from `.agents/platform/detected.md`:**
 
 | Pattern | When | How |
 |---|---|---|
-| **Explore** | scope ≥ 5 files / ≥ 300 lines | `invoke_subagent` (TypeName: `"research"`) → summary ≤500 tokens → act on summary only |
-| **Execution** | single section > 8 steps + isolated output | `invoke_subagent` (TypeName: `"self"`) → pass goal + constraints + output format → receive structured result |
-| **Parallel fan-out** | ≥ 2 sections in same Cycle (no dependency) | `invoke_subagent` Subagents[...] (one per section) → each writes `.sessions/cycle_N_<section_id>.json` → read all results → pass as context to next Cycle → single Completion Gate after all Cycles |
+| **Explore** | scope ≥ 5 files / ≥ 300 lines | `<spawn_tool>` explore mode (`explore_type` from detected.md) → summary ≤500 tokens → act on summary only |
+| **Execution** | single section > 8 steps + isolated output | `<spawn_tool>` execution mode (`execution_type` from detected.md) → pass goal + constraints + output format → receive structured result |
+| **Parallel fan-out** | ≥ 2 sections in same Cycle (no dependency) | `<spawn_tool>` parallel mode (`parallel_mode` from detected.md) → each writes `.sessions/cycle_N_<section_id>.json` → read all results → pass as context to next Cycle |
+
+**Examples by platform (from detected.md):**
+- Antigravity 2.0: `invoke_subagent` · explore=`"research"` · execution=`"self"` · parallel=`Subagents[]`
+- Claude Code: `Agent()` · explore=`subagent_type=Explore` · execution=`subagent_type=task` · parallel=multiple calls
 
 **Hard limits:**
 - Max depth: 1 level only — worker agents may NOT spawn further agents
 - Sub-agent output: structured (JSON or table) — never prose
 - Token budget: sub-agent tokens count toward SESSION_TOTAL (no separate budget)
-- Parallel spawn: pass all sections as array in single `invoke_subagents` Subagents[] (not sequentially)
-- Custom types: use `define_subagent` to register a new TypeName for the session before invoking
+- Parallel spawn: use `parallel_mode` from detected.md — send all Cycle sections at once (not sequentially)
+- Custom types: if platform has `define_tool` in detected.md → use it to register custom agent types for the session
+
+**[platform-unknown] Co-development protocol — when no spawn tool detected:**
+```
+Q1: Does this platform support spawning sub-agents or parallel workers? (yes / no / partial)
+Q2: What tool/command name spawns them? (check platform docs — e.g., invoke_subagent, spawn, Agent...)
+Q3: What parameters does it accept? (share JSON schema or doc link)
+Q4: Can multiple agents run in parallel in one call, or must they be called sequentially?
+→ Based on answers: write .agents/platform/detected.md → proceed with correct tool name
+→ If partial support: document what IS possible → adapt patterns to fit
+```
 
 ---
 

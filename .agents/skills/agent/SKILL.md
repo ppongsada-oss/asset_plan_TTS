@@ -33,9 +33,11 @@ Orchestrator skill. Handles two responsibilities:
 2. Build dependency graph from Cycle declarations:
    - Sections in same Cycle = no dependency → parallel
    - Sections in Cycle N+1 declare context-input from Cycle N
-3. For Cycle N: call `invoke_subagent` with Subagents[] array (one entry per section) → emit [cycle N]
-   - TypeName: "self" for execution tasks · "research" for read-only explore tasks
-   - Workspace: "inherit" (default) unless section needs isolation → use "branch"
+3. Read `.agents/platform/detected.md` → get spawn_tool, execution_type, parallel_mode
+   For Cycle N: call `<spawn_tool>` using `<parallel_mode>` (one entry per section) → emit [cycle N]
+   - Explore tasks: use `<explore_type>` · Execution tasks: use `<execution_type>`
+   - Workspace/isolation: set per platform conventions (see detected.md notes)
+   - Platform unknown: emit [platform-unknown] → run B4 probe before proceeding
 4. Each section agent writes → `.sessions/cycle_N_<section_id>.json`
 5. After all Cycle N agents done:
    a. Read all cycle_N_*.json → validate each file:
@@ -44,7 +46,7 @@ Orchestrator skill. Handles two responsibilities:
       - Invalid JSON or missing file → treat as blocked, log in notes
    b. Any status = blocked → HALT all remaining Cycles → BLOCKED flow
    c. All done → aggregate results → build context payload for Cycle N+1
-6. Call `invoke_subagent` for Cycle N+1 — inject cycle_N results as `cycle_context:` in each Subagent Prompt
+6. Call `<spawn_tool>` for Cycle N+1 — inject cycle_N results as `cycle_context:` in each Subagent Prompt
 7. Repeat until all Cycles done → Completion Gate
 ```
 
@@ -55,19 +57,24 @@ Orchestrator skill. Handles two responsibilities:
 - `context_files:` only files the sub-agent needs (no full index)
 - `cycle_context:` structured results from prior Cycle(s) — omit if Cycle 1
 
-**invoke_subagent call structure (Antigravity 2.0):**
+**Spawn call structure — varies by platform (read from `.agents/platform/detected.md`):**
+
+Antigravity 2.0 example:
 ```json
 {
   "Subagents": [
     {
       "TypeName": "self",
       "Role": "<section name>",
-      "Prompt": "<goal> | constraints: <from CLAUDE.md R5,R6,R8> | output_format: cycle_N_<id>.json schema | cycle_context: <prior results or omit>",
+      "Prompt": "<goal> | constraints: <R5,R6,R8> | output_format: cycle_N_<id>.json | cycle_context: <prior results>",
       "Workspace": "inherit"
     }
   ]
 }
 ```
+Claude Code example: `Agent(subagent_type="task", prompt="<goal>...")`
+
+→ Always resolve actual call format from `detected.md` at runtime. Do not hardcode.
 
 **Sub-agent result file** — every spawned agent must write before returning:
 ```json
