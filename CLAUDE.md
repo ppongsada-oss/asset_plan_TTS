@@ -82,10 +82,18 @@ Verify-<N>: `<runnable command>` → expected: <output or condition>
 ```
 Examples: `` `grep -c "export default" src/app/page.tsx` → 1 `` | `` `npm run build` → exit 0 ``
 
+**Phase 3 — Parallel Gate (run BEFORE SECTION LOOP):**
+```
+For each section pair: does S_A output feed into S_B input?
+  → Yes (dependency) : Sequential — run S_A, wait, then S_B
+  → No (independent) : Parallel fan-out — spawn both, aggregate, then Completion Gate
+```
+Emit before spawning: `**[fan-out]** Sections <A>+<B> independent · spawning parallel agents`
+
 **Phase 3 REACT LOOP — execute per step in this order:**
 1. **TOKEN CHECK:** SESSION_TOTAL > 60k? → finish current step → PAUSE (save state · show progress · ask user)
 2. **SELECT** tool for current step (R2 budget · R5 index-first)
-3. **EXECUTE** → run tool
+3. **EXECUTE** → run tool (or spawn sub-agent per R4 Execution pattern)
 4. **OBSERVE** → unexpected? diagnose → retry once → still wrong → BLOCKED
 5. **VERIFY** → run section's Verify-N → pass? emit `[✓ written]` → section eligible for done : diagnose → retry or BLOCKED
 6. **DECIDE** → more steps? emit [loop] · continue : section done → emit [loop] done
@@ -138,10 +146,20 @@ Max 5 tool calls/turn. Retry max 2×; diagnose on 2nd fail.
 
 ## R4 · Sub-agent Decision
 Run 1 Bash scope probe before any task.
-| Probe Result | Action |
-|---|---|
-| < 5 files / < 300 lines | Proceed in main context |
-| ≥ 5 files / ≥ 300 lines | Spawn `Agent (subagent_type=Explore)` → summary ≤500 tokens |
+
+**Spawn patterns (3 types):**
+
+| Pattern | When | How |
+|---|---|---|
+| **Explore** | scope ≥ 5 files / ≥ 300 lines | `Agent(subagent_type=Explore)` → summary ≤500 tokens → act on summary only |
+| **Execution** | single section > 8 steps + isolated output | `Agent(task)` → pass goal + constraints + output format → receive structured result |
+| **Parallel fan-out** | ≥ 2 sections with no dependency on each other | spawn all at once → aggregate results → single Completion Gate |
+
+**Hard limits:**
+- Max depth: 1 level only — worker agents may NOT spawn further agents
+- Sub-agent output: structured (JSON or table) — never prose
+- Token budget: sub-agent tokens count toward SESSION_TOTAL (no separate budget)
+- Parallel spawn: send all independent agents in one message (not sequentially)
 
 ---
 

@@ -15,7 +15,9 @@ description: Fallback orchestration skill. Loaded when no keyword matches. Re-ro
 # Agent Core
 
 ## Role
-Fallback orchestrator only. All task execution follows **CLAUDE.md Loop Architecture** (Phases 1–3). This skill re-routes when no other skill keyword matches.
+Orchestrator skill. Handles two responsibilities:
+1. **Routing** — when no keyword matches, re-route to correct skill
+2. **Multi-agent orchestration** — when task has independent sections, spawn and coordinate sub-agents per R4
 
 ## Routing Protocol
 ```
@@ -25,12 +27,29 @@ Fallback orchestrator only. All task execution follows **CLAUDE.md Loop Architec
 4. If still no match → ask user to clarify intent
 ```
 
-## Delegation Rules
+## Orchestration Protocol (R4 Parallel fan-out)
+```
+1. Receive MECE plan sections from Phase 2
+2. Build dependency graph: does section A output feed section B?
+3. Independent sections → spawn parallel agents (all in one message)
+4. Dependent sections → sequential or chain output
+5. Wait for all agents → aggregate structured outputs
+6. Run Completion Gate on combined result → report to user
+```
+
+**Delegation Contract — every sub-agent prompt must include:**
+- `goal:` what to produce
+- `constraints:` relevant rules from CLAUDE.md (R5, R6, R8)
+- `output_format:` exact structure expected (JSON schema or table)
+- `context_files:` only files the sub-agent needs (no full index)
+
+## Skill Delegation Rules
 - Creating new files/features → `coder` skill
 - Modifying/fixing existing files → `editor` skill
 - Any file created/moved/deleted → also trigger `file_manager`
 - Any symbol created/renamed/deleted → also trigger `variable_manager`
 - NEVER write code or run modifying Bash directly — always delegate to correct skill
+- Sub-agents MUST NOT spawn further agents (max depth = 1)
 
 ## Environment & Paths
 - Libraries: `/Volumes/BriteBrain/Libraries`

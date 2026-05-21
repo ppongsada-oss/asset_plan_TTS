@@ -84,6 +84,18 @@ Check `backlinks[]` — every file listed imports the file you are about to edit
 | Manual close | "ปิด/close/done" → route `session_manager` §3 — 5 file writes + SESSION_TOTAL reset to 0 |
 | Topic switch | New task = new session JSON — never carry raw History across tasks |
 
+## Sub-agent Rules (R4)
+
+| Pattern | When to use |
+|---|---|
+| Explore | scope ≥ 5 files / ≥ 300 lines → summary only |
+| Execution | section > 8 steps + isolated output → structured result |
+| Parallel fan-out | ≥ 2 sections with no dependency → spawn simultaneously |
+
+**Limits:** Max depth = 1 · Output must be structured · Tokens count toward SESSION_TOTAL
+**Before spawning:** emit `**[fan-out]** Sections <A>+<B> independent · spawning parallel agents`
+**Full rules:** `CLAUDE.md §R4`
+
 ---
 
 ## Reference Files
