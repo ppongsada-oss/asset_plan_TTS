@@ -86,7 +86,9 @@ Triggered from Loop Phase 3 when verify or observe fails twice.
 
 ```
 1. HALT all remaining sections immediately
-2. Write .sessions/session_handoff.md with status "blocked"
+2. Write .sessions/session_handoff.md with status "blocked":
+   blocked_cycle: N
+   cycle_results_available: [.sessions/cycle_N_S1.json, ...]   ← list completed result files
 3. Show user:
    "ติดปัญหาที่: Section <S> step <name>
     สาเหตุ: <cause>
@@ -101,6 +103,8 @@ Triggered from Loop Phase 3 when verify or observe fails twice.
 ### Resume Flow
 ```
 1. Read .sessions/session_handoff.md → load sections_done + sections_pending + last_step
+1b. Read `.sessions/cycle_N_*.json` for the last completed Cycle (N = current_cycle from handoff)
+    → inject as `cycle_context:` before spawning Cycle N+1 agents
 2. Reload config: Read target Skill SKILL.md context_files
 3. MECE: load existing plan from handoff → reuse if valid · rebuild if scope changed
 4. Emit [resume] trace

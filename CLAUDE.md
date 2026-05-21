@@ -82,13 +82,23 @@ Verify-<N>: `<runnable command>` → expected: <output or condition>
 ```
 Examples: `` `grep -c "export default" src/app/page.tsx` → 1 `` | `` `npm run build` → exit 0 ``
 
-**Phase 3 — Parallel Gate (run BEFORE SECTION LOOP):**
+**Phase 3 — Cycle Gate (run BEFORE SECTION LOOP):**
 ```
-For each section pair: does S_A output feed into S_B input?
-  → Yes (dependency) : Sequential — run S_A, wait, then S_B
-  → No (independent) : Parallel fan-out — spawn both, aggregate, then Completion Gate
+Group sections into Cycles based on output→input dependencies:
 ```
-Emit before spawning: `**[fan-out]** Sections <A>+<B> independent · spawning parallel agents`
+Cycle 1: [SA, SB]   ← no dependencies between them → parallel
+Cycle 2: [SC]       ← SC needs output of SA or SB → sequential after Cycle 1
+```
+Rules:
+- Section X depends on Section Y = X needs Y's `cycle_N_Y.json` as input
+- All sections in a Cycle spawn in one message (parallel)
+- Cycle N+1 only spawns after ALL sections in Cycle N have `status: done`
+- Any section `status: blocked` in Cycle N → HALT all subsequent Cycles → BLOCKED flow
+
+Emit before spawning each Cycle:
+```
+**[cycle N]** Sections <A>+<B> → .sessions/cycle_N_*.json · depends-on: <"none" | "cycle_N-1_*.json">
+```
 
 **Phase 3 REACT LOOP — execute per step in this order:**
 1. **TOKEN CHECK:** SESSION_TOTAL > 60k? → finish current step → PAUSE (save state · show progress · ask user)
@@ -101,6 +111,7 @@ Emit before spawning: `**[fan-out]** Sections <A>+<B> independent · spawning pa
 **After each SECTION completes → write `.sessions/session_handoff.md`:**
 ```
 sections_done: [S1, S2] · sections_pending: [S3, S4]
+current_cycle: N · cycle_results: [.sessions/cycle_N_S1.json, .sessions/cycle_N_S2.json]
 last_step: <name> · latest_result: <summary>
 ```
 
@@ -153,7 +164,7 @@ Run 1 Bash scope probe before any task.
 |---|---|---|
 | **Explore** | scope ≥ 5 files / ≥ 300 lines | `Agent(subagent_type=Explore)` → summary ≤500 tokens → act on summary only |
 | **Execution** | single section > 8 steps + isolated output | `Agent(task)` → pass goal + constraints + output format → receive structured result |
-| **Parallel fan-out** | ≥ 2 sections with no dependency on each other | spawn all at once → aggregate results → single Completion Gate |
+| **Parallel fan-out** | ≥ 2 sections in same Cycle (no dependency) | spawn all at once → each writes `.sessions/cycle_N_<section_id>.json` → read all results → pass as context to next Cycle → single Completion Gate after all Cycles |
 
 **Hard limits:**
 - Max depth: 1 level only — worker agents may NOT spawn further agents

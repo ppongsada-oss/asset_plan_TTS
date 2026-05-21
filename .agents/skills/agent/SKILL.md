@@ -27,14 +27,20 @@ Orchestrator skill. Handles two responsibilities:
 4. If still no match → ask user to clarify intent
 ```
 
-## Orchestration Protocol (R4 Parallel fan-out)
+## Orchestration Protocol (R4 Cycle fan-out)
 ```
-1. Receive MECE plan sections from Phase 2
-2. Build dependency graph: does section A output feed section B?
-3. Independent sections → spawn parallel agents (all in one message)
-4. Dependent sections → sequential or chain output
-5. Wait for all agents → aggregate structured outputs
-6. Run Completion Gate on combined result → report to user
+1. Receive MECE plan from Phase 2 → read Cycle grouping
+2. Build dependency graph from Cycle declarations:
+   - Sections in same Cycle = no dependency → parallel
+   - Sections in Cycle N+1 declare context-input from Cycle N
+3. For Cycle N: spawn all sections in parallel (one message) → emit [cycle N]
+4. Each section agent writes → `.sessions/cycle_N_<section_id>.json`
+5. After all Cycle N agents done:
+   a. Read all cycle_N_*.json → check every status = done
+   b. Any status = blocked → HALT all remaining Cycles → BLOCKED flow
+   c. All done → aggregate results → build context payload for Cycle N+1
+6. Spawn Cycle N+1 agents — inject cycle_N results as `cycle_context:` in prompt
+7. Repeat until all Cycles done → Completion Gate
 ```
 
 **Delegation Contract — every sub-agent prompt must include:**
@@ -42,6 +48,20 @@ Orchestrator skill. Handles two responsibilities:
 - `constraints:` relevant rules from CLAUDE.md (R5, R6, R8)
 - `output_format:` exact structure expected (JSON schema or table)
 - `context_files:` only files the sub-agent needs (no full index)
+- `cycle_context:` structured results from prior Cycle(s) — omit if Cycle 1
+
+**Sub-agent result file** — every spawned agent must write before returning:
+```json
+{
+  "cycle": N,
+  "section": "S<id>-<name>",
+  "status": "done | blocked",
+  "verify_result": "<output of Verify command>",
+  "artifacts": ["path/to/file"],
+  "notes": ""
+}
+```
+Path: `.sessions/cycle_N_<section_id>.json`
 
 ## Skill Delegation Rules
 - Creating new files/features → `coder` skill

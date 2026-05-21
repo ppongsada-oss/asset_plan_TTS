@@ -44,6 +44,16 @@ Section 2 — <name from Skill sections[1]>:
   Rollback: <what to undo>
 
 Independent (any section): [X] · [Y]
+
+Cycle grouping (add when plan has ≥ 2 sections):
+  Cycle 1: [S1, S2]          ← sections with no dependencies between them
+  Cycle 2: [S3]              ← depends on output of S1 or S2
+  S3 context-input: cycle_1_S1.json, cycle_1_S2.json
+```
+Rules:
+- Sections in the same Cycle are spawned in parallel
+- Sections in Cycle N+1 declare which `cycle_N_*.json` files they need
+- Single-section plans have no Cycle grouping (omit Cycle block)
 ```
 
 Rules:
@@ -143,7 +153,8 @@ Section 3 — Sync & Close:
 
 ## Trace Format
 ```
-**[✓ MECE]**  Plan covers <N> sections · user confirmed · roadmap entries added
-**[MECE]**    ✓ Section <N> done · → Section <N+1> next
-**[MECE]**    ✓ All done · Roadmap updated · Thread: done
+**[✓ MECE]**   Plan covers <N> sections in <M> Cycles · user confirmed · roadmap entries added
+**[MECE]**     ✓ Section <N> done · → Section <N+1> next
+**[cycle N]**  All <X> sections done · results: .sessions/cycle_N_*.json · spawning Cycle <N+1>
+**[MECE]**     ✓ All Cycles done · Roadmap updated · Thread: done
 ```

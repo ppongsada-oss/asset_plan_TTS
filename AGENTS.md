@@ -90,10 +90,12 @@ Check `backlinks[]` — every file listed imports the file you are about to edit
 |---|---|
 | Explore | scope ≥ 5 files / ≥ 300 lines → summary only |
 | Execution | section > 8 steps + isolated output → structured result |
-| Parallel fan-out | ≥ 2 sections with no dependency → spawn simultaneously |
+| Parallel fan-out | ≥ 2 sections in same Cycle → spawn simultaneously → write `.sessions/cycle_N_*.json` |
+| Cycle transition | All sections in Cycle N done → read results → inject as context → spawn Cycle N+1 |
 
-**Limits:** Max depth = 1 · Output must be structured · Tokens count toward SESSION_TOTAL
-**Before spawning:** emit `**[fan-out]** Sections <A>+<B> independent · spawning parallel agents`
+**Limits:** Max depth = 1 · Output must be structured (write `.sessions/cycle_N_<id>.json`) · Tokens count toward SESSION_TOTAL
+**Before spawning:** emit `**[cycle N]** Sections <A>+<B> → .sessions/cycle_N_*.json · depends-on: <none | cycle_N-1>`
+**HALT rule:** Any section in Cycle N blocked → do NOT spawn Cycle N+1 → session_manager BLOCKED flow
 **Full rules:** `CLAUDE.md §R4`
 
 ---
