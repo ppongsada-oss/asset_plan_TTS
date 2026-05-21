@@ -162,15 +162,16 @@ Run 1 Bash scope probe before any task.
 
 | Pattern | When | How |
 |---|---|---|
-| **Explore** | scope ≥ 5 files / ≥ 300 lines | `Agent(subagent_type=Explore)` → summary ≤500 tokens → act on summary only |
-| **Execution** | single section > 8 steps + isolated output | `Agent(task)` → pass goal + constraints + output format → receive structured result |
-| **Parallel fan-out** | ≥ 2 sections in same Cycle (no dependency) | spawn all at once → each writes `.sessions/cycle_N_<section_id>.json` → read all results → pass as context to next Cycle → single Completion Gate after all Cycles |
+| **Explore** | scope ≥ 5 files / ≥ 300 lines | `invoke_subagent` (TypeName: `"research"`) → summary ≤500 tokens → act on summary only |
+| **Execution** | single section > 8 steps + isolated output | `invoke_subagent` (TypeName: `"self"`) → pass goal + constraints + output format → receive structured result |
+| **Parallel fan-out** | ≥ 2 sections in same Cycle (no dependency) | `invoke_subagent` Subagents[...] (one per section) → each writes `.sessions/cycle_N_<section_id>.json` → read all results → pass as context to next Cycle → single Completion Gate after all Cycles |
 
 **Hard limits:**
 - Max depth: 1 level only — worker agents may NOT spawn further agents
 - Sub-agent output: structured (JSON or table) — never prose
 - Token budget: sub-agent tokens count toward SESSION_TOTAL (no separate budget)
-- Parallel spawn: send all independent agents in one message (not sequentially)
+- Parallel spawn: pass all sections as array in single `invoke_subagents` Subagents[] (not sequentially)
+- Custom types: use `define_subagent` to register a new TypeName for the session before invoking
 
 ---
 

@@ -33,13 +33,18 @@ Orchestrator skill. Handles two responsibilities:
 2. Build dependency graph from Cycle declarations:
    - Sections in same Cycle = no dependency → parallel
    - Sections in Cycle N+1 declare context-input from Cycle N
-3. For Cycle N: spawn all sections in parallel (one message) → emit [cycle N]
+3. For Cycle N: call `invoke_subagent` with Subagents[] array (one entry per section) → emit [cycle N]
+   - TypeName: "self" for execution tasks · "research" for read-only explore tasks
+   - Workspace: "inherit" (default) unless section needs isolation → use "branch"
 4. Each section agent writes → `.sessions/cycle_N_<section_id>.json`
 5. After all Cycle N agents done:
-   a. Read all cycle_N_*.json → check every status = done
+   a. Read all cycle_N_*.json → validate each file:
+      - Required keys present: cycle, section, status, verify_result, artifacts
+      - status value in ["done", "blocked"] — if missing/invalid → treat as blocked
+      - Invalid JSON or missing file → treat as blocked, log in notes
    b. Any status = blocked → HALT all remaining Cycles → BLOCKED flow
    c. All done → aggregate results → build context payload for Cycle N+1
-6. Spawn Cycle N+1 agents — inject cycle_N results as `cycle_context:` in prompt
+6. Call `invoke_subagent` for Cycle N+1 — inject cycle_N results as `cycle_context:` in each Subagent Prompt
 7. Repeat until all Cycles done → Completion Gate
 ```
 
@@ -49,6 +54,20 @@ Orchestrator skill. Handles two responsibilities:
 - `output_format:` exact structure expected (JSON schema or table)
 - `context_files:` only files the sub-agent needs (no full index)
 - `cycle_context:` structured results from prior Cycle(s) — omit if Cycle 1
+
+**invoke_subagent call structure (Antigravity 2.0):**
+```json
+{
+  "Subagents": [
+    {
+      "TypeName": "self",
+      "Role": "<section name>",
+      "Prompt": "<goal> | constraints: <from CLAUDE.md R5,R6,R8> | output_format: cycle_N_<id>.json schema | cycle_context: <prior results or omit>",
+      "Workspace": "inherit"
+    }
+  ]
+}
+```
 
 **Sub-agent result file** — every spawned agent must write before returning:
 ```json
