@@ -44,3 +44,120 @@ print(f"Updated {len(scan())} symbols.")
 ```
 
 ---
+
+## 7. `scripts/lookup.py` Spec — T0 Pre-Read Oracle
+
+Run before any `Read` call or grep to get file + line + `read_hint` in one shot.
+
+```
+Usage:
+  python scripts/lookup.py "SymbolOrKeyword"          # search symbols + files
+  python scripts/lookup.py "keyword" --session        # search sessions only
+  python scripts/lookup.py "keyword" --file           # search files only
+  python scripts/lookup.py "keyword" --json           # JSON output (machine-readable)
+  python scripts/lookup.py "T-055" --session --json   # find session by task ID
+
+Output format (--json):
+  [
+    {
+      "type": "symbol" | "file" | "session",
+      "name": "<symbol or filename or session_id>",
+      "file": "<path>",
+      "line": <N>,
+      "line_end": <N>,
+      "read_hint": "offset=<N> limit=<N>",
+      "keywords": ["..."],
+      "score": <0.0–1.0>
+    },
+    ...
+  ]
+
+Returns: top 5 results sorted by score descending.
+Empty result → proceed to T1 grep tier.
+```
+
+Data sources searched:
+- `knowledge/index_variables.json` — symbols (`type: "symbol"`)
+- `knowledge/index_files.json` — files (`type: "file"`)
+- `knowledge/index_sessions.json` — session history (`type: "session"`, --session flag)
+
+Scoring: exact name match = 1.0 · substring match = 0.7 · keyword overlap = 0.3–0.6
+
+Integration points:
+- **`editor/SKILL.md §T0`** — run before any Read: `python scripts/lookup.py "SymbolName" --json`
+- **`coder/SKILL.md §1`** — check if feature already built: `python scripts/lookup.py "feature" --session --json`
+- **`session_manager/SKILL.md §2 Step 1a`** — resume flow: find prior session for task
+- **`self_improve/SKILL.md §2 Step 4.5`** — find session that triggered top CFP
+- **`CLAUDE.md §R5`** — T0 tier before T1-T3 grep tiers
+
+Minimal implementation pattern:
+```python
+import json, sys
+from pathlib import Path
+
+BASE = Path(__file__).parent.parent
+VARS_INDEX = BASE / "knowledge/index_variables.json"
+FILES_INDEX = BASE / "knowledge/index_files.json"
+SESS_INDEX  = BASE / "knowledge/index_sessions.json"
+
+def load_json(p):
+    if not p.exists(): return {}
+    return json.loads(p.read_text())
+
+# Search logic: score each entry by keyword overlap
+# --json: output JSON array · --session: search only sessions · --file: search only files
+```
+
+---
+
+## 8. `scripts/session_indexer.py` Spec
+
+Builds `knowledge/index_sessions.json` from all `.sessions/session_*.json` files.
+Run automatically at every session close (session_manager §3 Step 5).
+
+```
+Input:  Scans .sessions/session_*.json (all session archive files)
+Output: Writes knowledge/index_sessions.json
+
+For each session file extracts:
+  - session_id     (from JSON "session_id" field)
+  - tasks          (from "associated_tasks" array)
+  - status         (from "status" field)
+  - date           (from file mtime or session_id suffix)
+  - keywords       (tokenized from: session_id + tasks + summary_context + files_changed + History)
+  - summary        (first 200 chars of "summary_context")
+  - files_changed  (list from "files_changed" array if present)
+```
+
+Output schema:
+```json
+{
+  "sessions": {
+    "session_001_topic": {
+      "path": ".sessions/session_001_topic.json",
+      "tasks": ["T-001"],
+      "status": "completed",
+      "date": "2026-05-25",
+      "keywords": ["keyword1", "keyword2"],
+      "summary": "First 200 chars of summary_context...",
+      "files_changed": ["src/path/to/file.tsx"]
+    }
+  }
+}
+```
+
+Integration:
+- **`session_manager/SKILL.md §3 Step 5`** — run after closing session JSON (Step 1)
+- **`lookup.py`** — reads `index_sessions.json` when `--session` flag used
+
+Note on History type guard (required):
+```python
+# Old sessions may have History: ["string"] instead of History: [{dict}]
+for h in session.get("History", []):
+    if isinstance(h, dict):
+        tokens.update(tokenize_text(h.get("action", "") + " " + h.get("result", "")))
+    elif isinstance(h, str):
+        tokens.update(tokenize_text(h))
+```
+
+---

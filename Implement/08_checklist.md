@@ -4,8 +4,8 @@
 > For each item: run the Verify command → if it fails → follow the Fix action.
 > All commands run from `[PROJECT_ROOT]` (the directory containing CLAUDE.md).
 
-**Total required files: 23**
-(11 skill files + 3 config + 2 routing + 1 platform + 3 knowledge + 1 script + 1 docs + 1 failure patterns)
+**Total required files: 26**
+(11 skill files + 3 config + 2 routing + 1 platform + 4 knowledge + 3 scripts + 1 docs + 1 failure patterns)
 
 > Note: `02_setup.md §9` has a flat checkbox list. This file adds per-section grep verification and fix actions that §9 does not cover.
 
@@ -32,6 +32,8 @@ Expected: ≥ 10 matches
 | Cycle Gate | `grep -c "Cycle Gate\|cycle_N_\|TOKEN MERGE" CLAUDE.md` | ≥ 2 |
 | Completion Gate | `grep -c "Completion Gate" CLAUDE.md` | ≥ 1 |
 | R5 Post-Read Gate | `grep -c "post-read\|Post-Read Verdict" CLAUDE.md` | ≥ 1 |
+| R5 T0 Oracle | `grep -c "lookup.py\|T0\|Tier 0\|pre-read oracle" CLAUDE.md` | ≥ 2 |
+| R8 Session Index Sync | `grep -c "session_indexer\|index_sessions" CLAUDE.md` | ≥ 1 |
 
 - [ ] Boot reply line 1 includes `CFP: <cfp_boot_count>` field
 - [ ] `[post-read]` verdict emitted after every Read call (relevant | partial | irrelevant)
@@ -62,6 +64,9 @@ Expected: ≥ 10 matches
 - [ ] **`### Failed Approaches:` field** in R9: agent MUST write this field on R12 verify failure before escalating per R13
 - [ ] **`[✓ gather]` writes `gather_complete.md`**: G3 emit step includes writing `.sessions/gather_complete.md` with `date: YYYY-MM-DD`
 - [ ] **Sub-agent `constraints:` block**: execution/coder agents MUST include `constraints:` block in prompt (roadmap check, gather/mece files, index sync, db-gate)
+- [ ] **R5 T0 Oracle**: `python scripts/lookup.py "<symbol>" --json` runs BEFORE any grep or Read (Tier 0 in lookup hierarchy)
+- [ ] **T0 emit format**: `[pre-read]` trace includes `Tier: T0` when lookup.py is called
+- [ ] **R8 session_indexer**: `python scripts/session_indexer.py` listed in R8 Index Sync table for session close event
 
 ### 1.1a `settings.json` hooks (enforcement layer)
 
@@ -199,6 +204,18 @@ grep -c '"on_demand_files"' .agents/skills/skill-manifest.json
 ```
 Expected: 1 (version 2.1 present) · ≥ 6 (`on_demand_files` arrays present across skills)
 
+Check `lookup_oracle` blocks present for editor, coder, and session_manager skills:
+```bash
+grep -c '"lookup_oracle"' .agents/skills/skill-manifest.json
+```
+Expected: ≥ 3 (editor · coder · session_manager)
+
+Check `never_at_boot` list includes index_sessions.json:
+```bash
+grep -c "index_sessions" .agents/skills/skill-manifest.json
+```
+Expected: ≥ 1
+
 Fix if missing or incomplete: `Implement/03_config.md` → skill-manifest.json template → add the missing skill entry or upgrade to v2.1 format.
 
 ---
@@ -241,7 +258,29 @@ python3 -c "import json; d=json.load(open('knowledge/index_variables.json')); pr
 ```
 Expected: ≥ 1 after first `symbol_indexer.py` run.
 
-### 5.3 `knowledge/error_index.md`
+### 5.3 `knowledge/index_sessions.json`
+
+```bash
+python3 -c "import json; d=json.load(open('knowledge/index_sessions.json')); print('Sessions indexed:', len(d.get('sessions', d)))"
+```
+Expected: ≥ 1 session entry after first `session_indexer.py` run.
+
+Verify structure includes required fields:
+```bash
+python3 -c "
+import json; d=json.load(open('knowledge/index_sessions.json'))
+sessions = d.get('sessions', {})
+first = next(iter(sessions.values())) if sessions else {}
+fields = {'path', 'tasks', 'status', 'keywords', 'summary'}
+missing = fields - set(first.keys())
+print('Missing fields:', missing if missing else 'none')
+"
+```
+Expected: `Missing fields: none`
+
+Fix: run `python scripts/session_indexer.py` from project root to (re)build the index.
+
+### 5.4 `knowledge/error_index.md`
 
 ```bash
 grep -c "^## ERR-\|^# " knowledge/error_index.md
@@ -295,6 +334,61 @@ python3 scripts/symbol_indexer.py && grep -c '"line"' knowledge/index_variables.
 Expected: ≥ 1 symbol with a `"line"` field indexed.
 
 Fix: `Implement/05_scripts.md` → symbol_indexer.py spec → implement the full script.
+
+---
+
+### 6.2 `scripts/lookup.py` — T0 Pre-Read Oracle
+
+Existence check:
+```bash
+ls scripts/lookup.py
+```
+
+Run check (must exit without error):
+```bash
+python3 scripts/lookup.py "test" --json 2>&1 | head -5
+```
+
+Symbol lookup test (should return ≥1 result if index has symbols):
+```bash
+python3 scripts/lookup.py "export" --json | python3 -c "import json,sys; r=json.load(sys.stdin); print('Results:', len(r))"
+```
+Expected: `Results: ≥ 1`
+
+Session lookup test:
+```bash
+python3 scripts/lookup.py "session" --session --json | python3 -c "import json,sys; r=json.load(sys.stdin); print('Session results:', len(r))"
+```
+Expected: `Session results: ≥ 1` (after session_indexer.py has been run)
+
+Integration: T0 must be called before any grep/Read in `editor/SKILL.md`, `coder/SKILL.md`, `session_manager/SKILL.md §2`.
+
+Fix: `Implement/05_scripts.md §7` → lookup.py spec → implement the full script.
+
+---
+
+### 6.3 `scripts/session_indexer.py`
+
+Existence check:
+```bash
+ls scripts/session_indexer.py
+```
+
+Run check (must exit without error):
+```bash
+python3 scripts/session_indexer.py 2>&1 | tail -3
+```
+Expected: last line contains count of sessions indexed (e.g. `Indexed 83 sessions`)
+
+Verify output file updated:
+```bash
+python3 -c "import json; d=json.load(open('knowledge/index_sessions.json')); print('Sessions:', len(d.get('sessions', d)))"
+```
+Expected: ≥ 1
+
+Integration: called automatically by `session_manager §3 Step 5` on every session close.
+
+Fix: `Implement/05_scripts.md §8` → session_indexer.py spec → implement the full script.
 
 ---
 
@@ -376,9 +470,11 @@ echo "=== 3. Routing ===" && \
 echo "=== 4. Platform ===" && \
   grep "^platform:" .agents/platform/detected.md && \
 echo "=== 5. Knowledge ===" && \
-  ls knowledge/index_files.json knowledge/index_variables.json knowledge/error_index.md 2>&1 && \
+  ls knowledge/index_files.json knowledge/index_variables.json knowledge/index_sessions.json knowledge/error_index.md 2>&1 && \
+  python3 -c "import json; d=json.load(open('knowledge/index_sessions.json')); print('Sessions indexed:', len(d.get('sessions', d)))" && \
 echo "=== 6. Scripts ===" && \
-  ls scripts/symbol_indexer.py && \
+  ls scripts/symbol_indexer.py scripts/lookup.py scripts/session_indexer.py && \
+  python3 scripts/lookup.py "test" --json > /dev/null && echo "lookup.py: ok" && \
 echo "=== 7. Docs ===" && \
   ls docs/master_roadmap.md CODING_FAILURE_PATTERNS.md && \
 echo "=== ALL CHECKS DONE ==="
@@ -405,9 +501,14 @@ platform: antigravity   (or other known platform — NOT "unknown")
 === 5. Knowledge ===
 knowledge/index_files.json
 knowledge/index_variables.json
+knowledge/index_sessions.json
 knowledge/error_index.md
+Sessions indexed: <N>    ← ≥ 1 after first session_indexer.py run
 === 6. Scripts ===
 scripts/symbol_indexer.py
+scripts/lookup.py
+scripts/session_indexer.py
+lookup.py: ok
 === 7. Docs ===
 docs/master_roadmap.md
 CODING_FAILURE_PATTERNS.md
