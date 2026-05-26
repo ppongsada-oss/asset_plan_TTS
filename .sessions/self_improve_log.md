@@ -14,3 +14,9 @@
 - Trigger: complaint
 ---
 
+## SI-3 · 2026-05-26 · session_087_harness_docs_update
+- CFP: Gap audit (Q14) — 3 hook gaps + CFP count near threshold
+- File: ~/.claude/settings.json §PostToolUse (new), §PreToolUse (updated)
+- Change: Added PostToolUse Read hook (never-full-load detection), PostToolUse Write hook (wrong-plan-filename detection), updated PreToolUse with Verify-N content gate (≥2 required); archived CFP-001–004 to knowledge/cfp_archive.md (active=15)
+- Trigger: user-request (vulnerability audit)
+---

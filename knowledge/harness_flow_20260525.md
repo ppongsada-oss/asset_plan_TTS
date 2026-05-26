@@ -544,6 +544,12 @@ Gate                    Trigger                               Source file
 [pre-edit]              before EVERY Edit/Write on symbol     CLAUDE.md §R5
 [violation R5] ★        Read/Edit without gate trace          CLAUDE.md §R5
                         → discard result → redo with gate
+[never-full-load VIOLATION] ★★  PostToolUse Read hook fires   ~/.claude/settings.json §PostToolUse
+                        → protected file read in full → discard → re-run as grep+offset
+[WARN wrong-plan-file] ★★  PostToolUse Write hook fires        ~/.claude/settings.json §PostToolUse
+                        → plan .md written outside .sessions/mece_plan.md → move content
+[MECE CONTENT GATE] ★★  PreToolUse deny (src/ edit)           ~/.claude/settings.json §PreToolUse
+                        → mece_plan.md has <2 Verify-N criteria → rewrite before proceeding
 [plan-stale] ★          resume + hash mismatch / src changed  AGENTS.md §Boot, session_manager §2b
 [gate]                  destructive action (delete/overwrite) INVARIANTS.md §I1
 [db-gate]               edit src/db/ or DrizzleSchema symbol  INVARIANTS.md §I2
@@ -675,6 +681,7 @@ New failure patterns documented: `CFP-008` (MECE staleness), `CFP-009` (parallel
 | Q11 | Agent full-reads index JSONs + CLAUDE.md in Phase 1 G2 (~14k wasted tokens) | Never-Full-Load list + Full-Read whitelist added; gather_complete.md + mece_plan.md session-date hook | `CLAUDE.md §R5`, `AGENTS.md §Never-Full-Load`, `~/.claude/settings.json` |
 | Q12 | No precomputed read_hint in indexes — agents grep-hunt before every Read | Enrich indexes with `line_end`, `read_hint`, `keywords` via `symbol_indexer.py`; add T0 `lookup.py` oracle before T1–T3 grep tiers | `scripts/symbol_indexer.py`, `scripts/lookup.py`, `editor/SKILL.md §T0`, `CLAUDE.md §R5` |
 | Q13 | No session history searchable — agents can't find prior fix attempts for same feature/bug | `session_indexer.py` builds `index_sessions.json`; `lookup.py --session` searches it; wired into editor R9 Step 2.5, coder §1, session_manager §2 Step 1a, self_improve §2 Step 4.5 | `scripts/session_indexer.py`, `scripts/lookup.py`, `knowledge/index_sessions.json`, `editor/SKILL.md §R9`, `coder/SKILL.md §1`, `session_manager/SKILL.md §2`, `self_improve/SKILL.md §2` |
+| Q14 | Three hook gaps: (a) Read tool no hook → Never-Full-Load bypassed silently; (b) mece_plan.md gate checked existence only, not content → empty/minimal plan passed; (c) no wrong-filename detection for plan files | PostToolUse Read hook (warns + injects [never-full-load VIOLATION] when protected file read); PreToolUse updated with Verify-N count gate (≥2 required); PostToolUse Write hook (warns on *plan*.md outside .sessions/mece_plan.md); CFP-001–004 archived to cfp_archive.md (active=15) | `~/.claude/settings.json §PostToolUse (Read+Write)`, `knowledge/cfp_archive.md` |
 
 
 ---
