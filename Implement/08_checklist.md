@@ -37,7 +37,7 @@ Expected: ≥ 10 matches
 - [ ] `[post-read]` verdict emitted after every Read call (relevant | partial | irrelevant)
 - [ ] Per-Turn C0 complaint check active with c0_resolved flag (prevents infinite loop)
 - [ ] Per-Turn C2 topic-switch detection has IS/NOT/UNCERTAIN criteria
-- [ ] Phase 1 gather cap enforced: max 3 iterations → `[gather-stalled]` if exceeded
+- [ ] Phase 1 gather uses **hybrid front-loaded model**: G1 scans all sections at once → G2 runs all greps in one Bash call → single user ask (max 1) if still missing → emit `[✓ gather]`
 - [ ] `attempt_count` + `mece_plan_hash` written to session_handoff.md before any session pause
 - [ ] MECE Staleness Gate active on resume: sha1 check + git status src/
 - [ ] Verify command is checkable (not self-assessed): non-empty ≠ pass
@@ -46,6 +46,42 @@ Expected: ≥ 10 matches
 - [ ] `mece/SKILL.md` has Multi-skill Complex Feature template
 - [ ] `mece/SKILL.md` has Token Check block before `[cycle N]` emit
 - [ ] `mece/SKILL.md` has Feedback & Error Summary as Final Step before `[MECE]` done emit
+- [ ] **B2 conditional skip**: prompt contains `skill: <name>` → manifest grep skipped (saves ~1,300 tokens)
+- [ ] **B3 sections-only load**: SKILL.md read with `offset=1 limit=80` — `on_demand_files` NOT auto-loaded at boot
+- [ ] **Never-Full-Load list** in CLAUDE.md §R5: 7 files listed (CLAUDE.md, index_files.json, index_variables.json, master_roadmap.md, CODING_FAILURE_PATTERNS.md, INVARIANTS.md, error_index.md) with `[violation] never-full-load` emit on breach
+- [ ] **Full-Read whitelist** present: only SKILL.md (B3 ≤80L), src/ ≤80 lines (Phase 1 G2 only), REPO_MAP.md, session files
+- [ ] Verify with: `grep -c "Never-Full-Load\|Full-Read whitelist" CLAUDE.md` → ≥ 2
+- [ ] **L4.5 PURGE step**: drops raw tool results after Cycle N aggregation · keeps only verdict + artifact path
+- [ ] **Delegation Contract ≤800 tokens**: `constraints:` = rule numbers only · `cycle_context:` = ≤5 bullets ≤150 chars
+- [ ] **MECE plan size caps**: ≤5 steps/section · ≤2 verify commands/section (≤60 chars each) · total ≤120 lines
+- [ ] **self_improve CFP archive gate**: triggers when CFP count > 20 → archives oldest entries → keeps 15 active
+- [ ] **MANDATORY BOOT GATE** section present: agent must emit `[Boot]` before responding — skipping = CFP violation
+- [ ] **PHASE TRANSITION GATE** section present: `[✓ gather]` + `[✓ MECE]` required before any `src/` edit
+- [ ] Gate text explicitly states: "Reading SKILL.md at B3 is NOT Phase 1"
+- [ ] **R9 Step 0 — Recurring Fix Detection** present: signals list ("ยังไม่หาย", "still broken", "same error", etc.) triggers grep of `### Failed Approaches:` before choosing next fix
+- [ ] **`### Failed Approaches:` field** in R9: agent MUST write this field on R12 verify failure before escalating per R13
+- [ ] **`[✓ gather]` writes `gather_complete.md`**: G3 emit step includes writing `.sessions/gather_complete.md` with `date: YYYY-MM-DD`
+- [ ] **Sub-agent `constraints:` block**: execution/coder agents MUST include `constraints:` block in prompt (roadmap check, gather/mece files, index sync, db-gate)
+
+### 1.1a `settings.json` hooks (enforcement layer)
+
+| Hook | Verify | Expected behavior |
+|---|---|---|
+| `UserPromptSubmit` | `jq '.hooks.UserPromptSubmit' ~/.claude/settings.json` | Injects boot reminder via `additionalContext` |
+| `SessionStart` | `jq '.hooks.SessionStart' ~/.claude/settings.json` | Injects 5-step flow at session start |
+| `PreToolUse` (Edit\|Write) | `jq '.hooks.PreToolUse' ~/.claude/settings.json` | Blocks `src/` edit if `gather_complete.md` OR `mece_plan.md` missing/stale (date check) |
+
+```bash
+# Verify all three hooks present
+jq '.hooks | keys' ~/.claude/settings.json
+# Expected: ["PreToolUse", "SessionStart", "UserPromptSubmit"]
+
+# Verify session-scoped date check in PreToolUse hook
+jq -r '.hooks.PreToolUse[0].hooks[0].command' ~/.claude/settings.json | grep -c "date -r"
+# Expected: 2 (checks both gather_complete.md and mece_plan.md)
+```
+
+Fix if missing: add to `~/.claude/settings.json` per `Implement/03_config.md` hook section.
 
 Fix if missing: `Implement/03_config.md` → CLAUDE.md template → copy missing section.
 
@@ -107,7 +143,7 @@ Expected: 11
 
 | Skill | Required terms (grep pattern) | Min matches |
 |---|---|---|
-| `agent` | `Orchestration Protocol\|Delegation Contract\|cycle_context\|detected.md\|tokens_estimated` | 5 |
+| `agent` | `Orchestration Protocol\|Delegation Contract\|on_demand_files\|PURGE\|tokens_estimated` | 5 |
 | `coder` | `Roadmap Protocol\|Coding Standards\|Sections\|Responsibilities` | 4 |
 | `editor` | `Roadmap Protocol\|3-Tier\|Edit\|Sections\|Responsibilities` | 5 |
 | `file_manager` | `Backlink\|Triggers\|Pre-Analysis\|Sections` | 4 |
@@ -148,15 +184,22 @@ skills = d.get('skills', d) if isinstance(d, dict) else d
 print('Skill entries:', len(skills) if isinstance(skills, list) else 'check structure')
 "
 ```
-Expected: 10
+Expected: 11
 
 Count keyword arrays:
 ```bash
 grep -c '"keywords"' .agents/skills/skill-manifest.json
 ```
-Expected: 10
+Expected: 11
 
-Fix if missing or incomplete: `Implement/03_config.md` → skill-manifest.json template → add the missing skill entry.
+Check manifest version and on_demand_files (v2.1 requirement):
+```bash
+grep -c '"version": "2.1"' .agents/skills/skill-manifest.json && \
+grep -c '"on_demand_files"' .agents/skills/skill-manifest.json
+```
+Expected: 1 (version 2.1 present) · ≥ 6 (`on_demand_files` arrays present across skills)
+
+Fix if missing or incomplete: `Implement/03_config.md` → skill-manifest.json template → add the missing skill entry or upgrade to v2.1 format.
 
 ---
 
@@ -205,10 +248,29 @@ grep -c "^## ERR-\|^# " knowledge/error_index.md
 ```
 Expected: ≥ 1 (file exists with at least a header — `ERR-` entries are added as bugs are fixed).
 
+Entry template verification — each ERR entry must include `### Failed Approaches:` field:
+```bash
+grep -c "Failed Approaches" knowledge/error_index.md
+```
+Expected: ≥ 0 (0 is acceptable if no bugs have been fixed yet; any existing ERR entry should have the field).
+
 Fix: if any knowledge file is missing, create it from the schemas in `Implement/01_overview.md`:
 - `index_files.json` → empty JSON object `{}`
 - `index_variables.json` → empty JSON object `{}`
 - `error_index.md` → single line: `# Error Index`
+
+Entry template (each ERR-XXX must include this structure):
+```markdown
+## ERR-XXX: <Short title>
+- Task: T-{N}-{BugID}-{AttemptID}
+- File: <path>
+- Symptom: <what user saw>
+- Root Cause: <why it happened>
+- Resolution: <what fixed it>
+
+### Failed Approaches:
+- [YYYY-MM-DD] T-{N}-{BugID}-01: <approach tried> → verify failed · Reason: <why it didn't resolve>
+```
 
 ---
 
@@ -308,6 +370,7 @@ echo "=== 2. Skill Files ===" && \
   ls .agents/skills/self_improve/SKILL.md && \
 echo "=== 3. Routing ===" && \
   grep -c '"keywords"' .agents/skills/skill-manifest.json && \
+  grep -c '"version": "2.1"\|on_demand_files' .agents/skills/skill-manifest.json && \
   grep -c "self_improve" .agents/skills/skill-manifest.json && \
   grep -c "agent\|coder\|editor\|self_improve" .agents/skills/registry.md && \
 echo "=== 4. Platform ===" && \
@@ -334,6 +397,7 @@ echo "=== ALL CHECKS DONE ==="
 .agents/skills/self_improve/SKILL.md  ← confirmed present
 === 3. Routing ===
 11              ← keywords entries in skill-manifest.json
+≥7              ← manifest v2.1 present + on_demand_files entries
 1               ← self_improve in manifest
 <number ≥ 4>    ← skill names in registry.md
 === 4. Platform ===

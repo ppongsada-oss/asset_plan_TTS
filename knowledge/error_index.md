@@ -1,6 +1,6 @@
 # 🚨 Error Resolution Index (Knowledge Base)
 
-เอกสารฉบับนี้ใช้สำหรับรวบรวมปัญหา (Error) ที่พบเจอบ่อยระหว่างการพัฒนาระบบ Asset Plan และวิธีแก้ไขที่ได้รับการพิสูจน์แล้ว เพื่อให้ AI และนักพัฒนาสามารถเข้ามาค้นหาวิธีแก้ปัญหาได้อย่างรวดเร็ว
+This document collects recurring errors encountered during Asset Plan development, along with proven resolutions. AI agents and developers should search here before debugging any issue.
 
 ---
 
@@ -13,393 +13,334 @@
 - **Symptom:** <what the error looks like>
 - **Root Cause:** <why it happens>
 - **Resolution:** <exact fix applied>
+
+### Failed Approaches:
+- [YYYY-MM-DD] T-{N}-{BugID}-01: <approach tried> → verify failed · Reason: <why it didn't resolve>
 ```
 
 > **Task ID format:** `T-004-001-02` = Task T-004, Bug #1, Attempt #2
 > **Cross-link rule:** roadmap `[X] T-004-001-01 (→ ERR-XXX)` ↔ error_index `Task: T-004-001-01`
+> **Failed Approaches rule:** Agent MUST append to `### Failed Approaches:` before escalating any blocked fix (R9 + R13).
+> Future agents reading this entry MUST check `### Failed Approaches:` before choosing an approach — never repeat a listed approach.
+
+---
+
+## ⚡ LOOKUP TABLE — grep here first (R9 Step 1)
+
+> **R9 Workflow — never Read the full file:**
+> 1. `grep -i "<symptom keyword>" knowledge/error_index.md` → match ERR-XXX from table below
+> 2. `grep -n "^## .*ERR-XXX" knowledge/error_index.md | head -1` → get exact line N
+> 3. `Read knowledge/error_index.md offset=N limit=40` → read that entry only
+
+| ERR | Symptom Keywords |
+|-----|-----------------|
+| ERR-001 | D1 crash, invalid digit, AppleDouble, `._*` files, Miniflare crash |
+| ERR-002 | TypeScript unknown type, `json unknown`, build type error, `res.json()` |
+| ERR-003 | `no such table` D1 local, `Failed query`, next-on-pages |
+| ERR-004 | `setImmediate`, Edge Runtime, Node.js API not supported |
+| ERR-005 | `searchParams` async, Next.js 15, params error |
+| ERR-006 | `Unexpected token`, React Fragment, unclosed JSX |
+| ERR-007 | Bulk Upload, Multi-Row INSERT, `onConflictDoNothing`, silent fail |
+| ERR-008 | CSV parse, Apple Numbers, newlines in quotes, PapaParse |
+| ERR-009 | `no such table` new schema, missing migrations, `wrangler migrate` |
+| ERR-010 | Element type invalid, mixed imports, named/default import error |
+| ERR-011 | `Export db doesn't exist`, Edge Runtime D1, `D1Database` undefined |
+| ERR-012 | Navbar duplication, duplicated component, double render |
+| ERR-013 | Browser dialog, `confirm`/`alert` blocking, native dialog |
+| ERR-014 | Matrix tooltip missing, zero quantity tooltip |
+| ERR-015 | Matrix tooltip double counting, pending value wrong |
+| ERR-016 | Matrix stale data, cache invalidation failure |
+| ERR-017 | Redundant variable, Ecmascript duplicate declaration |
+| ERR-018 | `JSON.parse` unexpected character, response not JSON |
+| ERR-019 | Session initialization missing, manifest lookup |
+| ERR-020 | `TypeError` urgency undefined, `r is undefined` |
+| ERR-021 | Store Center reject return, workflow propagation bug |
+| ERR-022 | Store Center tab count, badge count mismatch |
+| ERR-023 | Matrix row focus, table row focus UX |
+| ERR-024 | Store Center hub row tracking, scroll position |
+| ERR-025 | Global table focus, keyboard navigation, scroll |
+| ERR-026 | Matrix sticky header, z-index alignment, header overlap |
+| ERR-027 | Tooltip clipped, `overflow hidden`, card container |
+| ERR-028 | Admin seeded wrong role, seeded as USER |
+| ERR-029 | Local dev D1 remote, Cloudflare D1 remote connection |
+| ERR-030 | Unlock button unexpired, job card unlock, deadline check |
+| ERR-031 | Target months hardcoded year, 2026 hardcoded, dynamic months |
+| ERR-032 | CSV Catalog Upload, Category Name Override, human-readable Thai names, dictionary mapping |
+| ERR-033 | Catalog Upload Button, fileInputRef, missing file input tag, click unresponsive |
+| ERR-034 | Catalog Upload Input Tag Hidden inside Modal Block, showUploadModal false, fileInputRef null, unresponsive |
+| ERR-035 | CSV Catalog Upload Shifted Columns, subcategory selection missing, upsert upload fix |
+| ERR-036 | CSV Catalog Overwrite lack of visibility, missing eq, dry-run modal differences |
+| ERR-037 | Add new item button in catalog dropdown inoperative, unified creation mode modal |
+| ERR-038 | Overwrite double-submit, loading overlay preview, Next.js fetch cache, no-store |
+| ERR-039 | D1 column order mismatch, inventory template headers align |
+| ERR-040 | RemoteD1 Database proxy column shifting in raw() mapping |
+| ERR-041 | Category & Subcategory popup modals with automatic suggestions, stacked modal overlays |
+| ERR-042 | Category & Subcategory soft-delete (archive) and conditional Equipment Item deletion |
 
 ---
 
 ## 🛑 ERR-001: Cloudflare D1 Local Database Crash (invalid digit found in string)
 
-**🔥 อาการ (Symptom):**
-เมื่อสั่งรัน `npm run dev` เซิร์ฟเวอร์ Next.js จะเกิด Error ทันทีในส่วนของ Database หรือ Miniflare และพ่น Log ออกมาแบบนี้:
-```text
-[Error: Failed to open database
-Caused by:
-    0: Loading persistence directory failed
-    1: invalid digit found in string]
-```
-
-**🔍 สาเหตุ (Root Cause):**
-ปัญหาไม่ได้เกิดจากโค้ดผิด แต่เกิดจาก **macOS AppleDouble Files (`._*`)**. 
-เมื่อโปรเจกต์ถูกเก็บไว้ใน External Drive (เช่น ExFAT) หรือ Network Drive ตัว macOS จะแอบสร้างไฟล์ซ่อนที่ขึ้นต้นด้วย `._` (เช่น `._0000_snapshot.json`) เอาไว้ในโฟลเดอร์ `drizzle/` หรือ `.wrangler/`
-เมื่อ Cloudflare Miniflare พยายามสแกนหาไฟล์ SQL Migration มันดันไปอ่านไฟล์ `._*` เหล่านี้ แล้วพยายามแปลงชื่อไฟล์เป็นตัวเลข Version ทำให้ระบบพัง (Crash) ทันที
-
-**✅ วิธีแก้ไข (Resolution):**
-ห้ามรัน `next dev` เพียวๆ แต่ต้องสั่งลบไฟล์ `._*` ทิ้งก่อนรันเสมอ
-ได้ทำการแก้ไขแบบถาวรไว้ที่ไฟล์ `package.json` ในส่วนของ `scripts`:
-```json
-"dev": "find . -type f -name '._*' -delete 2>/dev/null || true; next dev"
-```
-*หากพบปัญหานี้ซ้ำ: ให้ลองพิมพ์คำสั่ง `find . -type f -name "._*" -delete` ใน Terminal ด้วยตัวเอง แล้วสั่งรันใหม่*
+- **Task:** — · **Session:** —
+- **File:** `package.json` · **Line:** scripts.dev
+- **Symptom:** Running `npm run dev` crashes immediately in the Miniflare/database layer with `Failed to open database ... invalid digit found in string`.
+- **Root Cause:** macOS creates hidden `._*` AppleDouble files (e.g. `._0000_snapshot.json`) in `drizzle/` or `.wrangler/` when the project lives on an ExFAT or network drive. Miniflare tries to parse these filenames as migration version numbers and crashes.
+- **Resolution:** Always purge `._*` files before starting the dev server. Permanent fix in `package.json`:
+  ```json
+  "dev": "find . -type f -name '._*' -delete 2>/dev/null || true; next dev"
+  ```
+  If the error recurs, run `find . -type f -name "._*" -delete` manually and restart.
 
 ---
 
 ## 🛑 ERR-002: TypeScript "unknown" Type in Next.js 16 API Fetch
 
-**🔥 อาการ (Symptom):**
-เมื่อรัน `npm run build` จะพบ Error ตอน Compile:
-```text
-Type error: 'json' is of type 'unknown'.
-```
-
-**🔍 สาเหตุ (Root Cause):**
-Next.js 16 มีความเข้มงวดเรื่อง Type มากขึ้น คำสั่ง `await res.json()` หรือ `await request.json()` จะถูกตีความว่าเป็นประเภท `unknown` ทันที ทำให้ไม่สามารถดึงค่าเช่น `json.success` ออกมาใช้งานได้
-
-**✅ วิธีแก้ไข (Resolution):**
-ให้ทำการ Cast ชนิดตัวแปรให้ชัดเจน หรือบังคับเป็น `any` ตอนดึงข้อมูล:
-```typescript
-// ฝั่ง Backend (route.ts)
-const body = (await request.json()) as any;
-
-// ฝั่ง Frontend (Fetch)
-const json = (await res.json()) as any;
-```
+- **Task:** — · **Session:** —
+- **File:** src/app/api/\*/route.ts · **Line:** varies
+- **Symptom:** `npm run build` fails with `Type error: 'json' is of type 'unknown'.`
+- **Root Cause:** Next.js 16 strictly types `await res.json()` and `await request.json()` as `unknown`, blocking property access like `json.success`.
+- **Resolution:** Cast to `any` at the point of deserialization:
+  ```typescript
+  // Backend (route.ts)
+  const body = (await request.json()) as any;
+  // Frontend fetch
+  const json = (await res.json()) as any;
+  ```
 
 ---
 
 ## 🛑 ERR-003: "Failed query: no such table" on Local D1 (next-on-pages)
 
-**🔥 อาการ (Symptom):**
-เมื่อรัน `npm run dev` และพยายามยิง API ที่ดึงข้อมูลจาก Database จะเกิด Error แบบนี้ใน Console:
-```text
-Failed query: select ... from "users" ...
-```
-และหน้าเว็บจะพัง หรือ API จะตีกลับ `status 500`. 
-
-**🔍 สาเหตุ (Root Cause):**
-ในไฟล์ `next.config.ts` การตั้งค่า `setupDevPlatform({ persist: false })` ทำให้ทุกครั้งที่รัน `next dev` ระบบจะสร้าง Database ในหน่วยความจำ (In-Memory) ขึ้นมาใหม่แบบว่างเปล่า (Empty) โดยไม่สนใจข้อมูลเก่าที่มีอยู่ในโฟลเดอร์ `.wrangler/state` ทำให้ตารางทั้งหมดหายไป
-
-**✅ วิธีแก้ไข (Resolution):**
-1. แก้ไขไฟล์ `next.config.ts` เปลี่ยนเป็น `persist: true`
-2. ผู้ใช้ต้อง **กดหยุดเซิร์ฟเวอร์ (Ctrl+C)** แล้วสั่งรัน `npm run dev` ใหม่อีกครั้ง เพื่อให้ Next.js อ่าน Config ใหม่และเชื่อมต่อกับ `.wrangler/state` ที่มีตารางอยู่แล้ว
+- **Task:** — · **Session:** —
+- **File:** `next.config.ts` · **Line:** setupDevPlatform call
+- **Symptom:** API calls return status 500 with `Failed query: select ... from "users" ...` immediately after `npm run dev`.
+- **Root Cause:** `setupDevPlatform({ persist: false })` creates a fresh in-memory database on every dev server start, discarding all tables previously stored in `.wrangler/state`.
+- **Resolution:**
+  1. Change `next.config.ts` to `persist: true`.
+  2. Stop the server (Ctrl+C) and restart `npm run dev` so Next.js re-reads the config and connects to the persisted `.wrangler/state`.
 
 ---
 
 ## 🛑 ERR-004: "A Node.js API is used (setImmediate) which is not supported in the Edge Runtime"
 
-**🔥 อาการ (Symptom):**
-เมื่อพยายาม Login หรือ Seed ข้อมูลผู้ใช้ จะเกิด Error บน Server Console:
-```text
-Error: A Node.js API is used (setImmediate) which is not supported in the Edge Runtime.
-```
-หน้าเว็บหรือ API จะคืนค่า `Invalid credentials` หรือ `status 500`.
-
-**🔍 สาเหตุ (Root Cause):**
-แพ็กเกจ `bcryptjs` มีการเรียกใช้คำสั่ง `setImmediate` ซึ่งเป็นคำสั่งที่มีเฉพาะใน Node.js ทำให้ไม่สามารถรันบน **Edge Runtime** (เช่น Cloudflare Pages หรือ Next.js Edge) ได้
-
-**✅ วิธีแก้ไข (Resolution):**
-ห้ามใช้ `bcryptjs` ใน Edge Runtime ให้เปลี่ยนไปใช้ **WebCrypto API** (`crypto.subtle`) ซึ่งเป็นมาตรฐานที่รองรับบนเบราว์เซอร์และ Edge เต็มรูปแบบแทน เช่น:
-```typescript
-const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password + SALT));
-```
-
+- **Task:** — · **Session:** —
+- **File:** src/app/api/auth/\*/route.ts · **Line:** varies
+- **Symptom:** Login or seed endpoints return `Invalid credentials` / status 500 with `setImmediate is not supported in the Edge Runtime` in the server console.
+- **Root Cause:** `bcryptjs` internally calls `setImmediate`, a Node.js-only API unavailable in Cloudflare Pages / Next.js Edge Runtime.
+- **Resolution:** Replace `bcryptjs` with WebCrypto (`crypto.subtle`), which is fully supported on Edge:
+  ```typescript
+  const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password + SALT));
+  ```
 
 ---
 
 ## 🛑 ERR-005: Next.js 15 Async searchParams Error
 
-**🔥 อาการ (Symptom):**
-เมื่อรันและเข้าใช้งานหน้าเว็บที่มีการดึงค่า `searchParams` จะพบ Error:
-```text
-Error: Route "/..." used `searchParams.project_id`. `searchParams` is a Promise and must be unwrapped with `await` or `React.use()` before accessing its properties.
-```
-
-**🔍 สาเหตุ (Root Cause):**
-ใน Next.js 15 มีการเปลี่ยนแปลงแบบ Breaking Change โดยให้ `searchParams` และ `params` กลายเป็น Asynchronous (Promise) การดึงค่าแบบเดิมจึงเกิด Error
-
-**✅ วิธีแก้ไข (Resolution):**
-กำหนด Type เป็น `Promise` และเรียกใช้ `await` เสมอ:
-```typescript
-export default async function Page({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
-  const resolvedParams = await searchParams;
-  const id = resolvedParams?.id;
-}
-```
+- **Task:** — · **Session:** —
+- **File:** src/app/\*/page.tsx · **Line:** varies
+- **Symptom:** Pages with `searchParams` throw `searchParams is a Promise and must be unwrapped with await or React.use() before accessing its properties`.
+- **Root Cause:** Next.js 15 breaking change: `searchParams` and `params` are now Promises; synchronous access is no longer supported.
+- **Resolution:** Declare as `Promise` type and always `await`:
+  ```typescript
+  export default async function Page({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
+    const resolvedParams = await searchParams;
+    const id = resolvedParams?.id;
+  }
+  ```
 
 ---
 
 ## 🛑 ERR-007: Bulk Upload Equipment — "Failed to process upload" (Miniflare D1 Multi-Row Insert)
 
-**🔥 อาการ (Symptom):**
-กด "อัปโหลดข้อมูล (Bulk)" แล้วขึ้น alert `Error: Failed to process upload` ทุกครั้ง ไม่ว่าจะลอง upload กี่ครั้งก็ตาม
+- **Task:** — · **Session:** session_023
+- **File:** src/app/api/equipment/upload/route.ts · **Line:** varies
+- **Symptom:** "Bulk upload" button always shows `Error: Failed to process upload`, regardless of retry count.
+- **Root Cause:** Four compounding failures discovered in order:
 
-**🔍 Root Cause ทั้งหมด (พบในลำดับนี้ — session_023):**
+  | # | Failure Point | Cause |
+  |---|---------------|-------|
+  | 1 | CSV Parser | Naive `split(",")` breaks on names containing commas (e.g. `"Electric Hoist 1,000 Kg."`) |
+  | 2 | `onConflictDoNothing()` | Miniflare D1 local does **not** support `INSERT ... ON CONFLICT DO NOTHING` — fails silently on any conflict |
+  | 3 | `buy_price` / `rent_price` | Excel exports decimals (e.g. `8596.03`) but schema declares `integer` — Miniflare D1 enforces this strictly |
+  | 4 | Multi-row INSERT | Drizzle D1 Edge Runtime layer does **not** support multi-row INSERT at any batch size — must insert one row at a time |
 
-| # | จุดที่พัง | สาเหตุ |
-|---|-----------|--------|
-| 1 | CSV Parser | `split(",")` แบบ naive ทำให้ชื่อที่มี comma เช่น `"รอกสลิงไฟฟ้า ขนาด 1,000 Kg."` parse เพี้ยน |
-| 2 | `onConflictDoNothing()` | Miniflare D1 local **ไม่รองรับ** `INSERT ... ON CONFLICT DO NOTHING` → "Failed query" ทุกครั้งที่มี conflict |
-| 3 | `buy_price` / `rent_price` | Excel มีราคาทศนิยม เช่น `8596.03` แต่ schema กำหนดเป็น `integer` → Miniflare D1 enforce type อย่างเข้มงวด → Error |
-| 4 | Multi-row INSERT | Drizzle D1 edge runtime layer **ไม่รองรับ multi-row INSERT** ไม่ว่า batch จะเล็กแค่ไหน (ลอง 99, ลอง chunk ต่างๆ ล้วน fail) → ต้อง insert ทีละ 1 row เท่านั้น |
+- **Resolution:**
+  1. **CSV parsing** → switch to `papaparse` (`^5.5.3`), which is Edge-compatible and RFC-4180 compliant.
+  2. **onConflictDoNothing** → replace with `SELECT existing codes → filter → INSERT only new rows` pattern for all tables.
+  3. **Decimal prices** → `Math.round(Number(cols[5]))` for `buy_price` and `rent_price`.
+  4. **Multi-row INSERT** → insert one row per iteration: `for (const item of newInserts) { await db.insert(...).values(item); }`
 
-**✅ วิธีแก้ไข (Final Resolution) — ใน `src/app/api/equipment/upload/route.ts`:**
-1. **CSV Parser** → เปลี่ยนเป็น `papaparse` (package: `^5.5.3`) ซึ่งรองรับ edge runtime และ RFC-4180 ครบถ้วน
-2. **onConflictDoNothing** → เปลี่ยนเป็น pattern `SELECT existing codes → filter → INSERT เฉพาะที่ยังไม่มี` (ใช้กับทั้ง categories, sub_categories, equipment_items)
-3. **ราคาทศนิยม** → `Math.round(Number(cols[5]))` สำหรับ buy_price และ rent_price
-4. **Multi-row INSERT** → insert ทีละ 1 row ใน for loop: `for (const item of newInserts) { await db.insert(...).values(item); }`
-
-**⚠️ กฎสำคัญสำหรับโปรเจ็กต์นี้ (Miniflare D1 Local):**
-> **ห้ามใช้ multi-row INSERT และ `onConflictDoNothing()` กับ Miniflare D1 local** เด็ดขาด ทั้งสองอย่างนี้ fail แบบ "Failed query" โดยไม่บอก error จริง ให้ใช้ SELECT+filter+single-row-insert แทนเสมอ
-
-**📁 ไฟล์ข้อมูลที่ import สำเร็จ:**
-`/Users/dude/Downloads/equipment_import.csv` — 536 รายการ (A:13, B:247, C:98, D:68, E:110)
-สร้างจาก sheet WH ของ `202603 Asset Plan ไตรมาศ 2.xlsx`
+  > **Project-wide rule (Miniflare D1 Local):** Never use multi-row INSERT or `onConflictDoNothing()`. Both fail with a silent "Failed query". Always use SELECT+filter+single-row-insert.
 
 ---
 
 ## 🛑 ERR-006: React "Unexpected token" (Unclosed Fragment)
 
-**🔥 อาการ (Symptom):**
-หน้าเว็บ Crash พังพร้อมแสดง Error ใน Console:
-```text
-Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
-Parsing ecmascript source code failed
-```
-
-**🔍 สาเหตุ (Root Cause):**
-เกิดจากการเขียน JSX ปิด Tag ไม่ครบ โดยเฉพาะการลืมปิด React Fragment (`</>`) เมื่อมีการเปิด (`<>`) ไว้ตั้งแต่ต้น
-
-**✅ วิธีแก้ไข (Resolution):**
-ตรวจสอบการจับคู่ Tag ใน Return Statement ให้ถูกต้อง โดยเฉพาะปิดท้าย:
-```typescript
-return (
-  <>
-    <div>...</div>
-  </> // ต้องมีบรรทัดนี้ปิดท้ายเสมอ
-);
-```
+- **Task:** — · **Session:** —
+- **File:** src/app/\*/page.tsx · **Line:** varies
+- **Symptom:** Page crashes with `Unexpected token. Did you mean '{'}'}' or '&rbrace;'?` / `Parsing ecmascript source code failed`.
+- **Root Cause:** JSX return statement has an unclosed React Fragment — `<>` opened but `</>` missing.
+- **Resolution:** Verify every `<>` has a matching `</>` at the end of the return block:
+  ```typescript
+  return (
+    <>
+      <div>...</div>
+    </> // required
+  );
+  ```
 
 ---
 
 ## 🛑 ERR-008: CSV Parsing Failure on Apple Numbers Exports (Newlines in Quotes)
 
-**🔥 อาการ (Symptom):**
-เมื่อพยายามอัปโหลดไฟล์ CSV (Equipment Bulk Upload) ที่ Export มาจากโปรแกรม Apple Numbers หรือ Excel บางเวอร์ชัน จะเกิด Error `Failed to process upload` (Status 500) ในฝั่งเซิร์ฟเวอร์
-
-**🔍 สาเหตุ (Root Cause):**
-ไฟล์ที่นำมาอัปโหลดมีการกรอกข้อมูลแบบ **กดขึ้นบรรทัดใหม่ (Enter/Return) ภายในเซลล์เดียวกัน** (เช่น ชื่ออุปกรณ์ยาวแล้วกดปัดบรรทัด)
-เมื่อโค้ดเก่าใช้คำสั่ง `text.split("\n")` เพื่อแยกแถว (Row) มันจะตัดคำตรงกลางเซลล์นั้นออกเป็น 2 บรรทัดทันที ทำให้คอลัมน์เคลื่อน (Column Mismatch) จำนวนคอลัมน์ไม่ครบตามที่กำหนด ระบบจึงข้ามบรรทัดนั้นไป และทำให้ข้อมูลที่เหลือดึงผิดช่องจน Insert ลง Database ไม่ได้
-
-**✅ วิธีแก้ไข (Resolution):**
-การเขียนฟังก์ชัน `parseCSVRow` เองไม่เพียงพอต่อการแก้ปัญหานี้ เนื่องจากต้องแยกแยะให้ออกว่า `\n` ตัวไหนอยู่ใน Quotes (`"`) ตัวไหนคือการขึ้นแถวใหม่จริง
-**ต้องเปลี่ยนไปใช้ Library มาตรฐานสากลอย่าง `PapaParse`** แทน:
-1. รัน `npm install papaparse --legacy-peer-deps`
-2. เรียกใช้ใน `route.ts`:
-```typescript
-import Papa from "papaparse";
-
-const parsed = Papa.parse(text, {
-  header: false,
-  skipEmptyLines: true,
-});
-const rows = parsed.data as string[][];
-```
-วิธีนี้ `Papa.parse` จะรับข้อความดิบ (Raw Text) ไปประมวลผลและจัดการปัญหา Newline/Comma ใน Quotes ได้อย่างสมบูรณ์แบบ
+- **Task:** — · **Session:** —
+- **File:** src/app/api/equipment/upload/route.ts · **Line:** varies
+- **Symptpt:** Uploading a CSV exported from Apple Numbers or certain Excel versions returns `Failed to process upload` (status 500).
+- **Root Cause:** Cells with embedded newlines (Enter key pressed inside a cell) cause `text.split("\n")` to split mid-cell, producing column mismatches that skip or corrupt rows.
+- **Resolution:** Replace all custom CSV splitting with `PapaParse`:
+  1. Run `npm install papaparse --legacy-peer-deps`
+  2. Use in `route.ts`:
+  ```typescript
+  import Papa from "papaparse";
+  const parsed = Papa.parse(text, { header: false, skipEmptyLines: true });
+  const rows = parsed.data as string[][];
+  ```
+  `Papa.parse` correctly handles quoted newlines and embedded commas per RFC-4180.
 
 ---
 
 ## 🛑 ERR-009: "no such table" or Failed Insert on New Schema Tables (Missing Local Migrations)
 
-**🔥 อาการ (Symptom):**
-เมื่อมีการเพิ่ม Table ใหม่ใน `schema.ts` (เช่น `planning_logs`) และพยายามเรียกใช้งานผ่าน API จะเกิด Error:
-```text
-Failed query: insert into "planning_logs" ...
-no such table: planning_logs
-```
-หรือ API ตีกลับ status 500 โดยที่โค้ดดูถูกต้องทุกประการ
-
-**🔍 สาเหตุ (Root Cause):**
-แม้ว่าเราจะอัปเดตไฟล์ `schema.ts` แล้ว แต่เรายังไม่ได้สั่ง Generate และ Push Migration เข้าไปยัง Database ในเครื่อง (Local D1) ทำให้โครงสร้างใน DB จริงไม่ตรงกับที่ระบุในโค้ด
-
-**✅ วิธีแก้ไข (Resolution):**
-1. สั่ง Generate Migration ไฟล์ใหม่: `npx drizzle-kit generate`
-2. นำ SQL จากไฟล์ที่สร้างขึ้นมา (ใน `db_migrations/`) ไปรันใน Local DB:
-   ```bash
-   npx wrangler d1 execute <db-name> --local --command="CREATE TABLE ..."
-   ```
-3. (ถาวรกว่า) ในอนาคตควรใช้ `npx drizzle-kit push` (หาก Config รองรับ) หรือตรวจสอบว่าทุกครั้งที่มีการเปลี่ยน Schema ได้ทำการรัน Migration ครบถ้วนแล้ว
+- **Task:** — · **Session:** —
+- **File:** src/db/schema.ts + local D1 state · **Line:** varies
+- **Symptom:** After adding a new table to `schema.ts`, API calls return status 500 with `no such table: <table_name>`.
+- **Root Cause:** `schema.ts` was updated but migration files were never generated and applied to the local D1 database, leaving the actual DB schema out of sync with the code.
+- **Resolution:**
+  1. Generate the migration: `npx drizzle-kit generate`
+  2. Apply to local DB:
+     ```bash
+     npx wrangler d1 execute <db-name> --local --command="CREATE TABLE ..."
+     ```
+  3. Going forward, run `npx drizzle-kit push` (if config supports it) or ensure migrations are applied after every schema change.
 
 ---
 
 ## 🛑 ERR-010: "Element type is invalid" Runtime Error (Mixed Named/Default Imports)
 
-**🔥 อาการ (Symptom):**
-หน้าเว็บ Crash พังพร้อมแสดง Error สีแดง (Runtime Error) ใน Console:
-```text
-Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
-```
-
-**🔍 สาเหตุ (Root Cause):**
-เกิดจากการ Import คอมโพเนนต์ผิดรูปแบบ เช่น คอมโพเนนต์ต้นทางถูก Export แบบ **Named Export** (`export function MyComponent`) แต่ตอนนำไปใช้กลับ Import แบบ **Default Import** (`import MyComponent from "..."`) หรือในทางกลับกัน
-ทำให้ตัวแปรคอมโพเนนต์ที่นำมาใช้มีค่าเป็น `undefined` และ React ไม่สามารถเรนเดอร์ได้
-
-**✅ วิธีแก้ไข (Resolution):**
-ตรวจสอบรูปแบบการ Export และ Import ให้ตรงกันเสมอ:
-1. หากต้นทางเป็น `export function Navbar() { ... }` (Named)
-   -> ปลายทางต้องใช้ `import { Navbar } from "@/components/layout/Navbar";` (มีปีกกา)
-2. หากต้นทางเป็น `export default function ProjectManagement() { ... }` (Default)
-   -> ปลายทางต้องใช้ `import ProjectManagement from "@/components/admin/ProjectManagement";` (ไม่มีปีกกา)
+- **Task:** — · **Session:** —
+- **File:** src/app/\*/page.tsx · **Line:** varies
+- **Symptom:** Page crashes at runtime with `Element type is invalid: expected a string or class/function but got: undefined. You likely forgot to export your component or mixed up default and named imports.`
+- **Root Cause:** Component exported as a named export (`export function MyComponent`) but imported as a default import (`import MyComponent from "..."`), or vice versa, resulting in `undefined`.
+- **Resolution:** Match export style to import style exactly:
+  1. Named export → `import { Navbar } from "@/components/layout/Navbar";` (with braces)
+  2. Default export → `import ProjectManagement from "@/components/admin/ProjectManagement";` (no braces)
 
 ---
 
 ## 🛑 ERR-011: "Export db doesn't exist" (Edge Runtime D1 Connection)
 
-**🔥 อาการ (Symptom):**
-เมื่อรัน API route ใน Edge Runtime จะพบ Error:
-```text
-The export db was not found in module [project]/src/db/index.ts. Did you mean to import getDb?
-```
-
-**🔍 สาเหตุ (Root Cause):**
-ในโปรเจกต์ที่ใช้ Cloudflare D1 ร่วมกับ `next-on-pages` เราไม่สามารถสร้าง Global Database Instance (`db`) ทิ้งไว้ได้ เพราะการเชื่อมต่อต้องอ้างอิงจาก `env` ของ Request นั้นๆ (Edge Runtime Context)
-
-**✅ วิธีแก้ไข (Resolution):**
-ห้าม `import { db }` โดยตรง ให้ใช้ `getDb` ร่วมกับ `getRequestContext()` ดังนี้:
-1. ตั้งค่า `export const runtime = "edge";`
-2. นำเข้าคอมโพเนนต์ที่จำเป็น:
-   ```typescript
-   import { getDb } from "@/db";
-   import { getRequestContext } from "@cloudflare/next-on-pages";
-   ```
-3. ดึง `env` และสร้าง `db` instance ภายในฟังก์ชัน API:
-   ```typescript
-   const env = getRequestContext().env;
-   const db = getDb(env as any);
-   ```
+- **Task:** — · **Session:** —
+- **File:** src/db/index.ts · **Line:** varies
+- **Symptom:** `The export db was not found in module [project]/src/db/index.ts. Did you mean to import getDb?`
+- **Root Cause:** In a Cloudflare D1 + next-on-pages project, a global `db` instance cannot exist because the D1 binding is only available per-request via the Edge Runtime `env` context.
+- **Resolution:** Never `import { db }` directly. Use `getDb` with `getRequestContext()`:
+  1. Set `export const runtime = "edge";`
+  2. Import:
+     ```typescript
+     import { getDb } from "@/db";
+     import { getRequestContext } from "@cloudflare/next-on-pages";
+     ```
+  3. Instantiate per-request:
+     ```typescript
+     const env = getRequestContext().env;
+     const db = getDb(env as any);
+     ```
 
 ---
 
 ## 🛑 ERR-012: Duplicated UI Components (Navbar Duplication)
 
-**🔥 อาการ (Symptom):**
-Navbar แสดงผลซ้อนกัน 2 อัน (Duplicated) โดยจะเห็นชัดเจนเมื่อมีการดัน Scroll หรือใช้ CSS Sticky/Fixed ทำให้ส่วนหัวของเว็บดูหนาผิดปกติหรือมีโลโก้ซ้ำกัน
-
-**🔍 สาเหตุ (Root Cause):**
-มีการเรียกใช้งานคอมโพเนนต์ `<Navbar />` ซ้ำซ้อนกันทั้งในไฟล์ **Layout หลัก (`src/app/layout.tsx`)** และในไฟล์ **Page เฉพาะหน้า (`src/app/.../page.tsx`)**
-เนื่องจากโครงสร้างของ Next.js App Router จะนำ `layout.tsx` มาครอบ `page.tsx` เสมอ หากใส่ไว้ทั้งสองที่ คอมโพเนนต์จะถูกเรนเดอร์ออกมา 2 ครั้ง
-
-**✅ วิธีแก้ไข (Resolution):**
-ให้เลือกใส่ `<Navbar />` ไว้ที่เดียวเท่านั้น ซึ่งโดยปกติควรอยู่ที่ `src/app/layout.tsx` เพื่อให้แสดงผลเหมือนกันทุกหน้า (Global Navigation) และให้ลบ `<Navbar />` ออกจากไฟล์ `page.tsx` ของหน้านั้นๆ ดังนี้:
-1. ตรวจสอบ `src/app/layout.tsx` ว่ามี `<Navbar />` ครอบ `{children}` อยู่แล้วหรือไม่
-2. หากมีแล้ว ให้เปิดไฟล์ `page.tsx` ที่พบปัญหา แล้วลบคำสั่ง `import { Navbar } ...` และ `<Navbar />` ในส่วน Return Statement ออก
+- **Task:** — · **Session:** —
+- **File:** src/app/layout.tsx + src/app/\*/page.tsx · **Line:** varies
+- **Symptom:** Navbar renders twice (stacked or doubled), making the header appear abnormally thick or showing duplicate logos.
+- **Root Cause:** `<Navbar />` is placed in both `src/app/layout.tsx` (global) and a specific `page.tsx`. Next.js App Router wraps every page with its layout, so the component renders twice.
+- **Resolution:**
+  1. Keep `<Navbar />` only in `src/app/layout.tsx`.
+  2. Remove the `import { Navbar }` and `<Navbar />` from any `page.tsx` that also appears in the layout.
 
 ---
 
 ## 🛑 ERR-013: Browser Native Dialogs (confirm/alert) Blocking in Next.js Event Handlers
 
-**🔥 อาการ (Symptom):**
-เมื่อกดปุ่มที่มีการเรียกใช้ `window.confirm()` หรือ `confirm()` ใน Event Handler ระบบจะนิ่งไปเฉยๆ ไม่มีการแสดงหน้าต่างยืนยันขึ้นมา และโค้ดบรรทัดถัดไปจะไม่ถูกรัน (Execution Blocked) โดยไม่มี Error แสดงใน Console (พบได้บ่อยในเบราว์เซอร์ Firefox หรือเมื่อมีการใช้ Backdrop Blur ร่วมกับ Fixed Overlays)
-
-**🔍 สาเหตุ (Root Cause):**
-1. **Browser Policy**: เบราว์เซอร์บางตัวอาจบล็อก Dialog ที่เกิดจาก Asynchronous Event หรือสคริปต์ที่มองว่าเป็นการรบกวนผู้ใช้
-2. **Focus/Overlay Conflict**: ใน Next.js เมื่อมีการใช้ `fixed` overlay และ `backdrop-blur` ตัวเบราว์เซอร์อาจเกิดปัญหาเรื่อง Focus Trap ทำให้หน้าต่าง Native Dialog ถูกซ่อนอยู่ข้างหลังหรือถูกยกเลิกทันที
-
-**✅ วิธีแก้ไข (Resolution):**
-ห้ามใช้ `window.confirm()` หรือ `alert()` ในฟังก์ชันที่สำคัญ ให้เปลี่ยนไปใช้ **Custom Confirmation Modal (React Component)** หรือใช้การเช็ค State เพื่อแสดง UI ยืนยันแทน เพื่อให้แน่ใจว่าระบบจะทำงานได้ในทุกเบราว์เซอร์และไม่เกิดการ Block การทำงานของ Main Thread
+- **Task:** — · **Session:** —
+- **File:** varies · **Line:** varies
+- **Symptom:** Clicking a button that calls `window.confirm()` or `confirm()` causes the UI to silently freeze — no dialog appears and no subsequent code runs. No console error is shown. Common in Firefox or when `backdrop-blur` + fixed overlays are present.
+- **Root Cause:** Some browsers block synchronous native dialogs from async event handlers or scripts they consider intrusive. Fixed overlays with `backdrop-blur` can also trap focus, causing the native dialog to be hidden or immediately dismissed.
+- **Resolution:** Never use `window.confirm()` or `alert()` for critical actions. Replace with a custom React confirmation modal or a state-based UI confirmation to ensure cross-browser compatibility and no main-thread blocking.
 
 ---
 
 ## 🛑 ERR-014: Matrix Report Tooltip Missing on Zero Quantities
 
-**🔥 อาการ (Symptom):**
-เมื่อนำเมาส์ไปชี้ (Hover) ที่คอลัมน์ "ค้างรับ" หรือ "ค้างส่ง" ในหน้า Matrix Report แล้วไม่มี Tooltip แสดงผลขึ้นมา โดยเฉพาะเมื่อยอดค้างเป็น "0" (สีเขียว) ทั้งที่ควรจะแสดงรายละเอียดสิ่งที่ดำเนินการไปแล้ว
-
-**🔍 สาเหตุ (Root Cause):**
-1. **API Logic**: เดิม API จะส่งข้อมูล `details` มาให้เฉพาะเมื่อมี "ยอดค้างจริง" (`qty > 0`) เท่านั้น เมื่อรายการถูกจัดการจนยอดค้างเป็น 0 ตัว API จะไม่ส่งรายละเอียดของโครงการนั้นมาใน Array
-2. **Frontend Logic**: คอมโพเนนต์ `<BreakdownTooltip />` มีเงื่อนไข `if (items.length === 0) return null;` ทำให้เมื่อไม่มีข้อมูลจาก API ตัว Tooltip จะไม่ถูกเรนเดอร์ออกมาเลย
-
-**✅ วิธีแก้ไข (Resolution):**
-ปรับปรุง API ใน `src/app/api/reports/matrix/route.ts` ให้ส่งข้อมูลโครงการที่มีการดำเนินการแล้ว (Handled) กลับมาด้วย แม้ยอดค้างจะเป็น 0 โดยคำนวณจาก:
-- **ค้างส่ง**: `Original Demand - Supplied`
-- **ค้างรับ**: `Original Excess - Received - Rejected`
-และปรับ Frontend ให้แสดงผลยอด 0 ด้วยสีที่จางลง (Slate-500) เพื่อให้ผู้ใช้ยังคงเห็นประวัติการทำงานใน Tooltip ได้
+- **Task:** — · **Session:** —
+- **File:** src/app/api/reports/matrix/route.ts + src/components/matrix/BreakdownTooltip.tsx · **Line:** varies
+- **Symptom:** Hovering over "Pending Demand" or "Pending Return" columns shows no tooltip when the pending count is 0 (green), even though actions were taken on that row.
+- **Root Cause:** (1) The API only included `details` when `qty > 0`; once a row was fully handled, no detail array was sent. (2) `<BreakdownTooltip />` had an early return `if (items.length === 0) return null`, so zero-item responses produced no tooltip at all.
+- **Resolution:** Update `src/app/api/reports/matrix/route.ts` to always return project detail records even when pending is 0, computing: Pending Demand = `Original Demand - Supplied`; Pending Return = `Original Excess - Received - Rejected`. Update the frontend to render zero values in a muted color (slate-500) so users can still see action history in the tooltip.
 
 ---
 
 ## 🛑 ERR-015: Matrix Report Tooltip Double Counting (Wrong Pending Value)
 
-**🔥 อาการ (Symptom):**
-ใน Tooltip รายละเอียดค้างส่ง (Pending Demand) แสดงค่า `Pending` ผิดพลาด ทั้งที่ `Required` และ `Supplied` เท่ากันแล้ว (เช่น 3 และ 3) แต่ระบบยังคำนวณค้างเป็น 3 และแสดงสถานะเป็น Waiting
-
-**🔍 สาเหตุ (Root Cause):**
-**Baseline Adjustment Error**: ใน API เดิมมีการนำค่า `projectTotalSupplied` ไปลบออกจาก `currentInv` ก่อนจะนำมาหา `originalNetGap` แต่เนื่องจาก `currentInv` เป็นค่า Baseline ที่ยังไม่ถูกอัปเดตตามมติการจัดการใน Cycle นั้นๆ (Stable Baseline) การนำไปลบออกจึงทำให้ยอด Demand เริ่มต้นสูงเกินจริง (Double Counting) ส่งผลให้ยอดคงค้างผิดเพี้ยน
-
-**✅ วิธีแก้ไข (Resolution):**
-แก้ไขใน `src/app/api/reports/matrix/route.ts` โดยให้ใช้ `currentInv` เป็นค่า Baseline ตั้งต้นตรงๆ โดยไม่ต้องนำผลการตัดสินใจ (Actions) มาบวกหรือลบกลับ และคำนวณ `Pending` จาก `OriginalGap - HandledActions` เพื่อให้ได้ค่าที่ถูกต้องตามความเป็นจริง
+- **Task:** — · **Session:** —
+- **File:** src/app/api/reports/matrix/route.ts · **Line:** varies
+- **Symptom:** The pending demand tooltip shows a non-zero pending value even when `Required` and `Supplied` are equal (e.g. both 3), and status incorrectly shows "Waiting".
+- **Root Cause:** Baseline Adjustment Error — the API subtracted `projectTotalSupplied` from `currentInv` before calculating `originalNetGap`. Since `currentInv` is a stable snapshot baseline that should not be adjusted by current-cycle actions, this subtraction inflated the starting demand (double counting), producing a wrong pending value.
+- **Resolution:** In `src/app/api/reports/matrix/route.ts`, use `currentInv` as the raw baseline without applying any action adjustments to it. Calculate `Pending = OriginalGap - HandledActions` directly.
 
 ---
 
 ## 🛑 ERR-016: Matrix Report Stale Data (Cache Invalidation Failure)
 
-**🔥 อาการ (Symptom):**
-เมื่อผู้ใช้ทำการตัดสินใจในหน้า Store Center Hub (เช่น กดสั่งซื้อ, เช่า, หรือเบิกจ่าย) หรือเมื่อ PM ทำการอนุมัติใบงาน แต่ข้อมูลในหน้า Matrix Report กลับไม่เปลี่ยนแปลงตามข้อมูลล่าสุด ต้องรอนานถึง 5 นาที หรือข้อมูลไม่เปลี่ยนเลย
+- **Task:** — · **Session:** —
+- **File:** src/app/api/center/decisions/route.ts, src/app/api/pm/jobs/approve/route.ts, src/app/api/site/plans/route.ts · **Line:** varies
+- **Symptom:** After a Store Center Hub decision (purchase, rent, dispatch) or PM approval, the Matrix Report page does not update — stale data persists for up to 5 minutes or indefinitely.
+- **Root Cause:** (1) The decisions API invalidated a hardcoded cache key `"matrix_report"` while the Matrix Report API used dynamic keys like `matrix_report_v3_c1_...` — these never matched. (2) PM Approval and Site Planning endpoints had no cache invalidation for the matrix report at all.
+- **Resolution:** In all three mutation endpoints, replace key-specific deletion with prefix-based deletion: `kv.list({ prefix: "matrix_report_v3_" })` → delete all matching keys. Apply to:
+  1. `src/app/api/center/decisions/route.ts` (POST and DELETE)
+  2. `src/app/api/pm/jobs/approve/route.ts`
+  3. `src/app/api/site/plans/route.ts`
 
-**🔍 สาเหตุ (Root Cause):**
-1. **Mismatched Cache Keys**: ใน API `POST /api/center/decisions` มีการสั่งลบ Cache ด้วยคีย์แบบตายตัวคือ `"matrix_report"` แต่ใน Matrix Report API ใช้คีย์แบบ Dynamic ตาม Version และ Filter (เช่น `matrix_report_v3_c1_...`) ทำให้การลบ Cache เดิมไม่ได้ผล
-2. **Missing Invalidation Points**: ในส่วนของ PM Approval และ Site Planning ไม่มีการสั่งล้าง Cache ของ Matrix Report เลย เมื่อมีการอนุมัติหรือแก้ไขแผนงาน ข้อมูลภาพรวมจึงยังคงเป็นค่าเก่าที่ค้างอยู่ในระบบ
-
-**✅ วิธีแก้ไข (Resolution):**
-ปรับปรุงการล้าง Cache ให้ครอบคลุมทุกจุดที่มีการเปลี่ยนแปลงข้อมูล โดยใช้คำสั่ง `kv.list({ prefix: "matrix_report_v3_" })` เพื่อค้นหา Cache Key ทั้งหมดที่ขึ้นต้นด้วยชื่อนี้และสั่งลบทั้งหมด (Prefix-based Deletion) ใน 3 จุดหลัก:
-1. `src/app/api/center/decisions/route.ts` (ทั้ง POST และ DELETE)
-2. `src/app/api/pm/jobs/approve/route.ts`
-3. `src/app/api/site/plans/route.ts`
 ---
 
 ## 🛑 ERR-017: Redundant Variable Definition (Ecmascript file error)
 
-**🔥 อาการ (Symptom):**
-เมื่อรัน API หรือคอมโพเนนต์จะพบ Error ใน Console/Build Log:
-```text
-the name 'searchParams' is defined multiple times
-./src/app/api/.../route.ts (L:C)
-Ecmascript file had an error
-```
+- **Task:** — · **Session:** —
+- **File:** src/app/api/\*/route.ts · **Line:** varies
+- **Symptom:** Build or runtime log shows `the name 'searchParams' is defined multiple times` / `Ecmascript file had an error`.
+- **Root Cause:** The same variable name is declared more than once in the same scope, typically from copy-paste or repeated edits to a function.
+- **Resolution:**
+  1. Check the top of the function for an existing `const { searchParams } = ...` declaration.
+  2. Remove the duplicate, or alias it: `const { searchParams: sp } = ...`.
+  3. Ensure no same-named variable exists in any nested scope of the same function.
 
-**🔍 สาเหตุ (Root Cause):**
-เกิดจากการประกาศตัวแปรที่มีชื่อเดียวกันซ้ำซ้อนกันใน Scope เดียวกัน (มักเกิดจากการ Copy-Paste โค้ดหรือการอัปเดตโค้ดหลายครั้งในฟังก์ชันเดียว) ทำให้ JavaScript Engine ไม่สามารถประมวลผลไฟล์ได้
-
-**✅ วิธีแก้ไข (Resolution):**
-ตรวจสอบและลบการประกาศตัวแปรซ้ำ (Redundant Definition) ออก หรือเปลี่ยนชื่อตัวแปรเพื่อหลีกเลี่ยงการซ้อนทับ (Shadowing) ดังนี้:
-1. ตรวจสอบต้นฟังก์ชันว่ามีการประกาศ `const { searchParams } = ...` ไว้แล้วหรือไม่
-2. ลบบรรทัดที่มีการประกาศซ้ำ หรือใช้การตั้งชื่อเล่น (Alias) เช่น `const { searchParams: sp } = ...` เพื่อความปลอดภัย
-3. ตรวจสอบให้แน่ใจว่าไม่มีการประกาศตัวแปรชื่อเดียวกันใน Scope ที่ซ้อนกัน
 ---
 
 ## 🛑 ERR-018: JSON.parse: unexpected character at line 1 column 1
 
-**🔥 อาการ (Symptom):**
-พบ Error ใน Browser Console:
-```text
-SyntaxError: JSON.parse: unexpected character at line 1 column 1 of the JSON data
-```
-มักเกิดขึ้นเมื่อโค้ดฝั่ง Client พยายาม `fetch` ข้อมูลและแปลงเป็น JSON แต่ API ส่งคืนค่าที่ไม่ใช่ JSON (เช่น HTML 404 Page หรือ Text Error)
-
-**🔍 สาเหตุ (Root Cause):**
-1. เรียกใช้งาน API Path ที่ไม่มีอยู่จริง (404) ทำให้เซิร์ฟเวอร์ส่งคืนหน้า HTML Error แทนที่จะเป็น JSON
-2. API เกิด Runtime Error (500) และส่งคืน Text stack trace แทน JSON
-3. ลืมใส่ Prefix ของ API Path เช่น `/api/center/cycles` แต่ไปเรียก `/api/cycles`
-
-**✅ วิธีแก้ไข (Resolution):**
-1. ตรวจสอบ Network Tab ใน Browser เพื่อดูว่า API ที่เรียกคืนค่าเป็นอะไร (Status Code และ Response Body)
-2. ตรวจสอบ API Path ในโค้ดให้ตรงกับที่มีอยู่จริงใน `src/app/api/...`
-3. เพิ่มการตรวจสอบการ `fetch` ก่อนเรียก `.json()`:
-```javascript
-const res = await fetch(url);
-if (!res.ok) throw new Error("API status: " + res.status);
-const json = await res.json();
-```
+- **Task:** — · **Session:** —
+- **File:** varies (client-side fetch) · **Line:** varies
+- **Symptom:** Browser console shows `SyntaxError: JSON.parse: unexpected character at line 1 column 1` when a client fetch tries to parse the API response as JSON.
+- **Root Cause:** (1) The API path does not exist (404 returns an HTML error page). (2) A runtime error (500) returns a text stack trace instead of JSON. (3) Wrong API path prefix (e.g. calling `/api/cycles` instead of `/api/center/cycles`).
+- **Resolution:**
+  1. Check the Network tab to inspect the actual status code and response body.
+  2. Verify the API path in code matches a real route under `src/app/api/...`.
+  3. Guard every fetch before calling `.json()`:
+  ```javascript
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("API status: " + res.status);
+  const json = await res.json();
+  ```
 
 ---
 
@@ -417,13 +358,12 @@ const json = await res.json();
 
 - **Task:** T-020-ERR-01 · **Session:** session_055
 - **File:** src/hooks/use-requests.ts · **Line:** 28
-- **Symptom:** หน้าจอ **CenterDashboard** ค้างและแสดง Error `can't access property "urgency", r is undefined` เมื่อระบบพยายามโหลดข้อมูลใบขอเบิก/จัดหา
-- **Root Cause:** ตัว Hook `useCenterRequests` ใช้คำสั่ง `flatMap` ในการรวมข้อมูลแต่ละหน้า (Pagination) โดยไม่ได้ตรวจสอบว่าข้อมูลในหน้านั้นมีค่าหรือไม่ (เช่น กรณี API Error หรือไม่มีข้อมูล) ทำให้มีค่า `undefined` หลุดเข้าไปในอาเรย์ `requests` เมื่อ UI พยายามแมพข้อมูลมาแสดงผลและเรียกใช้ property `.urgency` จึงเกิดการ Crash
-- **Resolution:** 
-  1. แก้ไข Hook ใน `src/hooks/use-requests.ts` ให้ใช้ Optional Chaining และ Filter เพื่อกรองเฉพาะข้อมูลที่ถูกต้อง: `.flatMap((page) => page?.data || []).filter(Boolean)`
-  2. เพิ่มความปลอดภัยในฝั่ง UI `src/components/store-center/CenterDashboard.tsx` ด้วยการใช้ Optional Chaining (`r?.urgency`) ในทุกจุดที่เข้าถึงข้อมูล เพื่อป้องกันการ Crash หากข้อมูลไม่สมบูรณ์
-
-- **Update (Attempt 2):** พบว่านอกจากปัญหา `undefined` ในอาเรย์แล้ว ยังมีปัญหาที่ Logic การ Query (SQL Join) ที่มีความเข้มงวดเกินไป ทำให้รายการที่ไม่มี `job_id` หรือไม่อยู่ในงวดงานที่เลือกถูกกรองออกทั้งหมด ได้ทำการ Refactor API ให้ดึงข้อมูลแบบกว้างขึ้นและมาทำการกรอง (Filter) ในระดับ JavaScript แทน เพื่อความแม่นยำและป้องกันข้อมูลหาย
+- **Symptom:** CenterDashboard freezes with `can't access property "urgency", r is undefined` when loading request data.
+- **Root Cause:** The `useCenterRequests` hook used `flatMap` to merge paginated pages without checking for undefined pages (e.g. on API error or empty result), allowing `undefined` entries into the `requests` array. When UI mapped over the array and accessed `.urgency`, it crashed.
+- **Resolution:**
+  1. Fix the hook in `src/hooks/use-requests.ts` to filter undefined entries: `.flatMap((page) => page?.data || []).filter(Boolean)`
+  2. Add optional chaining in `src/components/store-center/CenterDashboard.tsx` at every property access (`r?.urgency`) to prevent crashes on incomplete data.
+  - **Attempt 2 update:** Also refactored the API SQL join (was too strict — excluded requests without a `job_id` or outside the selected cycle). Switched to a broader query with JavaScript-level filtering for accuracy.
 
 ---
 
@@ -431,9 +371,9 @@ const json = await res.json();
 
 - **Task:** T-011-001-01 · **Session:** session_057
 - **File:** src/app/api/center/decisions/route.ts
-- **Symptom:** ปฏิเสธการคืน (Reject Return) ในเดือนหนึ่งแล้ว ทำให้เดือนถัดไป (ที่เคยจัดการเสร็จแล้ว) กลับมาแสดงผลเป็นรายการค้างคืน (Pending Return) ใหม่โดยอัตโนมัติ
-- **Root Cause:** เดิมระบบอัปเดตยอด `required_qty` เฉพาะเดือนที่กดปฏิเสธเท่านั้น แต่เนื่องจาก Asset Plan เป็นข้อมูลต่อเนื่อง หากเดือน N เพิ่มขึ้นแต่เดือน N+1 เท่าเดิม จะเกิดความต่าง (Delta) ที่ API `requests` จะมองว่าเป็นรายการคืนใหม่ (Phantom Return)
-- **Resolution:** แก้ไข API Decisions (ทั้ง POST และ DELETE) ให้ทำการขยายผล (Propagate) การเพิ่ม/ลด `required_qty` ไปยังเดือนปัจจุบันและ **ทุกเดือนในอนาคต** ของโครงการและอุปกรณ์เดียวกัน เพื่อรักษาความต่อเนื่องของแผนงาน
+- **Symptom:** Rejecting a return in month N causes already-handled months (N+1 onward) to re-appear as new pending returns.
+- **Root Cause:** The API only updated `required_qty` for the month where the rejection occurred. Because Asset Plan is a continuous timeline, a delta between month N and N+1 caused the `requests` API to treat the gap as a new phantom return.
+- **Resolution:** Update the Decisions API (POST and DELETE) to propagate `required_qty` changes to the current month and **all future months** for the same project and equipment, maintaining timeline continuity.
 
 ---
 
@@ -441,12 +381,12 @@ const json = await res.json();
 
 - **Task:** T-011-002-01 · **Session:** session_055
 - **File:** src/app/api/center/requests/route.ts
-- **Symptom:** ตัวเลขบน Tab ใน Store Center Hub (New Demand / Expected Returns) แสดงผลเป็น "0" สำหรับ Tab ที่ไม่ได้เลือก หรือเปลี่ยนเป็น "0" เมื่อสลับหน้า
-- **Root Cause:** API เดิมทำการกรองข้อมูลตามประเภท (Type) ก่อนที่จะส่งกลับมา ทำให้ยอดรวม (Total) ที่ส่งกลับมาหน้าบ้านมีเพียงประเภทเดียว ข้อมูลอีกประเภทจึงกลายเป็น 0 เสมอเมื่อ UI พยายามนับจากอาเรย์ผลลัพธ์
-- **Resolution:** 
-  1. แก้ไข API ใน `src/app/api/center/requests/route.ts` ให้ทำการคำนวณจำนวนของทั้งสองประเภท (`demand` และ `return`) หลังจากกรองด้วยเงื่อนไขค้นหา/งวดงานแล้ว แต่ **ก่อน** จะทำการกรองแยกตามประเภทเพื่อทำ Pagination
-  2. ส่งค่า `counts: { demand, return }` กลับมาใน JSON response
-  3. ปรับปรุง Hook `useCenterRequests` ให้ดึงค่า `counts` นี้ออกมา และปรับปรุง UI `CenterDashboard.tsx` ให้ใช้ค่าจาก API แทนการนับเองในตัวแปร `requests`
+- **Symptom:** Tab badges in Store Center Hub (New Demand / Expected Returns) show "0" for the non-active tab, or reset to "0" when switching tabs.
+- **Root Cause:** The API filtered by type (demand or return) before computing totals, so the returned array only contained one type and the UI counted the other as 0.
+- **Resolution:**
+  1. In `src/app/api/center/requests/route.ts`, compute counts for both types after applying search/cycle filters but **before** type-based pagination filtering.
+  2. Return `counts: { demand, return }` in the JSON response.
+  3. Update `useCenterRequests` to expose `counts`, and update `CenterDashboard.tsx` to use these API-provided counts instead of self-counting from the `requests` array.
 
 ---
 
@@ -454,9 +394,9 @@ const json = await res.json();
 
 - **Task:** T-015.2 · **Session:** session_055
 - **File:** src/app/matrix-report/page.tsx · **Line:** 513
-- **Symptom:** เมื่อเลื่อนตาราง (Scroll) ลงมาด้านล่าง ผู้ใช้โฟกัสแถวที่กำลังดูอยู่ได้ยาก (Hard to focus on current row)
-- **Root Cause:** ตารางมีข้อมูลจำนวนมากและขาดตัวเลขลำดับแถว (Running Number) ทำให้การอ้างอิงหรือติดตามแถวขณะเลื่อนหน้าจอทำได้ยาก
-- **Resolution:** เพิ่มคอลัมน์ Running Number (#) ที่ตำแหน่งแรกของตาราง โดยกำหนดให้เป็น Sticky (left-0) เพื่อให้มองเห็นเลขลำดับได้ตลอดเวลาแม้จะเลื่อนไปทางขวา และช่วยให้การกวาดสายตา (Eye scanning) ทำได้สะดวกขึ้น
+- **Symptom:** When scrolling a long matrix table, users cannot easily identify which row they are on.
+- **Root Cause:** No row number column existed, making it hard to reference or track a specific row while scrolling.
+- **Resolution:** Add a sticky running-number column (#) at the leftmost position (`sticky left-0`) so the row index remains visible even when scrolling right.
 
 ---
 
@@ -464,9 +404,9 @@ const json = await res.json();
 
 - **Task:** T-011.1 · **Session:** session_056
 - **File:** src/components/store-center/CenterDashboard.tsx · **Line:** 486
-- **Symptom:** ผู้ใช้งานติดตามแถวที่กำลังดำเนินการได้ยากเมื่อรายการใน Store Center Hub มีจำนวนมาก
-- **Root Cause:** ขาดตัวบ่งชี้ลำดับแถว (Running Number) ในตารางหลัก ทำให้การอ้างอิงลำดับขณะเลื่อนหน้าจอทำได้ยาก
-- **Resolution:** เพิ่มคอลัมน์ # ต่อจาก Checkbox ในตารางหลักของ CenterDashboard โดยใช้ index จากการ map ข้อมูล เพื่อแสดงลำดับแถวที่ชัดเจน ช่วยเพิ่มความแม่นยำในการใช้งาน
+- **Symptom:** Users have difficulty tracking which row they are working on when the request list is long.
+- **Root Cause:** No row-number indicator in the main table, making row reference difficult during scrolling.
+- **Resolution:** Add a # column immediately after the checkbox column in the CenterDashboard main table, using the map index as the row number for clear positional reference.
 
 ---
 
@@ -474,9 +414,9 @@ const json = await res.json();
 
 - **Task:** T-011.2, T-011.3 · **Session:** session_056
 - **Files:** src/components/site-plan/PMReviewTable.tsx, src/components/site-plan/PlanningWorksheet.tsx
-- **Symptom:** ผู้ใช้งานหลงลืมลำดับแถวขณะทำการ Review หรือวางแผนแผนงานที่มีปริมาณอุปกรณ์จำนวนมาก
-- **Root Cause:** ขาดคอลัมน์อ้างอิงลำดับ (#) แบบคงที่ (Sticky) ทำให้เมื่อเลื่อนตารางไปทางขวาหรือลงล่าง ผู้ใช้ไม่สามารถระบุลำดับแถวที่กำลังทำงานอยู่ได้ง่าย
-- **Resolution:** เพิ่มคอลัมน์ Running Number (#) แบบ Sticky left-0 ในทั้ง PM Review Table และ Planning Worksheet และปรับให้ชื่ออุปกรณ์เป็น Sticky left-[40px] พร้อมเงาจางๆ (shadow) เพื่อแยกชั้นข้อมูลให้ชัดเจน ช่วยให้การกรอกข้อมูลและตรวจสอบข้อมูลในตารางขนาดใหญ่ทำได้รวดเร็วและแม่นยำขึ้น
+- **Symptom:** Users lose track of row position while reviewing or planning large equipment lists.
+- **Root Cause:** No sticky running-number (#) column — when scrolling right or down, users cannot identify which row they are editing.
+- **Resolution:** Add a sticky (#) column (`sticky left-0`) to both PM Review Table and Planning Worksheet. Also make the equipment name column sticky at `left-[40px]` with a subtle shadow to visually separate the frozen columns from the scrollable data area.
 
 ---
 
@@ -484,13 +424,13 @@ const json = await res.json();
 
 - **Task:** T-015-001-03 · **Session:** session_057
 - **File:** src/app/matrix-report/page.tsx · **Line:** 411
-- **Symptom:** หัวตาราง Matrix Report แสดงผลผิดเพี้ยน (เละ) เมื่อทำการ Scroll โดยมีอาการซ้อนทับกันของหัวตารางแถวที่ 1 และ 2 หรือมีช่องว่างระหว่างแถว
-- **Root Cause:** 1) การใช้ค่าคงที่ `top-[68px]` สำหรับหัวตารางแถวที่สองไม่ตรงกับความสูงจริงของแถวแรก 2) การตั้งค่า `z-index` ไม่เป็นลำดับชั้น (Hierarchical) ทำให้คอลัมน์ Sticky ถูกหัวตารางทับ หรือหัวตารางทับกันเอง
-- **Resolution:** 
-  1. ปรับปรุงระบบ **Z-Index Layering**: Intersection (Top-Left) = `z-[100]`, Top Headers = `z-[50]`, Second Headers = `z-[40]`, Body Sticky = `z-[30]`
-  2. ปรับระยะ **Top Offset**: ใช้ `40px` และบังคับความสูงแถวแรกด้วย `h-[40px]` เพื่อความแม่นยำ
-  3. แก้ไข **Sub-pixel Gap**: ใช้การ Overlap คอลัมน์ที่สองทับคอลัมน์แรก 1px (`left-[49px]` ทับ `w-[50px]`) และใส่ `div` ล็อคความกว้างไว้ภายใน เพื่อป้องกัน Browser คำนวณความกว้างเพี้ยนจนเกิดรอยแยกสีขาว
-  4. เพิ่ม **Visual Depth**: ใช้ `shadow-[1px_0_0_0_#e2e8f0]` แทน `border-r` เพื่อให้เส้นแบ่งมีความหนาคงที่ 1px และไม่กระทบการคำนวณ Box Model
+- **Symptom:** Matrix Report table headers render incorrectly when scrolling — row 1 and row 2 headers overlap, or a white gap appears between header rows.
+- **Root Cause:** (1) Hardcoded `top-[68px]` for the second header row did not match the actual rendered height of the first header row. (2) `z-index` values were not layered hierarchically, causing sticky columns to bleed through headers or headers to overlap each other.
+- **Resolution:**
+  1. **Z-Index Layering:** Intersection cell (top-left) = `z-[100]`, top headers = `z-[50]`, second headers = `z-[40]`, body sticky cells = `z-[30]`.
+  2. **Top Offset:** Use `40px` and enforce first-row height with `h-[40px]` for precision.
+  3. **Sub-pixel Gap Fix:** Overlap the second sticky column over the first by 1px (`left-[49px]` over a `w-[50px]` cell) with an inner `div` locking the width, preventing browser sub-pixel rounding from creating white seams.
+  4. **Visual Depth:** Use `shadow-[1px_0_0_0_#e2e8f0]` instead of `border-r` so dividers are always exactly 1px and do not affect box model calculations.
 
 ---
 
@@ -498,6 +438,170 @@ const json = await res.json();
 
 - **Task:** T-038-001-01 · **Session:** session_059
 - **File:** src/components/admin/ProjectManagement.tsx · **Line:** 154
-- **Symptom:** Tooltip ที่แสดงรายการอุปกรณ์ในหน้า Admin Projects ถูกขอบ Card ตัดขาด (Clipped) ไม่สามารถแสดงผลทะลุออกมานอก Card ได้
-- **Root Cause:** คอนเทนเนอร์ของ Card มีการใช้คลาส `overflow-hidden` ซึ่งจะตัดเนื้อหาใดๆ ที่อยู่นอกขอบเขตของ Card ทิ้ง รวมถึง Tooltip ที่ใช้ `absolute` positioning
-- **Resolution:** นำคลาส `overflow-hidden` ออกจากคอนเทนเนอร์ของ Card และเพิ่ม `hover:z-20` เพื่อให้ Card ที่ถูก Hover ลอยขึ้นมาอยู่เหนือ Card ใบอื่น (Stacking Context) ทำให้ Tooltip แสดงผลได้อย่างสมบูรณ์และสวยงาม
+- **Symptom:** Equipment list tooltip in the Admin Projects page is clipped by the card border and cannot render outside the card boundaries.
+- **Root Cause:** The card container has `overflow-hidden`, which clips any absolutely positioned child (including tooltips) that extends beyond the card's bounds.
+- **Resolution:** Remove `overflow-hidden` from the card container and add `hover:z-20` so the hovered card rises above sibling cards, allowing the tooltip to render fully without clipping.
+
+---
+
+## 🛑 ERR-028: Local Admin Account Seeded with Incorrect Role (Seeded as USER)
+
+- **Task:** T-005-001-01 · **Session:** session_065
+- **File:** src/app/api/auth/seed/route.ts · **Line:** 22
+- **Symptom:** Logging in with the default admin account (`admin@tts-construction.com` / `password123`) shows no admin menus — only the regular site view.
+- **Root Cause:** The `/api/auth/seed` API updates only `password_hash` when the user already exists in the database. It never forces `global_role` back to `ADMIN`, so if the account exists with role `USER`, it stays `USER` after every seed run.
+- **Resolution:** Update `/api/auth/seed` to always set `global_role: "ADMIN"` alongside `password_hash` during the update step, ensuring the seeded account always has admin rights after seeding.
+
+---
+
+## 🛑 ERR-029: Local Development Isolated from Cloudflare D1 Remote Database
+
+- **Task:** T-002-002-01 · **Session:** session_066
+- **File:** src/db/index.ts · **Line:** 8
+- **Symptom:** `npm run dev` connects to an empty local Miniflare SQLite DB instead of the real Cloudflare D1 remote database. Real user accounts (e.g. `admin@tts-construction.com`) cannot be used locally. Adding `--remote` to Wrangler does not help because the next-on-pages dev platform does not support remote D1 binding in local dev mode.
+- **Root Cause:** `setupDevPlatform` (next-on-pages) only emulates D1 locally with an in-memory/local SQLite — it has no mechanism to read/write real Cloudflare D1 via the binding API in local development mode.
+- **Resolution:** Create a `RemoteD1Database` proxy class in `src/db/index.ts` that implements the `D1Database` interface. When `process.env.NODE_ENV === 'development'` and Cloudflare credentials are present in `.env.local`, it translates all Drizzle SQL queries into direct calls to the Cloudflare D1 HTTP REST API (`/accounts/{account_id}/d1/database/{database_uuid}/query`), making local dev instantly sync with the remote D1 database.
+
+---
+
+## 🛑 ERR-030: Unlock Button Rendered on Unexpired Planning Job Cards
+
+- **Task:** T-056.1-BUG-01 · **Session:** session_072_unlock_job_cards
+- **File:** src/components/store-center/JobManagement.tsx · **Line:** 401
+- **Symptom:** The "Unlock" button appears and is clickable on all job cycle cards, including those whose deadline has not yet passed (no locking should have occurred yet).
+- **Root Cause:** Browsers configured with the Buddhist Era calendar (e.g. Safari on macOS/iOS with Thai locale) return `new Date().getFullYear()` as a Buddhist year (e.g. 2569). The `isDeadlinePassed` comparison then evaluates `"2569-05-22" > "2026-05-31"` as `true`, incorrectly treating all cards as expired and rendering the unlock button on every card.
+- **Resolution:**
+  1. Fix `getLocalGregorianString` in `src/lib/date-utils.ts` to always format dates using `Intl.DateTimeFormat("en-US", { calendar: "gregory", year: "numeric", month: "2-digit", day: "2-digit" })`, forcing Gregorian dates regardless of the user's system calendar.
+  2. Disable the unlock button when `!isUnlockedState && !isDeadlinePassed(cycle.end_date)`.
+  3. Show a days-remaining badge (green: "X days until lock", orange: "Last day before lock") when the deadline has not passed.
+
+---
+
+## 🛑 ERR-031: Target Months in Job Creation Limited to Hardcoded Year (2026)
+
+- **Task:** T-056-002-01 · **Session:** session_073_dynamic_months
+- **File:** src/components/store-center/JobManagement.tsx · **Line:** 33
+- **Symptom:** The "Create New Job Cycle" screen only shows target month buttons for 2026 (`2026-01` through `2026-12`), making it impossible to create job cycles for future years (e.g. 2027).
+- **Root Cause:** `AVAILABLE_MONTHS` was a hardcoded string array fixed to 2026, with no mechanism to switch years or select months from other years.
+- **Resolution:**
+  1. Add a Year Selector dropdown that displays both Gregorian (AD) and Buddhist Era (BE) year labels.
+  2. Derive the current year using `getLocalGregorianString(new Date())` to avoid Buddhist calendar contamination (per CFP-007).
+  3. Render the 12 month buttons dynamically for whichever year is selected.
+  4. Add a Selected Months Summary badge strip so users can see and edit cross-year month selections at a glance.
+
+---
+
+## 🛑 ERR-032: CSV Catalog Upload Category Name Override
+
+- **Task:** T-077-002-01 · **Session:** session_077_category_preview
+- **File:** src/app/api/equipment/upload/route.ts · **Line:** 60-65
+- **Symptom:** Re-uploading `equipment_import.csv` overwrites the human-readable Thai names of categories and subcategories in the database with their alphanumeric codes (e.g., "A", "A1").
+- **Root Cause:** The catalog CSV file lacks column fields for human-readable category/subcategory names. The upload API endpoint defaults to setting `name = code` when creating or mapping unique categories/subcategories.
+- **Resolution:** Defined static lookup dictionaries (`CATEGORY_NAMES` and `SUBCATEGORY_NAMES`) mapping category and subcategory codes to their correct Thai names, and used them to set the correct human-readable names during row processing inside the upload API.
+
+---
+
+## 🛑 ERR-033: Catalog Upload Button Unresponsive
+
+- **Task:** T-077-003-01 · **Session:** session_077_category_preview
+- **File:** src/components/master-data/EquipmentTable.tsx · **Line:** 848
+- **Symptom:** Clicking the "อัปโหลด Catalog (CSV)" dropdown action does not trigger the file picker and nothing happens on the screen.
+- **Root Cause:** The `fileInputRef` state ref was declared and referenced by the trigger button's onClick function, but the `<input type="file" ref={fileInputRef} ... />` tag was never rendered in the React JSX tree, leading to a silent failure.
+- **Resolution:** Rendered the missing `<input type="file" ref={fileInputRef} accept=".csv" className="hidden" onChange={handleFileUpload} />` element in the component's JSX layout.
+
+---
+
+## 🛑 ERR-034: Catalog Upload Input Tag Hidden inside Modal Block
+
+- **Task:** T-077-003-02 · **Session:** session_077_category_preview (Attempt 2)
+- **File:** src/components/master-data/EquipmentTable.tsx · **Line:** 848 / 1086
+- **Symptom:** Clicking the "อัปโหลด Catalog (CSV)" dropdown action does not trigger the file picker and nothing happens on the screen.
+- **Root Cause:** In the previous fix, the missing `<input>` tag was added inside the `{showUploadModal && (...)` conditional block. Because `showUploadModal` is `false` by default, the file input tag is not rendered in the DOM, making `fileInputRef.current` null and the button click unresponsive.
+- **Resolution:** Moved both hidden `<input>` tags for CSV catalog upload and Excel inventory upload outside of the conditional modal block to the root of the component's returned JSX so that they are always mounted and accessible.
+
+---
+
+## 🛑 ERR-035: CSV Catalog Upload Shifted Columns & Missing Subcategory Selection
+
+- **Task:** T-077-004-01 · **Session:** session_077_category_preview (Attempt 2)
+- **File:** src/app/api/equipment/upload/route.ts · **Line:** 151-176
+- **Symptom:** In the Edit Equipment modal, the "Sub-Category (หมวดย่อย)" dropdown remains blank/shows `-- เลือก --` for certain items, even though the category is selected correctly. Also, in the background table, columns under the item name are shifted (e.g. displaying subcategory code and unit where category and subcategory belong).
+- **Root Cause:** A buggy legacy parser split rows containing commas in their name fields inappropriately, shifting subsequent columns (saving `"PCS"` into `sub_category_code` and `"B20"` into `category_code`). Because `"PCS"` is not a valid subcategory of category `"B"`, the select box was unable to find a matching option and fell back to `-- เลือก --`. Furthermore, because the upload API was "insert only" (skipping items with existing `item_code`), re-uploading the corrected CSV was unable to overwrite/correct these corrupted database entries.
+- **Resolution:** Modified the Catalog CSV upload API route to perform a robust Upsert operation. It now updates existing items (matching by `item_code`) with the corrected columns from the CSV and inserts only new ones, enabling users to re-upload and seamlessly repair any historically corrupted database entries.
+
+---
+
+## 🛑 ERR-036: CSV Catalog Upload Overwrite Lack of Visibility & Missing `eq` Import
+
+- **Task:** T-077-004-02 · **Session:** session_077_category_preview (Attempt 2)
+- **File:** src/app/api/equipment/upload/route.ts, src/components/master-data/EquipmentTable.tsx
+- **Symptom:** Compilation error due to missing `eq` import in the upload route API, and a lack of data visibility/warning when uploading corrected CSV data since the system would overwrite existing items immediately without letting the user see what is different or giving them options to overwrite/skip.
+- **Root Cause:** 1) Drizzle's `eq` operator was added to the DB join and update queries in the upload route but was not imported. 2) The frontend uploaded files directly to the API without first validating differences via dry-run or providing interactive confirmation options.
+- **Resolution:** 1) Added `import { eq } from "drizzle-orm"` in the API upload route. 2) Redesigned the frontend upload flow to first execute a dry-run check (`?dry_run=true`). If modifications are found, it opens a highly polished glassmorphic custom comparison modal displaying summary cards and a scrollable side-by-side list of specific differences (`old ➡️ new`). 3) Enabled selective write operations by providing options to "เขียนทับข้อมูลเดิมทั้งหมด (Overwrite)" or "นำเข้าเฉพาะของใหม่เท่านั้น (Skip & Insert New)" to protect data integrity.
+
+---
+
+## 🛑 ERR-037: '+ เพิ่มรายการใหม่' Button in Catalog Dropdown Menu Inoperative
+
+- **Task:** T-055.4 · **Session:** session_079_t055_ui_dropdown
+- **File:** src/components/master-data/EquipmentTable.tsx · **Line:** 625 / 830
+- **Symptom:** In the Equipment Master Data page, clicking the "+ เพิ่มรายการใหม่" (Add new item) action button inside the Catalog vertical dropdown menu closes the dropdown menu but does not open the item creation modal, making it impossible to register single items manually through the UI.
+- **Root Cause:** The onClick handler of the "+ เพิ่มรายการใหม่" button was hardcoded to run `setActiveMenu(null)`, which closes the dropdown list but does not set any state to trigger the modal. The edit/creation modal itself only opened when `editItem` was non-null, and was hardcoded to act as an edit-only form (disabling the `item_code` field and using PUT requests).
+- **Resolution:** 1) Integrated creation mode into the existing Edit modal. If `editItem.id === 0`, it switches the modal to Creation Mode, changing the title to "เพิ่มอุปกรณ์ใหม่ (Create Equipment)", enabling the `item_code` input field, and submitting via a POST request to `/api/equipment` instead of PUT. 2) Updated the "+ เพิ่มรายการใหม่" dropdown action button onClick handler to call `setEditItem` with a default empty equipment object (id: 0, empty string fields, etc.), opening the unified modal in Creation Mode.
+
+---
+
+## 🛑 ERR-038: Overwrite Button Double-submit and Next.js Fetch Caching
+
+- **Task:** T-077-005-01 · **Session:** session_080
+- **File:** src/components/master-data/EquipmentTable.tsx · **Line:** 98, 102, 1192, 1206, 1293, 1301, 1311
+- **Symptom:** In the CSV Import Comparison Modal, clicking the "เขียนทับข้อมูลทั้งหมด (Overwrite)" button performs the upload but does not show a loading UI, allowing users to click repeatedly (double-submit). Additionally, once the upload completes, the master data table does not refresh with updated values, displaying stale cached results.
+- **Root Cause:** 1) The modal lacked a loading overlay and failed to disable interactive buttons (Close, Cancel, Skip, Overwrite) while the upload state `uploading` was active. 2) Next.js route caching aggressively cached the GET requests to `/api/equipment` and `/api/categories` inside `fetchData()`, returning cached stale data instead of requesting fresh values.
+- **Resolution:** 1) Added `relative` positioning class to the preview modal container card and embedded the absolute `<LoadingOverlay />` component controlled by the `uploading` state. 2) Applied `disabled={uploading}` and opacity styles to the modal close, cancel, and import buttons. 3) Added the `{ cache: "no-store" }` options header to the `/api/equipment` and `/api/categories` fetch calls to bypass Next.js GET caching and enforce fresh data retrievals.
+
+---
+
+## 🛑 ERR-039: D1 Database Schema Variable Column Order Mismatch
+
+- **Task:** T-077-006-01 · **Session:** session_081
+- **File:** `src/db/schema.ts` · **Line:** 66
+- **Symptom:** Discrepancy between Drizzle-defined schema column order and the actual Cloudflare D1 local/production SQLite database, which could lead to column mismatches or migration failures. Additionally, the Excel inventory template headers did not align with DB schema column names.
+- **Root Cause:** Columns added to tables later via migrations (`ALTER TABLE`) exist at the end of the SQLite database tables (e.g. `cycle_id` in `project_inventory` is the last column, `qty` in `center_decisions` is the last column, and `is_unlocked`/`updated_at` in `planning_jobs` are at the end after `created_at`). However, `src/db/schema.ts` defined them in a different logical order. Furthermore, the Excel template used custom names (`LocationCode`, `ItemMetaCode`, `QTYLine`) instead of the DB columns (`project_id`, `item_code`, `qty`).
+- **Resolution:**
+  1. Aligned the Drizzle schema definitions in `src/db/schema.ts` to match the exact column order of D1 SQLite database tables.
+  2. Updated `src/app/api/inventory/template/route.ts` to use `project_id`, `item_code`, `qty`, `description` as Excel template headers.
+  3. Modified `src/app/api/inventory/upload/route.ts` to support both the database-aligned headers and the legacy headers for backwards-compatibility.
+
+---
+
+## 🛑 ERR-040: RemoteD1 Database Proxy Column Shifting in raw() Mapping
+
+- **Task:** T-077-006-02 · **Session:** session_082
+- **File:** `src/db/index.ts` · **Line:** 65 / 90
+- **Symptom:** In local development, the equipment edit modal (or pages using database joins like LEFT JOIN) displays incorrect/shifted data values (e.g. subcategory name showing in item name, unit showing `0`, rent price showing `129` when it is actually `0`).
+- **Root Cause:** Next.js development server is configured with `CLOUDFLARE_D1_API_TOKEN` which uses `RemoteD1Database` to connect to the remote production D1 database. The class's `.raw()` method was using the `/query` endpoint, which returns rows as JSON objects. For queries containing joined tables with duplicate column names (like `name` in `equipment_items`, `categories`, and `sub_categories`), duplicate keys clash and overwrite each other, returning fewer keys than selected columns. Converting this object back to an array using `Object.keys()` resulted in a truncated array of values which Drizzle incorrectly mapped by index, causing column shifting.
+- **Resolution:** Re-implemented the `.raw()` proxy method in `RemoteD1Database` (both in `prepare` and `prepareWithParams`) to call the Cloudflare D1 REST API `/raw` endpoint, which natively executes SQLite queries and returns raw row arrays of values alongside a list of column names, avoiding key collisions and ensuring exact index mapping alignment for Drizzle.
+
+---
+
+## 🛑 ERR-041: Category & Subcategory Creation Popup Modals in Master Data Preview
+
+- **Task:** T-077-007-01 · **Session:** session_077_category_preview
+- **File:** `src/components/master-data/EquipmentTable.tsx` · **Line:** 62, 329, 1179, 1192-1320
+- **Symptom:** When clicking "เพิ่มหมวดหลัก" or "เพิ่มหมวดย่อย" inside the Category & Subcategory Preview modal, the user is redirected away or the modal is closed to switch to the "CATEGORY" tab, which breaks the workspace context and requires extra navigation steps.
+- **Root Cause:** Main and subcategory creation was only designed to work on the "CATEGORY" tab interface, causing actions triggered from within the preview modal (which shows category/subcategory lists) to either be unavailable or disrupt the preview flow.
+- **Resolution:** Created dedicated, stacked `AddCategoryModal` and `AddSubCategoryModal` overlay popups with a high z-index (`z-[60]`) and backdrop blur. Handled local state to auto-suggest the next category code (using alphabetical sequence) and next subcategory code (using numerical increment based on parent category code). Closed modals and refreshed categories data upon successful submission without closing the underlying preview modal or changing the active tab.
+
+---
+
+## 🛑 ERR-042: Category & Subcategory Archiving and Conditional Equipment Item Deletion
+
+- **Task:** T-077-008-01 · **Session:** session_083_t077_popup_modals
+- **File:** `src/db/schema.ts`, `src/app/api/categories/route.ts`, `src/app/api/equipment/route.ts`, `src/components/master-data/EquipmentListTable.tsx`, `src/components/master-data/EquipmentTable.tsx` · **Line:** varies
+- **Symptom:** Categories and subcategories could only be hard-deleted, which triggers D1 database foreign key constraint failures if they are associated with existing equipment. Equipment items were not deletable at all from the UI.
+- **Root Cause:** 1) Missing status columns and archive workflow for categories/subcategories to preserve historical references. 2) Missing delete endpoint and verification logic to ensure equipment is only deleted when it has no planning cycles or stock inventory records.
+- **Resolution:** 
+  1. Modified `src/db/schema.ts` and `schema.sql` to add a `status` column (`ACTIVE` / `ARCHIVED`) to `categories` and `sub_categories` tables.
+  2. Updated the DELETE handler in `/api/categories` to soft-delete categories/subcategories (changing status to `ARCHIVED`) and cascade the status update to child subcategories.
+  3. Added subqueries in GET `/api/equipment` to compute `is_deletable` boolean based on plan and inventory counts, and implemented DELETE `/api/equipment` endpoint with reference double-checks.
+  4. Rendered a conditional "Delete" button in `EquipmentListTable` and integrated deletion handlers in `EquipmentTable`.

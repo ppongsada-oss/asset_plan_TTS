@@ -152,7 +152,7 @@ Run after onboarding or integration. All items must pass before starting develop
 [ ] .agents/skills/token_auditor/SKILL.md — exists, contains threshold gate
 [ ] .agents/skills/token_tracker/SKILL.md — exists
 [ ] .agents/skills/identity/SKILL.md — exists
-[ ] `.agents/skills/agent/SKILL.md` — contains Orchestration Protocol (Cycle fan-out, 7 steps) + Delegation Contract (goal/constraints/output_format/context_files/cycle_context)
+[ ] `.agents/skills/agent/SKILL.md` — contains Orchestration Protocol (Cycle fan-out, 7 steps) + Delegation Contract (goal/constraints/output_format/on_demand_files/cycle_context)
 [ ] python scripts/symbol_indexer.py — exits 0, reports symbol count > 0
 ```
 

@@ -1,0 +1,34 @@
+{
+  "session_id": "session_074_token_optimization",
+  "associated_tasks": [],
+  "status": "completed",
+  "estimated_tokens": 26500,
+  "summary_context": "Full token efficiency audit and harness optimization. 14 changes across 9 files.",
+  "outcomes": [
+    "error_index.md: added LOOKUP TABLE (31 ERR rows) — R9 now grep table → Read offset+limit=40 only",
+    "CLAUDE.md R9: updated to grep-first workflow, never Read full error_index",
+    "CLAUDE.md R3: added 80k compact threshold",
+    "CLAUDE.md R11: added session/knowledge file English-only enforcement rule",
+    "CLAUDE.md: removed duplicate Boot traces, Per-Turn Routing C1-C3 table, R4 spawn patterns — stubbed to AGENTS.md",
+    "AGENTS.md: synced R9 Quick Reference row + ascii_flow reference row",
+    "knowledge/session_index.md: created compact index for all 74 sessions",
+    "knowledge/error_index.md: converted all 31 ERR entries from Thai to English (-46% file size)",
+    "knowledge/harness_flow.md: deleted (superseded by harness_flow_20260525.md)",
+    "skill-manifest.json: removed redundant error_protocol block",
+    "skill-manifest.json: added ascii_flow skill entry",
+    ".agents/skills/ascii_flow/SKILL.md: created new skill (6 sections — char palette, box templates, detail guidelines, connectors, doc structure, invoke rule)",
+    ".agents/skills/coder/SKILL.md: added Flow Diagram Rule — load ascii_flow before any box diagram"
+  ],
+  "token_savings_per_session": "~1,500 tok static (CLAUDE.md dedup) + ~2,800 tok per error lookup (English + grep-first) + ~13k per R9 full-read prevented",
+  "files_changed": [
+    "knowledge/error_index.md",
+    "knowledge/session_index.md",
+    "knowledge/harness_flow.md (deleted)",
+    "CLAUDE.md",
+    "AGENTS.md",
+    ".agents/skills/skill-manifest.json",
+    ".agents/skills/ascii_flow/SKILL.md",
+    ".agents/skills/coder/SKILL.md"
+  ],
+  "History": []
+}

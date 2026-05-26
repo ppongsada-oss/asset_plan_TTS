@@ -67,7 +67,10 @@ Orchestrator skill. Handles two responsibilities:
    c. All done → aggregate results → build **trimmed** context payload for Cycle N+1:
       - Include per result: `status`, `verify_result`, `artifacts` (paths only), `notes`
       - Exclude: raw file content read during the cycle (content stays in artifacts on disk)
-      - Apply Context Trim to any `context_files:` passed forward (see Delegation Contract)
+      - Apply Context Trim to any `on_demand_files:` passed forward (see Delegation Contract)
+   d. [L4.5] PURGE: drop all raw tool results from steps a–c from context
+      Keep only: verify verdict + artifact path per section (≤2 lines per section)
+      Emit: [purge] Cycle <N> — dropped raw results · kept: verify verdicts + artifact paths
 **Token Check before spawning Cycle N+1:**
 - Read SESSION_TOTAL from .sessions/session_tokens.md
 - > 50k AND compact not yet run this transition? → run Mid-Session Compact → emit [compact] → then spawn
@@ -78,16 +81,18 @@ Orchestrator skill. Handles two responsibilities:
 \```
 
 **Delegation Contract — every sub-agent prompt must include:**
-- `goal:` what to produce
-- `constraints:` relevant rules from CLAUDE.md (R5, R6, R8)
+- `goal:` what to produce (≤2 sentences)
+- `constraints:` rule numbers only (e.g. R5,R6,R8) — NEVER copy rule text
 - `output_format:` exact structure expected (JSON schema or table)
-- `context_files:` only files the sub-agent needs (no full index)
-- **Context Trim** (run before setting `context_files:`):
+- `on_demand_files:` only files the sub-agent needs (≤5 paths, NEVER inline content)
+- **Context Trim** (run before setting `on_demand_files:`):
   1. For each candidate file: check its `[post-read]` verdict from this session
-  2. `irrelevant` verdict → exclude from `context_files:` entirely
+  2. `irrelevant` verdict → exclude from `on_demand_files:` entirely
   3. `partial` verdict → pass excerpt reference only (`<file>` L<N>–L<N>), not full path
   4. No `[post-read]` verdict yet → include (sub-agent will read as needed)
-- `cycle_context:` structured results from prior Cycle(s) — omit if Cycle 1
+- `cycle_context:` ≤5 bullets ≤150 chars each — NEVER raw JSON · omit if Cycle 1
+- **Spawn Context Gate:** total `cycle_context` + `on_demand_files` >2,000 chars → summarize further
+- **Total prompt budget: ≤800 tokens** — count before spawning; if exceeded → trim `cycle_context` first
 
 **Spawn call structure — varies by platform (read from `[PROJECT_ROOT]/.agents/platform/detected.md`):**
 
@@ -546,6 +551,13 @@ Rules:
 - Sections in Cycle N+1 declare which `cycle_N_*.json` files they need
 - Single-section plans have no Cycle grouping (omit Cycle block)
 - Multi-skill `Skill: X + Y`: X runs first → verify → then Y
+
+**Plan size caps (token budget enforcement):**
+- Steps: ≤5 items per section
+- Verify: ≤2 commands per section (≤60 chars each)
+- Rollback: ≤15 words per section
+- Total plan: ≤120 lines · if exceeds → consolidate into fewer sections
+- Cycle grouping block: ≤10 lines total
 \```
 
 ## Verify Pattern Lookup (use when writing DoD for each section)
@@ -853,7 +865,7 @@ Triggered from Loop Phase 3 when token threshold hit.
    → git status --short src/ → any changes?
    → hash mismatch OR src/ changed → emit [plan-stale] → ask: reconfirm plan or rebuild?
    → hash matches AND src/ clean → proceed silently
-   → Reload config (target Skill context_files)
+   → Reload config (target Skill on_demand_files) — skip if skill unchanged since last session
    → Restore attempt_count: if count=0 → budget=1 retry; if count=1 → next fail = BLOCKED immediately
    → emit [resume-attempt] count=<N>
    → Reset loop to pending section → continue Phase 3
@@ -895,7 +907,7 @@ If `attempt_count` missing from handoff → default to `0` (fresh budget for tha
 - Count total chars across all `cycle_N_*.json` files to be injected
 - If total > 3,000 chars: summarize each file to key fields only (`status`, `artifacts`, `notes`)
 - Never inject raw file content from artifact paths — pass paths only
-2. Reload config: Read target Skill SKILL.md context_files
+2. Reload config: Read target Skill SKILL.md on_demand_files — skip if skill unchanged (conditional reload)
 3. MECE: load existing plan from handoff → reuse if valid · rebuild if scope changed
 4. Emit [resume] trace
 5. Open REACT LOOP at first pending section

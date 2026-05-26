@@ -1,0 +1,22 @@
+{
+  "session_id": "session_086_index_enrichment_lookup",
+  "associated_tasks": ["harness-index-enrichment"],
+  "status": "completed",
+  "estimated_tokens": 16000,
+  "summary_context": "Built complete index enrichment system and pre-read oracle for the AI agent harness. Key deliverables: (1) Rewrote scripts/symbol_indexer.py to compute line_end (brace-depth tracking), read_hint (offset/limit precomputed), and keywords (camelCase split + path tokens) — enriching knowledge/index_variables.json with 68 symbols. Fixed nested {'files':{}} structure bug so key_sections and keywords now correctly populate knowledge/index_files.json entries. (2) Created scripts/lookup.py — T0 pre-read oracle that searches symbols + files + sessions in one call, returning file+line+read_hint before any Read call; supports --session and --json flags; wired as Tier 0 before T1-T3 grep tiers in editor/SKILL.md and CLAUDE.md §R5. (3) Created scripts/session_indexer.py + knowledge/index_sessions.json — indexes all 83 sessions with keywords, summary excerpt, tasks, status, date. (4) Wired session lookup into 4 skills: editor §R9 Step 0 (prior fix history), session_manager §2 resume (prior context), self_improve §2 Step 4.5 (CFP trigger context), coder before scaffold (prior feature check). (5) Updated skill-manifest.json with lookup_oracle blocks for editor and coder; added index_sessions.json to never_at_boot list and on_demand_files for editor/session_manager. (6) session_manager §3 Step 5 now runs session_indexer.py on every close to keep index fresh.",
+  "files_changed": [
+    "scripts/symbol_indexer.py — rewrite: line_end + read_hint + keywords + fix nested index_files structure",
+    "scripts/lookup.py — new T0 oracle: search_symbols + search_files + search_sessions; --session flag",
+    "scripts/session_indexer.py — new: builds knowledge/index_sessions.json from .sessions/*.json",
+    "knowledge/index_variables.json — enriched: 68 symbols with line_end + read_hint + keywords",
+    "knowledge/index_files.json — enriched: key_sections + keywords per file entry",
+    "knowledge/index_sessions.json — new: 83 sessions indexed with keywords + summary excerpts",
+    ".agents/skills/skill-manifest.json — lookup_oracle in editor + coder; index_sessions in never_at_boot",
+    ".agents/skills/editor/SKILL.md — T0 tier + R9 Step 2.5 session lookup",
+    ".agents/skills/session_manager/SKILL.md — Step 1a session lookup on resume; Step 5 session_indexer",
+    ".agents/skills/self_improve/SKILL.md — Step 4.5 session context for top CFP",
+    ".agents/skills/coder/SKILL.md — Step 1 session lookup before scaffold",
+    "CLAUDE.md — T0 lookup.py in R5; session_indexer in R8 Index Sync table"
+  ],
+  "History": []
+}

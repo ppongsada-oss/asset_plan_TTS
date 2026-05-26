@@ -17,6 +17,21 @@
         "src/app/api/users/route.ts",
         "src/app/api/users/[id]/route.ts",
         "src/app/api/profile/route.ts"
+      ],
+      "line_end": 11,
+      "read_hint": {
+        "offset": 1,
+        "limit": 21
+      },
+      "keywords": [
+        "created_at",
+        "db",
+        "email",
+        "global_role",
+        "id",
+        "password_hash",
+        "schema",
+        "users"
       ]
     },
     "project_roles": {
@@ -32,6 +47,20 @@
       "used_in": [
         "src/app/api/projects/roles/route.ts",
         "src/app/api/auth/me/route.ts"
+      ],
+      "line_end": 18,
+      "read_hint": {
+        "offset": 8,
+        "limit": 20
+      },
+      "keywords": [
+        "db",
+        "id",
+        "project_id",
+        "project_roles",
+        "role",
+        "schema",
+        "user_id"
       ]
     },
     "projects": {
@@ -48,6 +77,21 @@
       "used_in": [
         "src/app/api/admin/projects/route.ts",
         "src/app/api/projects/route.ts"
+      ],
+      "line_end": 26,
+      "read_hint": {
+        "offset": 15,
+        "limit": 21
+      },
+      "keywords": [
+        "code",
+        "db",
+        "id",
+        "name",
+        "password",
+        "projects",
+        "schema",
+        "status"
       ]
     },
     "categories": {
@@ -62,12 +106,25 @@
       "used_in": [
         "src/app/api/categories/route.ts",
         "src/app/api/equipment/upload/route.ts"
+      ],
+      "line_end": 33,
+      "read_hint": {
+        "offset": 24,
+        "limit": 19
+      },
+      "keywords": [
+        "categories",
+        "code",
+        "db",
+        "id",
+        "name",
+        "schema"
       ]
     },
     "sub_categories": {
       "type": "DBTable",
       "source": "src/db/schema.ts",
-      "line": 34,
+      "line": 35,
       "fields": [
         "id",
         "code",
@@ -77,12 +134,26 @@
       "used_in": [
         "src/app/api/categories/route.ts",
         "src/app/api/equipment/upload/route.ts"
+      ],
+      "line_end": 40,
+      "read_hint": {
+        "offset": 30,
+        "limit": 20
+      },
+      "keywords": [
+        "category_code",
+        "code",
+        "db",
+        "id",
+        "name",
+        "schema",
+        "sub_categories"
       ]
     },
     "equipment_items": {
       "type": "DBTable",
       "source": "src/db/schema.ts",
-      "line": 41,
+      "line": 43,
       "fields": [
         "id",
         "item_code",
@@ -100,12 +171,33 @@
         "src/app/api/equipment/upload/route.ts",
         "src/app/api/center/requests/route.ts",
         "src/app/api/reports/matrix/route.ts"
+      ],
+      "line_end": 54,
+      "read_hint": {
+        "offset": 38,
+        "limit": 26
+      },
+      "keywords": [
+        "(integer)",
+        "buy_price",
+        "category_code",
+        "db",
+        "equipment_items",
+        "id",
+        "item_code",
+        "lead_time",
+        "name",
+        "remaining_stock",
+        "rent_price",
+        "schema",
+        "sub_category_code",
+        "unit"
       ]
     },
     "planning_cycles": {
       "type": "DBTable",
       "source": "src/db/schema.ts",
-      "line": 55,
+      "line": 57,
       "fields": [
         "id",
         "cycle_number",
@@ -119,12 +211,29 @@
         "src/app/api/center/cycles/route.ts",
         "src/app/api/center/cycles/[id]/route.ts",
         "src/app/site-plan/[job_id]/page.tsx"
+      ],
+      "line_end": 65,
+      "read_hint": {
+        "offset": 52,
+        "limit": 23
+      },
+      "keywords": [
+        "created_at",
+        "created_by",
+        "cycle_number",
+        "db",
+        "end_date",
+        "id",
+        "planning_cycles",
+        "schema",
+        "start_date",
+        "target_months"
       ]
     },
     "planning_jobs": {
       "type": "DBTable",
       "source": "src/db/schema.ts",
-      "line": 66,
+      "line": 68,
       "fields": [
         "id",
         "cycle_id",
@@ -139,12 +248,28 @@
         "src/app/api/pm/jobs/approve/route.ts",
         "src/app/api/pm/jobs/reject/route.ts",
         "src/app/site-plan/[job_id]/page.tsx"
+      ],
+      "line_end": 77,
+      "read_hint": {
+        "offset": 63,
+        "limit": 24
+      },
+      "keywords": [
+        "created_at",
+        "cycle_id",
+        "db",
+        "id",
+        "planning_jobs",
+        "project_id",
+        "schema",
+        "site_code",
+        "status"
       ]
     },
     "project_plans": {
       "type": "DBTable",
       "source": "src/db/schema.ts",
-      "line": 76,
+      "line": 80,
       "fields": [
         "id",
         "project_id",
@@ -161,12 +286,31 @@
         "src/app/api/pm/plans/save/route.ts",
         "src/app/api/center/requests/route.ts",
         "src/app/api/reports/matrix/route.ts"
+      ],
+      "line_end": 94,
+      "read_hint": {
+        "offset": 75,
+        "limit": 29
+      },
+      "keywords": [
+        "approved_by",
+        "created_by",
+        "db",
+        "equipment_id",
+        "id",
+        "job_id",
+        "month",
+        "project_id",
+        "project_plans",
+        "required_qty",
+        "schema",
+        "status"
       ]
     },
     "project_inventory": {
       "type": "DBTable",
       "source": "src/db/schema.ts",
-      "line": 93,
+      "line": 97,
       "fields": [
         "id",
         "project_id",
@@ -176,12 +320,27 @@
       ],
       "used_in": [
         "src/app/api/site/inventory/route.ts"
+      ],
+      "line_end": 107,
+      "read_hint": {
+        "offset": 92,
+        "limit": 25
+      },
+      "keywords": [
+        "cycle_id",
+        "db",
+        "equipment_id",
+        "id",
+        "project_id",
+        "project_inventory",
+        "qty",
+        "schema"
       ]
     },
     "center_decisions": {
       "type": "DBTable",
       "source": "src/db/schema.ts",
-      "line": 106,
+      "line": 110,
       "fields": [
         "id",
         "plan_id",
@@ -194,12 +353,29 @@
       "used_in": [
         "src/app/api/center/decisions/route.ts",
         "src/app/api/center/requests/route.ts"
+      ],
+      "line_end": 120,
+      "read_hint": {
+        "offset": 105,
+        "limit": 25
+      },
+      "keywords": [
+        "action_by",
+        "action_type",
+        "center_decisions",
+        "created_at",
+        "db",
+        "id",
+        "notes",
+        "plan_id",
+        "qty",
+        "schema"
       ]
     },
     "planning_logs": {
       "type": "DBTable",
       "source": "src/db/schema.ts",
-      "line": 119,
+      "line": 123,
       "fields": [
         "id",
         "job_id",
@@ -210,12 +386,27 @@
       "used_in": [
         "src/app/api/pm/jobs/approve/route.ts",
         "src/app/api/pm/jobs/reject/route.ts"
+      ],
+      "line_end": 130,
+      "read_hint": {
+        "offset": 118,
+        "limit": 22
+      },
+      "keywords": [
+        "action",
+        "created_at",
+        "db",
+        "id",
+        "job_id",
+        "performed_by",
+        "planning_logs",
+        "schema"
       ]
     },
     "getDb": {
       "type": "Function",
       "source": "src/db/index.ts",
-      "line": 7,
+      "line": 139,
       "fields": [
         "env: Env → D1Database"
       ],
@@ -242,6 +433,20 @@
         "src/app/api/site/plans/route.ts",
         "src/app/api/users/route.ts",
         "src/app/site-plan/[job_id]/page.tsx"
+      ],
+      "line_end": 145,
+      "read_hint": {
+        "offset": 134,
+        "limit": 21
+      },
+      "keywords": [
+        "d1database",
+        "db",
+        "env",
+        "env:",
+        "get",
+        "index",
+        "→"
       ]
     },
     "signToken": {
@@ -253,6 +458,21 @@
       ],
       "used_in": [
         "src/app/api/auth/login/route.ts"
+      ],
+      "line_end": 25,
+      "read_hint": {
+        "offset": 7,
+        "limit": 28
+      },
+      "keywords": [
+        "authpayload",
+        "jwt",
+        "lib",
+        "payload:",
+        "promise<string>",
+        "sign",
+        "token",
+        "→"
       ]
     },
     "verifyToken": {
@@ -265,11 +485,26 @@
       "used_in": [
         "src/proxy.ts",
         "src/lib/auth-check.ts"
+      ],
+      "line_end": 35,
+      "read_hint": {
+        "offset": 22,
+        "limit": 23
+      },
+      "keywords": [
+        "jwt",
+        "lib",
+        "promise<authpayload>",
+        "string",
+        "token",
+        "token:",
+        "verify",
+        "→"
       ]
     },
     "AuthPayload": {
       "type": "Interface",
-      "source": "src/lib/jwt.ts",
+      "source": "src/lib/auth-check.ts",
       "line": 4,
       "fields": [
         "userId",
@@ -280,6 +515,21 @@
       "used_in": [
         "src/lib/auth-check.ts",
         "src/proxy.ts"
+      ],
+      "line_end": 9,
+      "read_hint": {
+        "offset": 1,
+        "limit": 20
+      },
+      "keywords": [
+        "auth",
+        "auth-check",
+        "email",
+        "lib",
+        "payload",
+        "projectroles",
+        "role",
+        "userid"
       ]
     },
     "hashPassword": {
@@ -293,6 +543,23 @@
         "src/app/api/auth/seed/route.ts",
         "src/app/api/users/route.ts",
         "src/app/api/users/[id]/route.ts"
+      ],
+      "line_end": 9,
+      "read_hint": {
+        "offset": 1,
+        "limit": 21
+      },
+      "keywords": [
+        "(webcrypto",
+        "256)",
+        "hash",
+        "lib",
+        "password",
+        "password:",
+        "promise<string>",
+        "sha",
+        "string",
+        "→"
       ]
     },
     "comparePassword": {
@@ -305,6 +572,22 @@
       "used_in": [
         "src/app/api/auth/login/route.ts",
         "src/app/api/profile/route.ts"
+      ],
+      "line_end": 14,
+      "read_hint": {
+        "offset": 6,
+        "limit": 18
+      },
+      "keywords": [
+        "compare",
+        "hash:",
+        "lib",
+        "password",
+        "plain:",
+        "promise<boolean>",
+        "string",
+        "string,",
+        "→"
       ]
     },
     "getUserPayload": {
@@ -319,6 +602,24 @@
         "src/app/api/profile/route.ts",
         "src/app/api/users/route.ts",
         "src/app/api/users/[id]/route.ts"
+      ],
+      "line_end": 17,
+      "read_hint": {
+        "offset": 6,
+        "limit": 21
+      },
+      "keywords": [
+        "auth-check",
+        "authpayload",
+        "get",
+        "lib",
+        "nextrequest",
+        "null",
+        "payload",
+        "request:",
+        "user",
+        "|",
+        "→"
       ]
     },
     "checkProjectAccess": {
@@ -330,6 +631,22 @@
       ],
       "used_in": [
         "src/app/api/projects/roles/route.ts"
+      ],
+      "line_end": 35,
+      "read_hint": {
+        "offset": 14,
+        "limit": 31
+      },
+      "keywords": [
+        "access",
+        "auth-check",
+        "boolean",
+        "check",
+        "lib",
+        "project",
+        "projectid",
+        "request,",
+        "→"
       ]
     },
     "proxy": {
@@ -339,7 +656,20 @@
       "fields": [
         "NextRequest → NextResponse (JWT gate)"
       ],
-      "used_in": []
+      "used_in": [],
+      "line_end": 51,
+      "read_hint": {
+        "offset": 3,
+        "limit": 58
+      },
+      "keywords": [
+        "(jwt",
+        "gate)",
+        "nextrequest",
+        "nextresponse",
+        "proxy",
+        "→"
+      ]
     },
     "Navbar": {
       "type": "ReactComponent",
@@ -348,6 +678,15 @@
       "fields": [],
       "used_in": [
         "src/app/layout.tsx"
+      ],
+      "line_end": 183,
+      "read_hint": {
+        "offset": 10,
+        "limit": 80
+      },
+      "keywords": [
+        "layout",
+        "navbar"
       ]
     },
     "LoginForm": {
@@ -360,6 +699,18 @@
       ],
       "used_in": [
         "src/app/login/page.tsx"
+      ],
+      "line_end": 144,
+      "read_hint": {
+        "offset": 2,
+        "limit": 80
+      },
+      "keywords": [
+        "(string)",
+        "email",
+        "form",
+        "login",
+        "password"
       ]
     },
     "ProjectManagement": {
@@ -372,12 +723,25 @@
       ],
       "used_in": [
         "src/app/admin/projects/page.tsx"
+      ],
+      "line_end": 248,
+      "read_hint": {
+        "offset": 12,
+        "limit": 80
+      },
+      "keywords": [
+        "admin",
+        "create/edit/delete",
+        "form",
+        "list",
+        "management",
+        "project"
       ]
     },
     "EquipmentTable": {
       "type": "ReactComponent",
       "source": "src/components/master-data/EquipmentTable.tsx",
-      "line": 33,
+      "line": 37,
       "fields": [
         "item_code",
         "name",
@@ -391,6 +755,25 @@
       ],
       "used_in": [
         "src/app/master-data/page.tsx"
+      ],
+      "line_end": 97,
+      "read_hint": {
+        "offset": 32,
+        "limit": 75
+      },
+      "keywords": [
+        "buy_price",
+        "category_code",
+        "equipment",
+        "item_code",
+        "lead_time",
+        "master-data",
+        "name",
+        "remaining_stock",
+        "rent_price",
+        "sub_category_code",
+        "table",
+        "unit"
       ]
     },
     "StoreCenterTabs": {
@@ -402,12 +785,26 @@
       ],
       "used_in": [
         "src/app/store-center/page.tsx"
+      ],
+      "line_end": 40,
+      "read_hint": {
+        "offset": 2,
+        "limit": 48
+      },
+      "keywords": [
+        "[centerdashboard,",
+        "center",
+        "jobmanagement]",
+        "store",
+        "store-center",
+        "tabs",
+        "tabs:"
       ]
     },
     "CenterDashboard": {
       "type": "ReactComponent",
       "source": "src/components/store-center/CenterDashboard.tsx",
-      "line": 42,
+      "line": 43,
       "fields": [
         "req.project",
         "req.item_name",
@@ -419,12 +816,29 @@
       ],
       "used_in": [
         "src/components/store-center/StoreCenterTabs.tsx"
+      ],
+      "line_end": 103,
+      "read_hint": {
+        "offset": 38,
+        "limit": 75
+      },
+      "keywords": [
+        "center",
+        "dashboard",
+        "req.item_code",
+        "req.item_name",
+        "req.month",
+        "req.project",
+        "req.qty",
+        "req.status",
+        "req.urgency",
+        "store-center"
       ]
     },
     "JobManagement": {
       "type": "ReactComponent",
       "source": "src/components/store-center/JobManagement.tsx",
-      "line": 35,
+      "line": 34,
       "fields": [
         "cycle list",
         "create cycle",
@@ -433,12 +847,28 @@
       ],
       "used_in": [
         "src/components/store-center/StoreCenterTabs.tsx"
+      ],
+      "line_end": 94,
+      "read_hint": {
+        "offset": 29,
+        "limit": 75
+      },
+      "keywords": [
+        "assign",
+        "create",
+        "cycle",
+        "handlebulkcancel",
+        "job",
+        "jobs",
+        "list",
+        "management",
+        "store-center"
       ]
     },
     "handleBulkCancel": {
       "type": "Function",
       "source": "src/components/store-center/JobManagement.tsx",
-      "line": 140,
+      "line": 152,
       "fields": [
         "selectedProjectIds → bulk delete planning jobs"
       ],
@@ -449,7 +879,7 @@
     "SiteJobDashboard": {
       "type": "ReactComponent",
       "source": "src/components/site-plan/SiteJobDashboard.tsx",
-      "line": 25,
+      "line": 30,
       "fields": [
         "job list",
         "status badges",
@@ -457,12 +887,29 @@
       ],
       "used_in": [
         "src/app/site-plan/page.tsx"
+      ],
+      "line_end": 180,
+      "read_hint": {
+        "offset": 25,
+        "limit": 80
+      },
+      "keywords": [
+        "[job_id]",
+        "badges",
+        "dashboard",
+        "job",
+        "list",
+        "navigate",
+        "site",
+        "site-plan",
+        "status",
+        "to"
       ]
     },
     "PlanningWorksheet": {
       "type": "ReactComponent",
       "source": "src/components/site-plan/PlanningWorksheet.tsx",
-      "line": 23,
+      "line": 25,
       "fields": [
         "plans.item_code",
         "plans.name",
@@ -471,6 +918,21 @@
       ],
       "used_in": [
         "src/app/site-plan/[job_id]/page.tsx"
+      ],
+      "line_end": 85,
+      "read_hint": {
+        "offset": 20,
+        "limit": 75
+      },
+      "keywords": [
+        "(array)",
+        "inventory.current_stock",
+        "planning",
+        "plans.item_code",
+        "plans.month_qty",
+        "plans.name",
+        "site-plan",
+        "worksheet"
       ]
     },
     "PMReviewTable": {
@@ -484,6 +946,22 @@
       ],
       "used_in": [
         "src/app/site-plan/pm-approval/page.tsx"
+      ],
+      "line_end": 92,
+      "read_hint": {
+        "offset": 27,
+        "limit": 75
+      },
+      "keywords": [
+        "approve/reject",
+        "buttons",
+        "job_id",
+        "matrix",
+        "plans",
+        "pm",
+        "review",
+        "site-plan",
+        "table"
       ]
     },
     "Modal": {
@@ -498,6 +976,19 @@
       ],
       "used_in": [
         "src/components/ui/ConfirmModal.tsx"
+      ],
+      "line_end": 50,
+      "read_hint": {
+        "offset": 8,
+        "limit": 52
+      },
+      "keywords": [
+        "children",
+        "isopen",
+        "modal",
+        "onclose",
+        "title",
+        "ui"
       ]
     },
     "ConfirmModal": {
@@ -514,6 +1005,58 @@
       ],
       "used_in": [
         "src/components/site-plan/PMReviewTable.tsx"
+      ],
+      "line_end": 77,
+      "read_hint": {
+        "offset": 13,
+        "limit": 74
+      },
+      "keywords": [
+        "confirm",
+        "isopen",
+        "message",
+        "modal",
+        "onclose",
+        "onconfirm",
+        "title",
+        "type",
+        "ui"
+      ]
+    },
+    "JobCard": {
+      "type": "ReactComponent",
+      "source": "src/components/ui/JobCard.tsx",
+      "line": 27,
+      "fields": [
+        "status",
+        "jobNumber",
+        "projectName",
+        "projectId",
+        "cycleNumber",
+        "targetMonthsCount",
+        "endDate"
+      ],
+      "used_in": [
+        "src/app/site-plan/pm-approval/page.tsx",
+        "src/components/site-plan/SiteJobDashboard.tsx",
+        "src/components/store-center/JobManagement.tsx"
+      ],
+      "line_end": 163,
+      "read_hint": {
+        "offset": 22,
+        "limit": 80
+      },
+      "keywords": [
+        "card",
+        "cyclenumber",
+        "enddate",
+        "job",
+        "jobnumber",
+        "projectid",
+        "projectname",
+        "status",
+        "targetmonthscount",
+        "ui"
       ]
     },
     "RootLayout": {
@@ -521,49 +1064,121 @@
       "source": "src/app/layout.tsx",
       "line": 21,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 37,
+      "read_hint": {
+        "offset": 16,
+        "limit": 31
+      },
+      "keywords": [
+        "layout",
+        "root"
+      ]
     },
     "Home": {
       "type": "PageComponent",
       "source": "src/app/page.tsx",
       "line": 6,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 149,
+      "read_hint": {
+        "offset": 1,
+        "limit": 80
+      },
+      "keywords": [
+        "home",
+        "page"
+      ]
     },
     "LoginPage": {
       "type": "PageComponent",
       "source": "src/app/login/page.tsx",
       "line": 3,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 16,
+      "read_hint": {
+        "offset": 1,
+        "limit": 28
+      },
+      "keywords": [
+        "login",
+        "page"
+      ]
     },
     "MasterDataPage": {
       "type": "PageComponent",
       "source": "src/app/master-data/page.tsx",
       "line": 3,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 20,
+      "read_hint": {
+        "offset": 1,
+        "limit": 32
+      },
+      "keywords": [
+        "data",
+        "master",
+        "master-data",
+        "page"
+      ]
     },
     "StoreCenterPage": {
       "type": "PageComponent",
       "source": "src/app/store-center/page.tsx",
       "line": 4,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 31,
+      "read_hint": {
+        "offset": 1,
+        "limit": 42
+      },
+      "keywords": [
+        "center",
+        "page",
+        "store",
+        "store-center"
+      ]
     },
     "SitePlanPage": {
       "type": "PageComponent",
       "source": "src/app/site-plan/page.tsx",
       "line": 13,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 76,
+      "read_hint": {
+        "offset": 8,
+        "limit": 78
+      },
+      "keywords": [
+        "page",
+        "plan",
+        "site",
+        "site-plan"
+      ]
     },
     "JobPlanPage": {
       "type": "PageComponent",
       "source": "src/app/site-plan/[job_id]/page.tsx",
-      "line": 12,
+      "line": 13,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 94,
+      "read_hint": {
+        "offset": 8,
+        "limit": 80
+      },
+      "keywords": [
+        "[job_id]",
+        "job",
+        "page",
+        "plan",
+        "site-plan"
+      ]
     },
     "PMApprovalPage": {
       "type": "PageComponent",
@@ -575,37 +1190,90 @@
     "MatrixReport": {
       "type": "PageComponent",
       "source": "src/app/matrix-report/page.tsx",
-      "line": 7,
+      "line": 8,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 68,
+      "read_hint": {
+        "offset": 3,
+        "limit": 75
+      },
+      "keywords": [
+        "matrix",
+        "matrix-report",
+        "page",
+        "report"
+      ]
     },
     "ProjectRolesPage": {
       "type": "PageComponent",
       "source": "src/app/admin/project-roles/page.tsx",
       "line": 10,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 70,
+      "read_hint": {
+        "offset": 5,
+        "limit": 75
+      },
+      "keywords": [
+        "admin",
+        "page",
+        "project",
+        "project-roles",
+        "roles"
+      ]
     },
     "AdminProjectsPage": {
       "type": "PageComponent",
       "source": "src/app/admin/projects/page.tsx",
       "line": 2,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 10,
+      "read_hint": {
+        "offset": 1,
+        "limit": 23
+      },
+      "keywords": [
+        "admin",
+        "page",
+        "projects"
+      ]
     },
     "UsersManagementPage": {
       "type": "PageComponent",
       "source": "src/app/admin/users/page.tsx",
       "line": 12,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 251,
+      "read_hint": {
+        "offset": 7,
+        "limit": 80
+      },
+      "keywords": [
+        "admin",
+        "management",
+        "page",
+        "users"
+      ]
     },
     "ProfilePage": {
       "type": "PageComponent",
       "source": "src/app/profile/page.tsx",
       "line": 6,
       "fields": [],
-      "used_in": []
+      "used_in": [],
+      "line_end": 138,
+      "read_hint": {
+        "offset": 1,
+        "limit": 80
+      },
+      "keywords": [
+        "page",
+        "profile"
+      ]
     },
     "Env": {
       "type": "Interface",
@@ -617,79 +1285,221 @@
       "used_in": [
         "src/app/api/admin/projects/route.ts",
         "src/app/api/auth/login/route.ts"
+      ],
+      "line_end": 5,
+      "read_hint": {
+        "offset": 1,
+        "limit": 17
+      },
+      "keywords": [
+        "d1database",
+        "db",
+        "db:",
+        "env",
+        "index"
       ]
     },
     "config": {
       "type": "Unknown",
       "source": "src/proxy.ts",
       "line": 53,
-      "used_in": []
+      "used_in": [],
+      "line_end": 64,
+      "read_hint": {
+        "offset": 48,
+        "limit": 26
+      },
+      "keywords": [
+        "config",
+        "proxy"
+      ]
     },
     "metadata": {
       "type": "Unknown",
       "source": "src/app/layout.tsx",
       "line": 16,
-      "used_in": []
+      "used_in": [],
+      "line_end": 19,
+      "read_hint": {
+        "offset": 11,
+        "limit": 18
+      },
+      "keywords": [
+        "layout",
+        "metadata"
+      ]
     },
     "runtime": {
       "type": "Unknown",
       "source": "src/app/api/equipment/route.ts",
-      "line": 7,
-      "used_in": []
+      "line": 10,
+      "used_in": [],
+      "line_end": 17,
+      "read_hint": {
+        "offset": 5,
+        "limit": 22
+      },
+      "keywords": [
+        "equipment",
+        "route",
+        "runtime"
+      ]
     },
     "GET": {
       "type": "Unknown",
       "source": "src/app/api/equipment/route.ts",
-      "line": 9,
-      "used_in": []
+      "line": 19,
+      "used_in": [],
+      "line_end": 51,
+      "read_hint": {
+        "offset": 14,
+        "limit": 47
+      },
+      "keywords": [
+        "equipment",
+        "get",
+        "route"
+      ]
     },
     "POST": {
       "type": "Unknown",
       "source": "src/app/api/equipment/route.ts",
-      "line": 41,
-      "used_in": []
+      "line": 11,
+      "used_in": [],
+      "line_end": 66,
+      "read_hint": {
+        "offset": 6,
+        "limit": 70
+      },
+      "keywords": [
+        "equipment",
+        "post",
+        "route"
+      ]
     },
     "PUT": {
       "type": "Unknown",
       "source": "src/app/api/equipment/route.ts",
-      "line": 66,
-      "used_in": []
+      "line": 53,
+      "used_in": [],
+      "line_end": 71,
+      "read_hint": {
+        "offset": 48,
+        "limit": 33
+      },
+      "keywords": [
+        "equipment",
+        "put",
+        "route"
+      ]
     },
     "DELETE": {
       "type": "Unknown",
       "source": "src/app/api/categories/route.ts",
-      "line": 66,
-      "used_in": []
+      "line": 73,
+      "used_in": [],
+      "line_end": 92,
+      "read_hint": {
+        "offset": 68,
+        "limit": 34
+      },
+      "keywords": [
+        "categories",
+        "delete",
+        "route"
+      ]
     },
     "PATCH": {
       "type": "Unknown",
       "source": "src/app/api/admin/projects/route.ts",
       "line": 53,
-      "used_in": []
+      "used_in": [],
+      "line_end": 76,
+      "read_hint": {
+        "offset": 48,
+        "limit": 38
+      },
+      "keywords": [
+        "admin",
+        "patch",
+        "projects",
+        "route"
+      ]
     },
     "PMApprovalDashboard": {
       "type": "Unknown",
       "source": "src/app/site-plan/pm-approval/page.tsx",
-      "line": 16,
-      "used_in": []
+      "line": 23,
+      "used_in": [],
+      "line_end": 180,
+      "read_hint": {
+        "offset": 18,
+        "limit": 80
+      },
+      "keywords": [
+        "approval",
+        "dashboard",
+        "page",
+        "pm",
+        "pm-approval",
+        "site-plan"
+      ]
     },
     "PMReviewDetailPage": {
       "type": "Unknown",
       "source": "src/app/site-plan/pm-approval/[id]/page.tsx",
       "line": 12,
-      "used_in": []
+      "used_in": [],
+      "line_end": 81,
+      "read_hint": {
+        "offset": 7,
+        "limit": 80
+      },
+      "keywords": [
+        "[id]",
+        "detail",
+        "page",
+        "pm",
+        "pm-approval",
+        "review",
+        "site-plan"
+      ]
     },
     "useCenterRequests": {
       "type": "Unknown",
       "source": "src/hooks/use-requests.ts",
       "line": 9,
-      "used_in": []
+      "used_in": [],
+      "line_end": 47,
+      "read_hint": {
+        "offset": 4,
+        "limit": 53
+      },
+      "keywords": [
+        "center",
+        "hooks",
+        "requests",
+        "use",
+        "use-requests"
+      ]
     },
     "useCenterAlerts": {
       "type": "Unknown",
       "source": "src/hooks/use-requests.ts",
       "line": 49,
-      "used_in": []
+      "used_in": [],
+      "line_end": 61,
+      "read_hint": {
+        "offset": 44,
+        "limit": 27
+      },
+      "keywords": [
+        "alerts",
+        "center",
+        "hooks",
+        "use",
+        "use-requests"
+      ]
     },
     "BreakdownTooltip": {
       "type": "ReactComponent",
@@ -719,7 +1529,161 @@
     "EquipmentListTable": {
       "type": "Unknown",
       "source": "src/components/master-data/EquipmentListTable.tsx",
-      "line": 28,
+      "line": 30,
+      "used_in": [],
+      "line_end": 135,
+      "read_hint": {
+        "offset": 25,
+        "limit": 80
+      },
+      "keywords": [
+        "equipment",
+        "list",
+        "master-data",
+        "table"
+      ]
+    },
+    "getLocalGregorianString": {
+      "type": "Unknown",
+      "source": "src/lib/date-utils.ts",
+      "line": 5,
+      "used_in": [],
+      "line_end": 15,
+      "read_hint": {
+        "offset": 1,
+        "limit": 25
+      },
+      "keywords": [
+        "date-utils",
+        "get",
+        "gregorian",
+        "lib",
+        "local",
+        "string"
+      ]
+    },
+    "getLocalGregorianStringFromISO": {
+      "type": "Unknown",
+      "source": "src/lib/date-utils.ts",
+      "line": 21,
+      "used_in": [],
+      "line_end": 26,
+      "read_hint": {
+        "offset": 16,
+        "limit": 20
+      },
+      "keywords": [
+        "date-utils",
+        "from",
+        "get",
+        "gregorian",
+        "iso",
+        "lib",
+        "local",
+        "string"
+      ]
+    },
+    "isDeadlinePassed": {
+      "type": "Unknown",
+      "source": "src/lib/date-utils.ts",
+      "line": 31,
+      "used_in": [],
+      "line_end": 35,
+      "read_hint": {
+        "offset": 26,
+        "limit": 19
+      },
+      "keywords": [
+        "date-utils",
+        "deadline",
+        "is",
+        "lib",
+        "passed"
+      ]
+    },
+    "getRemainingDays": {
+      "type": "Unknown",
+      "source": "src/lib/date-utils.ts",
+      "line": 40,
+      "used_in": [],
+      "line_end": 51,
+      "read_hint": {
+        "offset": 35,
+        "limit": 26
+      },
+      "keywords": [
+        "date-utils",
+        "days",
+        "get",
+        "lib",
+        "remaining"
+      ]
+    },
+    "getLateDays": {
+      "type": "Unknown",
+      "source": "src/lib/date-utils.ts",
+      "line": 56,
+      "used_in": [],
+      "line_end": 68,
+      "read_hint": {
+        "offset": 51,
+        "limit": 27
+      },
+      "keywords": [
+        "date-utils",
+        "days",
+        "get",
+        "late",
+        "lib"
+      ]
+    },
+    "dynamic": {
+      "type": "Unknown",
+      "source": "src/app/api/categories/route.ts",
+      "line": 7,
+      "line_end": 21,
+      "read_hint": {
+        "offset": 2,
+        "limit": 29
+      },
+      "keywords": [
+        "categories",
+        "dynamic",
+        "route"
+      ],
+      "used_in": []
+    },
+    "LoadingOverlay": {
+      "type": "Unknown",
+      "source": "src/components/ui/LoadingOverlay.tsx",
+      "line": 11,
+      "line_end": 36,
+      "read_hint": {
+        "offset": 6,
+        "limit": 40
+      },
+      "keywords": [
+        "loading",
+        "overlay",
+        "ui"
+      ],
+      "used_in": []
+    },
+    "JobCardProps": {
+      "type": "Unknown",
+      "source": "src/components/ui/JobCard.tsx",
+      "line": 7,
+      "line_end": 25,
+      "read_hint": {
+        "offset": 2,
+        "limit": 33
+      },
+      "keywords": [
+        "card",
+        "job",
+        "props",
+        "ui"
+      ],
       "used_in": []
     }
   }

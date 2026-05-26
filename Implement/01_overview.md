@@ -46,7 +46,7 @@ project-root/
 │
 ├── .agents/
 │   └── skills/
-│       ├── skill-manifest.json        # ★ Machine-readable routing: keywords → skill → context_files (Boot step 5)
+│       ├── skill-manifest.json        # ★ Machine-readable routing: keywords → skill → on_demand_files (Boot step 5)
 │       ├── registry.md                # Human-readable micro-rules + fast-match table (fallback)
 │       ├── mece/
 │       │   └── SKILL.md               # MECE plan template — auto-loaded before editor/coder

@@ -28,6 +28,11 @@ Check for Bash commands without `| grep | tail` filter → flag as violation of 
 **Check 3 — Low-Overhead Tooling:**
 Check for full-file edits when only a small targeted change was needed → flag as violation of R5 (index-first).
 
+| Audit Check | Criteria |
+|---|---|
+| Context payload size | Before each sub-agent spawn: verify `context_files:` + `cycle_context:` combined < 2,000 chars. Flag if exceeded. |
+| Post-read verdicts   | Confirm `[post-read]` verdict was emitted for every Read call this session. Flag missing verdicts. |
+
 ## Actions
 
 1. **Log the Lesson** → append to `docs/optimization_logs.md`:

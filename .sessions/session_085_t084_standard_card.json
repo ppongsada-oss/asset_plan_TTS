@@ -1,0 +1,8 @@
+{
+  "session_id": "session_085_t084_standard_card",
+  "associated_tasks": ["T-084"],
+  "status": "completed",
+  "estimated_tokens": 15000,
+  "summary_context": "Created a standard reusable JobCard component and replaced custom cards in SiteJobDashboard, pm-approval page, and JobManagement to establish styling consistency across the project. Registered the file and symbol in knowledge base and index files.",
+  "History": []
+}

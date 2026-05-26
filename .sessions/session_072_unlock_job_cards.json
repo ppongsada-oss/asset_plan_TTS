@@ -1,0 +1,8 @@
+{
+  "session_id": "session_072_unlock_job_cards",
+  "associated_tasks": ["T-056.1", "T-056.1-BUG-01"],
+  "status": "completed",
+  "estimated_tokens": 20000,
+  "summary_context": "Implemented job unlocking functionality allowing Store Center to unlock planning cards after deadline. Integrated lock-bypass logic, calculated lateness days, added Thai date localization, and documented CFP-005. Fixed unexpired card unlock button rendering by disabling the unlock button for unexpired jobs and displaying a badge with the remaining days before lock.",
+  "History": []
+}

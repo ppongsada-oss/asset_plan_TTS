@@ -2,8 +2,31 @@
   "files": {
     "src/hooks/use-requests.ts": {
       "description": "Custom SWR hooks for fetching center requests and alerts with caching logic.",
-      "associated_tasks": ["session_042"],
-      "backlinks": []
+      "associated_tasks": [
+        "session_042"
+      ],
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "useCenterRequests",
+          "line": 9,
+          "read_hint": {
+            "offset": 4,
+            "limit": 53
+          }
+        },
+        {
+          "name": "useCenterAlerts",
+          "line": 49,
+          "read_hint": {
+            "offset": 44,
+            "limit": 27
+          }
+        }
+      ],
+      "keywords": [
+        "use-requests"
+      ]
     },
     "src/db/schema.ts": {
       "description": "Drizzle ORM schema — defines all DB tables: users, projects, equipment, planning, center_decisions",
@@ -42,6 +65,107 @@
         "src/app/api/users/route.ts",
         "src/app/site-plan/[job_id]/page.tsx",
         "src/app/site-plan/pm-approval/[id]/page.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "users",
+          "line": 5,
+          "read_hint": {
+            "offset": 1,
+            "limit": 21
+          }
+        },
+        {
+          "name": "project_roles",
+          "line": 13,
+          "read_hint": {
+            "offset": 8,
+            "limit": 20
+          }
+        },
+        {
+          "name": "projects",
+          "line": 20,
+          "read_hint": {
+            "offset": 15,
+            "limit": 21
+          }
+        },
+        {
+          "name": "categories",
+          "line": 29,
+          "read_hint": {
+            "offset": 24,
+            "limit": 19
+          }
+        },
+        {
+          "name": "sub_categories",
+          "line": 35,
+          "read_hint": {
+            "offset": 30,
+            "limit": 20
+          }
+        },
+        {
+          "name": "equipment_items",
+          "line": 43,
+          "read_hint": {
+            "offset": 38,
+            "limit": 26
+          }
+        },
+        {
+          "name": "planning_cycles",
+          "line": 57,
+          "read_hint": {
+            "offset": 52,
+            "limit": 23
+          }
+        },
+        {
+          "name": "planning_jobs",
+          "line": 68,
+          "read_hint": {
+            "offset": 63,
+            "limit": 24
+          }
+        },
+        {
+          "name": "project_plans",
+          "line": 80,
+          "read_hint": {
+            "offset": 75,
+            "limit": 29
+          }
+        },
+        {
+          "name": "project_inventory",
+          "line": 97,
+          "read_hint": {
+            "offset": 92,
+            "limit": 25
+          }
+        },
+        {
+          "name": "center_decisions",
+          "line": 110,
+          "read_hint": {
+            "offset": 105,
+            "limit": 25
+          }
+        },
+        {
+          "name": "planning_logs",
+          "line": 123,
+          "read_hint": {
+            "offset": 118,
+            "limit": 22
+          }
+        }
+      ],
+      "keywords": [
+        "schema"
       ]
     },
     "src/db/index.ts": {
@@ -76,6 +200,27 @@
         "src/app/api/users/route.ts",
         "src/app/site-plan/[job_id]/page.tsx",
         "src/app/site-plan/pm-approval/[id]/page.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "Env",
+          "line": 3,
+          "read_hint": {
+            "offset": 1,
+            "limit": 17
+          }
+        },
+        {
+          "name": "getDb",
+          "line": 139,
+          "read_hint": {
+            "offset": 134,
+            "limit": 21
+          }
+        }
+      ],
+      "keywords": [
+        "index"
       ]
     },
     "src/lib/jwt.ts": {
@@ -97,6 +242,27 @@
         "src/app/site-plan/page.tsx",
         "src/lib/auth-check.ts",
         "src/proxy.ts"
+      ],
+      "key_sections": [
+        {
+          "name": "signToken",
+          "line": 12,
+          "read_hint": {
+            "offset": 7,
+            "limit": 28
+          }
+        },
+        {
+          "name": "verifyToken",
+          "line": 27,
+          "read_hint": {
+            "offset": 22,
+            "limit": 23
+          }
+        }
+      ],
+      "keywords": [
+        "jwt"
       ]
     },
     "src/lib/password.ts": {
@@ -110,6 +276,27 @@
         "src/app/api/profile/route.ts",
         "src/app/api/users/[id]/route.ts",
         "src/app/api/users/route.ts"
+      ],
+      "key_sections": [
+        {
+          "name": "hashPassword",
+          "line": 3,
+          "read_hint": {
+            "offset": 1,
+            "limit": 21
+          }
+        },
+        {
+          "name": "comparePassword",
+          "line": 11,
+          "read_hint": {
+            "offset": 6,
+            "limit": 18
+          }
+        }
+      ],
+      "keywords": [
+        "password"
       ]
     },
     "src/lib/auth-check.ts": {
@@ -123,6 +310,35 @@
         "src/app/api/projects/roles/route.ts",
         "src/app/api/users/[id]/route.ts",
         "src/app/api/users/route.ts"
+      ],
+      "key_sections": [
+        {
+          "name": "AuthPayload",
+          "line": 4,
+          "read_hint": {
+            "offset": 1,
+            "limit": 20
+          }
+        },
+        {
+          "name": "getUserPayload",
+          "line": 11,
+          "read_hint": {
+            "offset": 6,
+            "limit": 21
+          }
+        },
+        {
+          "name": "checkProjectAccess",
+          "line": 19,
+          "read_hint": {
+            "offset": 14,
+            "limit": 31
+          }
+        }
+      ],
+      "keywords": [
+        "auth-check"
       ]
     },
     "src/proxy.ts": {
@@ -130,21 +346,76 @@
       "associated_tasks": [
         "T-003"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "proxy",
+          "line": 8,
+          "read_hint": {
+            "offset": 3,
+            "limit": 58
+          }
+        },
+        {
+          "name": "config",
+          "line": 53,
+          "read_hint": {
+            "offset": 48,
+            "limit": 26
+          }
+        }
+      ],
+      "keywords": [
+        "proxy"
+      ]
     },
     "src/app/layout.tsx": {
       "description": "Root layout — wraps all pages, mounts Navbar",
       "associated_tasks": [
         "T-001"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "metadata",
+          "line": 16,
+          "read_hint": {
+            "offset": 11,
+            "limit": 18
+          }
+        },
+        {
+          "name": "RootLayout",
+          "line": 21,
+          "read_hint": {
+            "offset": 16,
+            "limit": 31
+          }
+        }
+      ],
+      "keywords": [
+        "layout"
+      ]
     },
     "src/app/page.tsx": {
       "description": "Root redirect page — checks JWT and routes to dashboard or login",
       "associated_tasks": [
         "T-001"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "Home",
+          "line": 6,
+          "read_hint": {
+            "offset": 1,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/components/layout/Navbar.tsx": {
       "description": "Top navigation bar with project selector and logout",
@@ -153,6 +424,19 @@
       ],
       "backlinks": [
         "src/app/layout.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "Navbar",
+          "line": 15,
+          "read_hint": {
+            "offset": 10,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "navbar"
       ]
     },
     "src/app/login/page.tsx": {
@@ -160,7 +444,20 @@
       "associated_tasks": [
         "T-004"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "LoginPage",
+          "line": 3,
+          "read_hint": {
+            "offset": 1,
+            "limit": 28
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/components/LoginForm.tsx": {
       "description": "Glassmorphism login form UI (email + password)",
@@ -169,6 +466,20 @@
       ],
       "backlinks": [
         "src/app/login/page.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "LoginForm",
+          "line": 7,
+          "read_hint": {
+            "offset": 2,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "form",
+        "login"
       ]
     },
     "src/app/api/auth/login/route.ts": {
@@ -178,6 +489,19 @@
       ],
       "backlinks": [
         "src/components/LoginForm.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "POST",
+          "line": 11,
+          "read_hint": {
+            "offset": 6,
+            "limit": 70
+          }
+        }
+      ],
+      "keywords": [
+        "route"
       ]
     },
     "src/app/api/auth/logout/route.ts": {
@@ -210,21 +534,60 @@
       "associated_tasks": [
         "T-006"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "ProjectRolesPage",
+          "line": 10,
+          "read_hint": {
+            "offset": 5,
+            "limit": 75
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/app/admin/projects/page.tsx": {
       "description": "Admin UI for creating and managing projects",
       "associated_tasks": [
         "T-006"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "AdminProjectsPage",
+          "line": 2,
+          "read_hint": {
+            "offset": 1,
+            "limit": 23
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/app/admin/users/page.tsx": {
       "description": "Admin UI for creating and managing users",
       "associated_tasks": [
         "T-006"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "UsersManagementPage",
+          "line": 12,
+          "read_hint": {
+            "offset": 7,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/components/admin/ProjectManagement.tsx": {
       "description": "Project CRUD form and list component — displays site inventory item counts",
@@ -234,6 +597,20 @@
       ],
       "backlinks": [
         "src/app/admin/projects/page.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "ProjectManagement",
+          "line": 17,
+          "read_hint": {
+            "offset": 12,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "management",
+        "project"
       ]
     },
     "src/app/api/admin/projects/route.ts": {
@@ -244,6 +621,35 @@
       ],
       "backlinks": [
         "src/components/admin/ProjectManagement.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "runtime",
+          "line": 10,
+          "read_hint": {
+            "offset": 5,
+            "limit": 22
+          }
+        },
+        {
+          "name": "GET",
+          "line": 19,
+          "read_hint": {
+            "offset": 14,
+            "limit": 47
+          }
+        },
+        {
+          "name": "PATCH",
+          "line": 53,
+          "read_hint": {
+            "offset": 48,
+            "limit": 38
+          }
+        }
+      ],
+      "keywords": [
+        "route"
       ]
     },
     "src/app/api/projects/route.ts": {
@@ -290,7 +696,20 @@
       "associated_tasks": [
         "T-006"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "ProfilePage",
+          "line": 6,
+          "read_hint": {
+            "offset": 1,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/app/api/profile/route.ts": {
       "description": "PUT /api/profile — update current user password",
@@ -306,7 +725,20 @@
       "associated_tasks": [
         "T-007"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "MasterDataPage",
+          "line": 3,
+          "read_hint": {
+            "offset": 1,
+            "limit": 32
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/components/master-data/EquipmentTable.tsx": {
       "description": "Equipment catalog table with CRUD, CSV upload and template download",
@@ -317,13 +749,44 @@
       ],
       "backlinks": [
         "src/app/master-data/page.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "EquipmentTable",
+          "line": 37,
+          "read_hint": {
+            "offset": 32,
+            "limit": 75
+          }
+        }
+      ],
+      "keywords": [
+        "equipment",
+        "table"
       ]
     },
     "src/components/master-data/EquipmentListTable.tsx": {
       "description": "Independent equipment list table with internal scroll and sticky header.",
-      "associated_tasks": ["T-019"],
+      "associated_tasks": [
+        "T-019"
+      ],
       "backlinks": [
         "src/components/master-data/EquipmentTable.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "EquipmentListTable",
+          "line": 30,
+          "read_hint": {
+            "offset": 25,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "equipment",
+        "list",
+        "table"
       ]
     },
     "src/app/api/equipment/route.ts": {
@@ -361,6 +824,35 @@
       ],
       "backlinks": [
         "src/components/master-data/EquipmentTable.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "dynamic",
+          "line": 7,
+          "read_hint": {
+            "offset": 2,
+            "limit": 29
+          }
+        },
+        {
+          "name": "PUT",
+          "line": 53,
+          "read_hint": {
+            "offset": 48,
+            "limit": 33
+          }
+        },
+        {
+          "name": "DELETE",
+          "line": 73,
+          "read_hint": {
+            "offset": 68,
+            "limit": 34
+          }
+        }
+      ],
+      "keywords": [
+        "route"
       ]
     },
     "src/app/store-center/page.tsx": {
@@ -368,7 +860,20 @@
       "associated_tasks": [
         "T-010"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "StoreCenterPage",
+          "line": 4,
+          "read_hint": {
+            "offset": 1,
+            "limit": 42
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/components/store-center/StoreCenterTabs.tsx": {
       "description": "Tab wrapper switching between CenterDashboard and JobManagement",
@@ -377,6 +882,21 @@
       ],
       "backlinks": [
         "src/app/store-center/page.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "StoreCenterTabs",
+          "line": 7,
+          "read_hint": {
+            "offset": 2,
+            "limit": 48
+          }
+        }
+      ],
+      "keywords": [
+        "center",
+        "store",
+        "tabs"
       ]
     },
     "src/components/store-center/CenterDashboard.tsx": {
@@ -388,6 +908,20 @@
       ],
       "backlinks": [
         "src/components/store-center/StoreCenterTabs.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "CenterDashboard",
+          "line": 43,
+          "read_hint": {
+            "offset": 38,
+            "limit": 75
+          }
+        }
+      ],
+      "keywords": [
+        "center",
+        "dashboard"
       ]
     },
     "src/components/store-center/JobManagement.tsx": {
@@ -398,6 +932,20 @@
       ],
       "backlinks": [
         "src/components/store-center/StoreCenterTabs.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "JobManagement",
+          "line": 34,
+          "read_hint": {
+            "offset": 29,
+            "limit": 75
+          }
+        }
+      ],
+      "keywords": [
+        "job",
+        "management"
       ]
     },
     "src/app/api/center/cycles/route.ts": {
@@ -462,14 +1010,40 @@
       "associated_tasks": [
         "T-013"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "SitePlanPage",
+          "line": 13,
+          "read_hint": {
+            "offset": 8,
+            "limit": 78
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/app/site-plan/[job_id]/page.tsx": {
       "description": "Site plan worksheet page for a specific job — loads PlanningWorksheet",
       "associated_tasks": [
         "T-013"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "JobPlanPage",
+          "line": 13,
+          "read_hint": {
+            "offset": 8,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/components/site-plan/SiteJobDashboard.tsx": {
       "description": "Job list with status indicators for Store Site",
@@ -478,6 +1052,21 @@
       ],
       "backlinks": [
         "src/app/site-plan/page.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "SiteJobDashboard",
+          "line": 30,
+          "read_hint": {
+            "offset": 25,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "dashboard",
+        "job",
+        "site"
       ]
     },
     "src/components/site-plan/PlanningWorksheet.tsx": {
@@ -487,6 +1076,20 @@
       ],
       "backlinks": [
         "src/app/site-plan/[job_id]/page.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "PlanningWorksheet",
+          "line": 25,
+          "read_hint": {
+            "offset": 20,
+            "limit": 75
+          }
+        }
+      ],
+      "keywords": [
+        "planning",
+        "worksheet"
       ]
     },
     "src/app/api/site/jobs/route.ts": {
@@ -531,14 +1134,40 @@
       "associated_tasks": [
         "T-014"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "PMApprovalDashboard",
+          "line": 23,
+          "read_hint": {
+            "offset": 18,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/app/site-plan/pm-approval/[id]/page.tsx": {
       "description": "PM review detail page for a specific job — loads PMReviewTable",
       "associated_tasks": [
         "T-014"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "PMReviewDetailPage",
+          "line": 12,
+          "read_hint": {
+            "offset": 7,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/components/site-plan/PMReviewTable.tsx": {
       "description": "PM review matrix with approve/reject buttons per job",
@@ -548,6 +1177,21 @@
       "backlinks": [
         "src/app/site-plan/pm-approval/page.tsx",
         "src/app/site-plan/pm-approval/[id]/page.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "PMReviewTable",
+          "line": 32,
+          "read_hint": {
+            "offset": 27,
+            "limit": 75
+          }
+        }
+      ],
+      "keywords": [
+        "pm",
+        "review",
+        "table"
       ]
     },
     "src/app/api/pm/jobs/approve/route.ts": {
@@ -582,7 +1226,20 @@
       "associated_tasks": [
         "T-015"
       ],
-      "backlinks": []
+      "backlinks": [],
+      "key_sections": [
+        {
+          "name": "MatrixReport",
+          "line": 8,
+          "read_hint": {
+            "offset": 3,
+            "limit": 75
+          }
+        }
+      ],
+      "keywords": [
+        "page"
+      ]
     },
     "src/app/api/reports/matrix/route.ts": {
       "description": "GET /api/reports/matrix — calculates equipment × project demand matrix",
@@ -727,8 +1384,97 @@
     },
     "docs/ui-standards.md": {
       "description": "UI Design Standards for tables and common layouts in the Asset Plan project.",
-      "associated_tasks": ["session_refine_center_hub"],
+      "associated_tasks": [
+        "session_refine_center_hub"
+      ],
       "backlinks": []
+    },
+    "knowledge/harness_flow.md": {
+      "description": "AI-facing Agent Harness end-to-end workflow guide (English version).",
+      "associated_tasks": [
+        "T-000"
+      ],
+      "backlinks": []
+    },
+    "knowledge/harness_flow_th.md": {
+      "description": "Comprehensive Agent Harness workflow summary and reference (Thai version).",
+      "associated_tasks": [
+        "T-063"
+      ],
+      "backlinks": []
+    },
+    "knowledge/harness_flow_20260525.md": {
+      "description": "Definitive harness flow reference post V1-V8 vulnerability fixes (2026-05-25). ASCII diagrams for all phases: Boot, Routing, Gather, MECE, REACT, Sub-agent, Completion Gate.",
+      "associated_tasks": [
+        "T-073"
+      ],
+      "backlinks": []
+    },
+    "knowledge/harness_flowchart.md": {
+      "description": "Visual Mermaid flowchart diagrams representing the Agent Harness lifecycle.",
+      "associated_tasks": [
+        "T-063.1"
+      ],
+      "backlinks": []
+    },
+    "src/components/ui/LoadingOverlay.tsx": {
+      "description": "Reusable blur overlay and loading spinner component.",
+      "associated_tasks": [
+        "T-076"
+      ],
+      "backlinks": [
+        "src/components/master-data/EquipmentTable.tsx",
+        "src/app/matrix-report/page.tsx",
+        "src/components/store-center/CenterDashboard.tsx",
+        "src/components/site-plan/PlanningWorksheet.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "LoadingOverlay",
+          "line": 11,
+          "read_hint": {
+            "offset": 6,
+            "limit": 40
+          }
+        }
+      ],
+      "keywords": [
+        "loading",
+        "overlay"
+      ]
+    },
+    "src/components/ui/JobCard.tsx": {
+      "description": "Reusable standard JobCard component displaying status, job number, project info, dates, and actions.",
+      "associated_tasks": [
+        "T-084"
+      ],
+      "backlinks": [
+        "src/app/site-plan/pm-approval/page.tsx",
+        "src/components/site-plan/SiteJobDashboard.tsx",
+        "src/components/store-center/JobManagement.tsx"
+      ],
+      "key_sections": [
+        {
+          "name": "JobCardProps",
+          "line": 7,
+          "read_hint": {
+            "offset": 2,
+            "limit": 33
+          }
+        },
+        {
+          "name": "JobCard",
+          "line": 27,
+          "read_hint": {
+            "offset": 22,
+            "limit": 80
+          }
+        }
+      ],
+      "keywords": [
+        "card",
+        "job"
+      ]
     }
   }
 }

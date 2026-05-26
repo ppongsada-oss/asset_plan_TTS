@@ -1,0 +1,17 @@
+{
+  "session_id": "session_075_harness_self_improvement",
+  "associated_tasks": ["T-harness-self-improve"],
+  "status": "completed",
+  "estimated_tokens": 95000,
+  "summary_context": "Built complete self-improvement system for agent harness. Key deliverables: (1) Per-Turn Routing C0-C3 with topic-switch detection — agent autonomously closes session on topic switch without user prompt. (2) New self_improve skill (4 sections: CFP Tally, Pattern Analysis, Proposal, Execution). (3) CFP review at session close (session_manager §3 Step 0). (4) Two vulnerability audit rounds — fixed NC1 (infinite C0 loop via c0_resolved flag), NC2 (handoff overwrite via Step 3.5 merge), NH1 (cfp_boot_count enforcement in Boot reply line), NH2/V13 (priority queue P1/P2 in §2), NH3 (detection signal validation in R16 Step 2.5), V11 (regex CFP-[0-9]+ fix), V15/V21/V22/V23/V24/NS1/NS2. (5) Updated harness_flow_20260525.md with patch tables P1-P6 + Q1-Q9 + R1-R11.",
+  "files_changed": [
+    "CLAUDE.md — R16 self-improvement protocol + C0 complaint check + cfp_boot_count in Boot",
+    "AGENTS.md — C0-C3 per-turn routing rewrite + topic-switch tables + c0_resolved flag",
+    "INVARIANTS.md — added I8 CFP ID pre-assignment for parallel agents",
+    ".agents/skills/self_improve/SKILL.md — NEW skill (4 sections)",
+    ".agents/skills/session_manager/SKILL.md — Step 0 CFP review + Step 3.5 merge + schema",
+    ".agents/skills/skill-manifest.json — self_improve skill entry",
+    "knowledge/harness_flow_20260525.md — full patch history P1-P6 Q1-Q9 R1-R11"
+  ],
+  "History": []
+}

@@ -10,8 +10,8 @@ Copy this into `CLAUDE.md` at project root. Adjust token thresholds to match you
 ## Boot (3 tool calls max)
 ```
 [B1] Bash: (phase=$(grep "^phase:" .sessions/active_thread.md 2>/dev/null | awk '{print $2}'); [ "$phase" != "in_progress" ] && printf "SESSION_TOTAL: 0\n" > .sessions/session_tokens.md; cat .sessions/active_thread.md 2>/dev/null | tail -4; echo "---"; cat .sessions/session_tokens.md 2>/dev/null; echo "---"; grep -n "\[/\]" docs/master_roadmap.md 2>/dev/null | head -3; echo "---"; echo "CFP_COUNT: $(grep -c '^## CFP-' CODING_FAILURE_PATTERNS.md 2>/dev/null || echo 0)")
-[B2] Read: .agents/skills/skill-manifest.json → match user intent to keywords[] → identify skill_name
-[B3] Read: .agents/skills/<skill_name>/SKILL.md → load sections[] and context_files
+[B2] IF prompt contains `skill: <name>` → skip manifest read · ELSE: grep keywords[] from skill-manifest.json (not full read) → identify skill_name
+[B3] Read: .agents/skills/<skill_name>/SKILL.md offset=1 limit=80 → sections[] only · on_demand_files = lookup table for G2 (NOT loaded at boot)
 ```
 → B1 auto-resets SESSION_TOTAL to 0 when phase ≠ in_progress (new session guard — runs before read)
 → Load SESSION_TOTAL from B1 into working memory (no further file reads for tokens this session)
@@ -28,6 +28,18 @@ Reply line 1 — Boot trace:
 ```
 **[Boot]** Thread: <done|in_progress> · Tasks: <N open> · Skill: `<name>` · Sections: <N> · Tokens: ~<N>k · CFP: <cfp_boot_count>
 ```
+
+## ⚡ MANDATORY BOOT GATE
+
+**Before responding to ANY user message — verify `[Boot]` trace has been emitted this session.**
+
+If `[Boot]` trace has NOT been emitted yet:
+1. STOP — do not respond to the user message
+2. Run B1 → B2 → B3 (Boot Sequence above, max 3 tool calls)
+3. Emit: `**[Boot]** Thread: ... · Skill: ... · Tokens: ~Nk · CFP: N`
+4. THEN respond to the user
+
+**Skipping boot = invalid session state. Responding without `[Boot]` = harness violation (CFP).**
 
 ---
 
@@ -132,6 +144,19 @@ Run 1 Bash scope probe before any task.
 - Parallel spawn: pass all sections as array in single `invoke_subagents` Subagents[] (not sequentially)
 - Custom types: use `define_subagent` to register a new TypeName for the session before invoking
 
+**Harness Context in Sub-agent Prompts:**
+- Explore agents (read-only): no harness constraints needed
+- Execution/Coder agents (any src/ work): MUST include `constraints:` block:
+  ```
+  constraints:
+    - Roadmap: task T-<N> must be [/] before any edit — grep docs/master_roadmap.md first
+    - No src/ edit without gather_complete.md AND mece_plan.md written today
+    - No new file without updating knowledge/index_files.json backlinks
+    - No symbol create/rename without python scripts/symbol_indexer.py after edit
+    - DB edits (src/db/): emit [db-gate] and halt — main agent must confirm
+  ```
+- Missing `constraints:` block in execution sub-agent prompt = CFP violation
+
 **Multi-file relevance check — primary vs fallback:**
 
 **Primary (spawn available):** Reading > 2 files to assess relevance → spawn Explore sub-agent instead.
@@ -160,9 +185,9 @@ Cannot fill Line? → grep not done yet → run grep first.
 **Post-Read Verdict — emit AFTER every Read result is processed:**
 
 **[post-read]** Target: `<file>` · Verdict: `relevant | partial | irrelevant` · Action: `keep | excerpt(L<N>–L<N>) | drop`
-- `relevant` → include as-is in `context_files:` or `cycle_context:`
+- `relevant` → include as-is in `on_demand_files:` or `cycle_context:`
 - `partial` → include only the stated excerpt range — not the full file
-- `irrelevant` → drop immediately; do NOT include in `context_files:`, `cycle_context:`, or any sub-agent prompt
+- `irrelevant` → drop immediately; do NOT include in `on_demand_files:`, `cycle_context:`, or any sub-agent prompt
 - Failure to emit `[post-read]` = treat content as `irrelevant` → drop
 - See CFP-004 in CODING_FAILURE_PATTERNS.md
 
@@ -217,13 +242,25 @@ Default: table/bullet over prose. Comparison → table. Steps → numbered list.
 2. grep knowledge/index_variables.json for affected symbol
 3. grep knowledge/index_files.json for backlinks
 
+**Step 0 — Recurring Fix Detection (run FIRST):**
+Signals: "ยังไม่หาย" · "แก้แล้วยัง" · "still broken" · "same error" · "กลับมาอีก" · "fix ไม่ผ่าน" · "ยังเจออยู่" · "ยังเป็นอยู่"
+OR: same ERR-XXX already [X] in roadmap / same T-N-BugID referenced
+→ Recurring: grep roadmap for prior AttemptID → read `### Failed Approaches:` in error_index entry → choose DIFFERENT approach
+→ Emit: `[recurring] ERR-XXX · Prior attempts: N · Previous approach: <summary> · New approach: <what's different>`
+
 New error → Task ID format: `T-{ParentTask}-{BugID}-{AttemptID}` (e.g. `T-004-001-02`)
 1. Add `[ ] T-{N}-{BugID}-01: <description>` to roadmap → set `[/]`
 2. Fix code
 3. Run python scripts/symbol_indexer.py
 4. Assign ERR-XXX code
-5. Write entry in knowledge/error_index.md (include Task ID + cross-link)
+5. Write entry in knowledge/error_index.md (include Task ID + cross-link + `### Failed Approaches:` field)
 6. Mark roadmap `[X] T-{N}-{BugID}-{Attempt} (→ ERR-XXX)`
+
+**On R12 verify failure** — before escalating per R13, MUST write to error_index entry:
+```
+### Failed Approaches:
+- [YYYY-MM-DD] T-{N}-{BugID}-01: <approach tried> → verify failed · Reason: <why it didn't resolve>
+```
 
 ---
 
@@ -310,8 +347,8 @@ You are operating inside the **[PROJECT NAME]** project. Rules apply to ALL agen
 
 ```
 [B1] Bash: (phase=$(grep "^phase:" .sessions/active_thread.md 2>/dev/null | awk '{print $2}'); [ "$phase" != "in_progress" ] && printf "SESSION_TOTAL: 0\n" > .sessions/session_tokens.md; cat .sessions/active_thread.md 2>/dev/null | tail -4; echo "---"; cat .sessions/session_tokens.md 2>/dev/null; echo "---"; grep -n "\[/\]" docs/master_roadmap.md 2>/dev/null | head -3; echo "---"; echo "CFP_COUNT: $(grep -c '^## CFP-' CODING_FAILURE_PATTERNS.md 2>/dev/null || echo 0)")
-[B2] Read: .agents/skills/skill-manifest.json → match user intent to keywords[] → identify skill_name
-[B3] Read: .agents/skills/<skill_name>/SKILL.md → load sections[] and context_files
+[B2] IF prompt contains `skill: <name>` → skip manifest read · ELSE: grep keywords[] from skill-manifest.json (not full read) → identify skill_name
+[B3] Read: .agents/skills/<skill_name>/SKILL.md offset=1 limit=80 → sections[] only · on_demand_files = lookup table for G2 (NOT loaded at boot)
 ```
 
 [B4] Platform Probe (run only if `.agents/platform/detected.md` has `platform: unknown`):
@@ -325,6 +362,9 @@ You are operating inside the **[PROJECT NAME]** project. Rules apply to ALL agen
 - If SESSION_TOTAL > 60k → warn user before proceeding
 
 Reply line 1: `**[Boot]** Thread: <done|in_progress> · Tasks: <N open> · Skill: <name> · Sections: <N> · Tokens: ~<N>k · CFP: <cfp_boot_count>`
+
+> ⚠️ **Boot ending ≠ ready to work.** After Reply line 1 → run C0–C3 → then Phase 1.
+> Reading SKILL.md at B3 is NOT Phase 1. Do NOT touch `src/` until `[✓ gather]` AND `[✓ MECE]` emitted.
 
 ---
 
@@ -358,6 +398,12 @@ Topic switch → emit [topic-switch] Current: X · New: Y · Closing first
              → session_manager §3 (close + reset) → new Phase 1
 Same topic   → match keywords[] → re-read SKILL.md if skill changes
 
+> ⚠️ **After C3 (any branch) → MANDATORY: Phase 1 G1-G2-G3 next. No exceptions.**
+> Knowing the skill (B3) does NOT satisfy Phase 1. Must grep indexes + read files + emit `[✓ gather]`.
+> `[✓ gather]` MUST write `.sessions/gather_complete.md` with `date: YYYY-MM-DD`.
+> Then Phase 2: MECE plan → user confirm → write `mece_plan.md` → emit `[✓ MECE]`.
+> **PreToolUse hook blocks `src/` Edit if `gather_complete.md` or `mece_plan.md` missing or stale (not written today).**
+
 | Keywords | Skill |
 |---|---|
 | แก้ bug / fix / error / debug | editor |
@@ -374,16 +420,14 @@ Same topic   → match keywords[] → re-read SKILL.md if skill changes
 
 | Phase | What happens |
 |---|---|
-| 1 Info Gather | Repeat: identify missing context → index-first → assess → emit [✓ gather] |
+| 1 Info Gather | **Hybrid front-loaded:** G1 scans ALL sections at once → output missing_files[] + missing_user_input[] · G2 runs ALL greps in one Bash call → targeted Read per item · Single user ask (max 1 per Phase 1 run) if input still missing → emit [✓ gather] |
 | 2 MECE Plan | Build plan (1:1 Skill sections) → Verify-N per section → user confirms → roadmap |
 
-**Gather iteration cap — hard limit:**
-Max 3 gather-read iterations per Phase 1 run. Count resets only at task start (not per turn).
-After 3 iterations without `[✓ gather]`:
-→ HALT gather loop
-→ Emit `[gather-stalled]` Missing: `<list what's still needed>`
-→ Ask user: "ขาด context: <list> — ช่วยระบุหรือให้ข้อมูลเพิ่มเติมได้ไหมครับ?"
-→ Do NOT proceed to Phase 2 until user provides context or explicitly says "proceed anyway"
+**Gather rules:**
+- G1: scan ALL sections in one pass — never one section at a time
+- G2: batch ALL greps into one Bash call — never one grep per turn
+- User ask: combine ALL missing items into ONE message — never ask incrementally
+- Stall cap: if after G1+G2+1 user ask context still insufficient → emit `[gather-stalled]` → halt Phase 1
 | 3 | Execution | Cycle Gate → group sections into Cycles → CYCLE LOOP: spawn Cycle N parallel → await → read cycle_N_*.json → spawn Cycle N+1 → Completion Gate |
 
 **Phases 1–2 run ONCE per task. On resume: skip to Phase 3 at pending section.**
@@ -626,52 +670,96 @@ Copy to `.agents/skills/skill-manifest.json`. Add or remove skills to match your
 
 ```json
 {
-  "version": "2.0",
+  "version": "2.1",
+  "_comment": "Machine-readable skill routing. on_demand_files = lookup table for G2 only — NOT auto-loaded at boot.",
+  "_schema_note": "Each on_demand_files entry: { path, when, how }. 'how' values: grep_only | targeted | full_ok (≤30 lines only) | grep_headers_then_append",
+  "boot_read_policy": {
+    "_note": "Files that MAY be read at boot — all others on_demand only",
+    "B1_bash_only": [".sessions/active_thread.md", ".sessions/session_tokens.md", "docs/master_roadmap.md (grep [/] only)", "CODING_FAILURE_PATTERNS.md (grep -c only)"],
+    "B3_sections_only": "Read SKILL.md offset=1 limit=80 — sections[] and skill name only",
+    "never_at_boot": ["knowledge/index_variables.json", "knowledge/index_files.json", "INVARIANTS.md", "REPO_MAP.md", "CODING_FAILURE_PATTERNS.md (full read)", "docs/master_roadmap.md (full read)"]
+  },
   "default_skill": "editor",
   "skills": {
     "editor": {
       "path": ".agents/skills/editor/SKILL.md",
-      "keywords": ["แก้", "fix", "bug", "edit", "debug", "เปลี่ยน", "ปรับ", "อัปเดต", "update", "modify"]
+      "keywords": ["แก้", "fix", "bug", "edit", "debug", "เปลี่ยน", "ปรับ", "อัปเดต", "update", "modify"],
+      "on_demand_files": [
+        { "path": "knowledge/index_variables.json", "when": "looking up symbol line number or used_in list", "how": "grep_only" },
+        { "path": "knowledge/index_files.json",     "when": "checking backlinks before editing a file",        "how": "grep_only" },
+        { "path": "INVARIANTS.md",                  "when": "R14/R15 gate fires (DB change or destructive op)","how": "targeted" },
+        { "path": "CODING_FAILURE_PATTERNS.md",     "when": "writing a new CFP entry only",                   "how": "grep_headers_then_append" }
+      ]
     },
     "coder": {
       "path": ".agents/skills/coder/SKILL.md",
-      "keywords": ["สร้าง", "create", "new file", "implement", "feature", "add", "เพิ่ม"]
+      "keywords": ["สร้าง", "create", "new file", "implement", "feature", "add", "เพิ่ม"],
+      "on_demand_files": [
+        { "path": "knowledge/index_files.json",  "when": "checking file exists or backlinks before creating", "how": "grep_only" },
+        { "path": "docs/master_roadmap.md",      "when": "assigning new T-ID (check for duplicates)",        "how": "grep_only" },
+        { "path": "INVARIANTS.md",               "when": "R14/R15 gate fires (DB change or destructive op)", "how": "targeted" }
+      ]
     },
     "file_manager": {
       "path": ".agents/skills/file_manager/SKILL.md",
-      "keywords": ["move", "rename", "delete file", "restructure", "ย้าย", "ลบ", "เปลี่ยนชื่อ"]
+      "keywords": ["move", "rename", "delete file", "restructure", "ย้าย", "ลบ", "เปลี่ยนชื่อ"],
+      "on_demand_files": [
+        { "path": "knowledge/index_files.json", "when": "updating backlinks for changed file", "how": "grep_only" }
+      ]
     },
     "variable_manager": {
       "path": ".agents/skills/variable_manager/SKILL.md",
-      "keywords": ["rename symbol", "refactor", "export", "symbol", "function name"]
+      "keywords": ["rename symbol", "refactor", "export", "symbol", "function name"],
+      "on_demand_files": [
+        { "path": "knowledge/index_variables.json", "when": "updating symbol entry after code change", "how": "grep_only" }
+      ]
     },
     "session_manager": {
       "path": ".agents/skills/session_manager/SKILL.md",
-      "keywords": ["จบ session", "close", "end session", "สรุป session", "ปิด session"]
+      "keywords": ["จบ session", "close", "end session", "สรุป session", "ปิด session"],
+      "on_demand_files": [
+        { "path": ".sessions/active_thread.md",   "when": "checking current phase at routing",   "how": "full_ok" },
+        { "path": ".sessions/session_handoff.md", "when": "resume flow or blocked state",         "how": "full_ok" },
+        { "path": ".sessions/session_tokens.md",  "when": "writing SESSION_TOTAL at checkpoint", "how": "full_ok" }
+      ]
     },
     "mece": {
       "path": ".agents/skills/mece/SKILL.md",
-      "keywords": ["plan", "วางแผน", "mece", "orchestrate", "phases"]
+      "keywords": ["plan", "วางแผน", "mece", "orchestrate", "phases"],
+      "on_demand_files": []
     },
     "agent": {
       "path": ".agents/skills/agent/SKILL.md",
-      "keywords": ["orchestrate", "multi-step", "coordinate", "spawn", "จัดการหลายขั้นตอน", "cycle", "fan-out", "orchestrate cycles"]
+      "keywords": ["orchestrate", "multi-step", "coordinate", "spawn", "จัดการหลายขั้นตอน", "cycle", "fan-out", "orchestrate cycles"],
+      "on_demand_files": []
     },
     "identity": {
       "path": ".agents/skills/identity/SKILL.md",
-      "keywords": ["identity", "session state", "who am i", "current skill", "ตัวตน"]
+      "keywords": ["identity", "session state", "who am i", "current skill", "ตัวตน"],
+      "on_demand_files": []
     },
     "token_auditor": {
       "path": ".agents/skills/token_auditor/SKILL.md",
-      "keywords": ["token limit", "context full", "approaching limit", "token threshold"]
+      "keywords": ["token limit", "context full", "approaching limit", "token threshold"],
+      "on_demand_files": [
+        { "path": ".sessions/session_tokens.md", "when": "reading current total for audit", "how": "full_ok" }
+      ]
     },
     "token_tracker": {
       "path": ".agents/skills/token_tracker/SKILL.md",
-      "keywords": ["token count", "session total", "how many tokens", "นับ token"]
+      "keywords": ["token count", "session total", "how many tokens", "นับ token"],
+      "on_demand_files": [
+        { "path": ".sessions/session_tokens.md", "when": "Boot B1 read (once) and checkpoint write", "how": "full_ok" }
+      ]
     },
     "self_improve": {
       "path": ".agents/skills/self_improve/SKILL.md",
-      "keywords": ["review CFP", "improve harness", "ปรับปรุง harness", "CFP review", "self improve", "failure pattern", "ปรับปรุงตัวเอง"]
+      "keywords": ["review CFP", "improve harness", "ปรับปรุง harness", "CFP review", "self improve", "failure pattern", "ปรับปรุงตัวเอง"],
+      "on_demand_files": [
+        { "path": "CODING_FAILURE_PATTERNS.md", "when": "reading CFP headers for analysis (grep -c first)", "how": "targeted" },
+        { "path": "CLAUDE.md",  "when": "proposing rule injection into CLAUDE.md", "how": "targeted" },
+        { "path": "AGENTS.md",  "when": "proposing rule injection into AGENTS.md", "how": "targeted" }
+      ]
     }
   }
 }
