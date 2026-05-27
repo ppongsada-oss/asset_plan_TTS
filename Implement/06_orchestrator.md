@@ -8,45 +8,72 @@ Two modes — identical file format, different execution:
 
 ### 14a. `.sessions/mece_plan.md` — Schema
 
-Orchestrator writes this file at **end of Phase 2 AFTER user confirm** (aligns with AGENTS.md M3→M4: send plan → wait confirm → then write). Never cleared by model — only by `"จบ session"` command.
+Orchestrator writes this file at **end of Phase 2 M5 AFTER user confirm** (aligns with AGENTS.md M3→M4→M5). Format = Phase-Checklist Template from `mece/SKILL.md §Phase-Checklist Template`. See that file for the canonical template — schema below is a reference summary.
+
+**Phase-Checklist Template format (written at M5):**
 
 ```markdown
-# MECE Plan — <Task Name>
-Created: <YYYY-MM-DD> | Last updated: <YYYY-MM-DD HH:MM>
-Status: in_progress | Budget: Used ~0k / Limit 50k
+## Phase 0 — Boot (once per session · keep [X] on resume · DO NOT reset)
+### Files Read
+| File | Tool | TH ch | EN ch | ~Tok |   ← ~Tok = EN_ch × 0.3 / 1000 · TH_ch × 1.7 / 1000
+|---|---|---|---|---|
+| .sessions/active_thread.md | `wc -m` | ___ | ___ | ___ |
+| .agents/skills/<name>/SKILL.md | `wc -m` | ___ | ___ | ___ |
+| .agents/skills/mece/SKILL.md (offset=31 limit=110) | `wc -m` | ___ | ___ | ___ |
+Phase 0 total: TH ___ch · EN ___ch → ~___tok
+- [ ] B1/B2-B3/C0-C3 checkboxes
+→ TOKEN CHECK (runtime · NOT at plan creation): write SESSION_TOTAL → file · cat → ___k
 
-## Cycles
-  Cycle 1: [S1, S2]
-  Cycle 2: [S3]
-  # S3 context-input: cycle_1_S1.json, cycle_1_S2.json
+## Phase 1 — Info Gather
+### Files Read  (same table format)
+- [ ] G1/G2/G3/gather_complete.md checkboxes
+→ TOKEN CHECK (runtime · NOT at plan creation) → ___k  (>60k → TOKEN PAUSE)
 
-## Sections
-- [ ] S1: <task description>
-      Skill: editor                              ← MANDATORY — one of: editor|coder|file_manager|variable_manager|agent
-      Context: [knowledge/index_variables.json, src/path/to/file.ts]
-      DoD: `grep -c "keyword" src/path/to/file.ts` → expected: 1
-      Est: ~8k tokens
+## Phase 2 — Plan
+### Files Read  (same table format)
+- [ ] M2/M3/M4/M5 checkboxes
+→ TOKEN CHECK (runtime · NOT at plan creation) → ___k  (>60k → TOKEN PAUSE)
 
-- [ ] S2: <task description>
-      Skill: file_manager                        ← MANDATORY
-      Context: [knowledge/index_files.json]
-      DoD: `grep "new-entry" knowledge/index_files.json` → expected: found
-      Est: ~4k tokens
+---
 
-## Continuation Prompt
-Resume: read .sessions/mece_plan.md → find first [/] or [ ] → execute as sub-agent
+**[✓ MECE]** Goal: ___
 
-## Session Archive
-<!-- session_manager appends closed-plan summaries here -->
+Section 1 — <name>:
+  Skill:    ___   ← MANDATORY — editor|coder|file_manager|variable_manager|agent
+  Tool:     ___   ← primary tool (Read|Edit|Write|Bash)
+  Constraints:
+    - ___         ← from §MECE Constraints Block in the section's SKILL.md
+  Steps:
+    - [S1-A] ___
+  Verify:   ___
+  Rollback: ___
+  Data_Sent: Thai ___ch | ENG: ___ch  ← fill AFTER section completes
+  Token:    ___k                       ← fill AFTER section completes
+
+---
+
+## Phase 3 — Execute + Close
+- [ ] S1 [✓ written] + Verify PASS
+      Data_Sent: TH ___ch · EN ___ch
+      → TOKEN CHECK (runtime · NOT at plan creation) → ___k
+- [ ] R8 index sync · Roadmap [X] · active_thread.md phase: done
+- [ ] SESSION_TOTAL written (fill ___k from working memory · do NOT hardcode 0k)
+- [ ] /compact — ALWAYS run at task complete
+      → ✅ compact แล้ว: "compact เรียบร้อยครับ session ใหม่เริ่มได้เลย ไม่ต้องรัน /compact เอง"
+- [ ] [mece-audit] · self_improve · harness_doctor · Ask user
+- [ ] Feedback & Error Summary delivered
 ```
 
-**Section status markers:**
+**Pre-fill rule:** Leave ALL `___` placeholders as-is at plan creation (M5) — fill only at runtime.
+**~Tok formula:** `EN_ch × 0.3 / 1000` · `TH_ch × 1.7 / 1000` · do NOT use `chars ÷ 1000` (overcounts 3×)
+
+**Section status markers (used inside Sections + Phase 3 close):**
 
 | Marker | Meaning |
 |---|---|
 | `[ ]` | Not started |
 | `[/]` | In progress — mark before first tool call |
-| `[X]` | Done — mark after DoD verify passes |
+| `[X]` | Done — mark after Verify-N passes |
 
 ---
 

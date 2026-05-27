@@ -30,6 +30,11 @@ You are operating inside the **Asset Plan** project. Rules apply to ALL agents r
      → on_demand_files from manifest = lookup table for G2, NOT loaded at boot
      → NEVER auto-load on_demand_files at B3 — they are read on-demand during G2 only
      → NEVER re-read SKILL.md mid-session unless skill changes (check cached skill_name first)
+     Also: Read .agents/skills/mece/SKILL.md offset=31 limit=110
+     → load §Plan Format (required fields: Skill/Tool/Constraints/Verify/Data_Sent/Token) +
+        §Execution Protocol (S1-A through S1-E steps) into working memory
+     → agent knows required plan fields BEFORE Phase 1 — avoids confusion at plan creation
+     → NEVER re-read mece/SKILL.md mid-session (Plan Format + Execution Protocol stay in context)
 ```
 
 - B1 auto-resets SESSION_TOTAL to 0 when phase ≠ in_progress
@@ -38,6 +43,10 @@ You are operating inside the **Asset Plan** project. Rules apply to ALL agents r
 - If SESSION_TOTAL > 60k → warn user before proceeding
 - If mece_plan.md exists with pending sections → skip Phase 1+2 → resume Phase 3 at pending section
   (pending = `grep -cE "^\- \[[ /]\]" .sessions/mece_plan.md 2>/dev/null || echo "0"` > 0)
+  **Resume read (run when pending > 0):**
+  `grep -n "^\- \[ \]\|^\- \[/\]" .sessions/mece_plan.md | head -3` → find first pending item
+  Determine resume phase: item in `## Phase 2` block → resume at Phase 2 · item in `## Phase 3` → resume at Phase 3
+  Read .sessions/mece_plan.md at that block (offset=N limit=40) → load pending section context
   **Resume staleness gate (V3) — run after B3 only when phase = in_progress:**
   `git status --short src/ 2>/dev/null | grep -c "." || echo "0"` → src/ changes since last session?
   Compare `mece_plan_hash` in `.sessions/session_handoff.md` vs `sha1sum .sessions/mece_plan.md 2>/dev/null | cut -d' ' -f1`
@@ -206,7 +215,15 @@ After 3 loops without `[✓ gather]`:
 [M3] Send plan + DoD (Verify-<N> for each section) to user → wait confirm
      User must confirm BOTH plan steps AND verify criteria before proceeding
 [M4] R-Roadmap: add entry for each section [ ] T-<N>: <section-name>
-[M5] Emit [✓ MECE]
+[M5] Write .sessions/mece_plan.md using Phase-Checklist Template (mece/SKILL.md §Phase-Checklist Template):
+     - Phase 0 block: fresh session = all [ ] · same session = [X] already · Files Read table with wc -m entries
+     - Phase 1-3 blocks: [ ] placeholders + TOKEN CHECK lines after each phase + after each section
+       (TOKEN CHECK: leave `→ ___k` as placeholder · do NOT evaluate at plan creation · fill at runtime: write SESSION_TOTAL from working memory to file first, then cat)
+     - Sections block: Tool: + Constraints: + Data_Sent: Thai ___ch | ENG: ___ch + Token: ___k per section
+     - Constraints: field — grep `## MECE Constraints Block` from each section's SKILL.md → paste ≤5 relevant lines
+       Missing Constraints: field = incomplete plan → user must reject and replan
+     User confirms plan includes Phase 0-3 checklist + Constraints: per section before proceeding
+[M6] Emit [✓ MECE]
 ```
 
 MECE runs ONCE. On resume: load existing plan from session → jump to pending section.
@@ -310,6 +327,7 @@ CODING_FAILURE_PATTERNS.md      (grows over time)       → grep -c "^## CFP-" �
 docs/master_roadmap.md          (180+ lines)            → grep -n "T-NNN" or tail -30 · NEVER full Read
 INVARIANTS.md                   (134 lines)             → on-demand ONLY when R14/R15 gate fires · not at boot
 knowledge/error_index.md        (grows over time)       → grep -n "^## ERR" → Read offset=N limit=40 ONLY
+knowledge/index_cfp_fix.json   (grows over time)       → full_ok WHILE entries ≤ 30 · grep ONLY beyond 30 CFPs
 ```
 
 **Full-Read whitelist (only these files may be read in full):**

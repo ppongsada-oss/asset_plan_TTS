@@ -69,6 +69,12 @@ Missing either → **STOP** → run the missing phase → only then proceed.
 **Reading SKILL.md at B3 is NOT Phase 1.** Phase 1 = grep indexes + targeted reads + [✓ gather] emitted.
 **[✓ gather] MUST write `.sessions/gather_complete.md`** (date: YYYY-MM-DD) — hook checks both files for today's date.
 **Writing mece_plan.md is NOT optional.** PreToolUse hook denies src/ Edit if either file missing or stale (not today).
+**mece_plan.md MUST include Phase 0-3 checklist blocks** (mece/SKILL.md §Phase-Checklist Template) — Tool/Data_Sent/Token per section.
+
+**At task complete — Phase 3 close mandatory sequence (no exceptions):**
+1. Write Phase 0 carry-forward → `session_handoff.md`: `skill_name + CFP_COUNT + task` — survives /compact
+2. `/compact` — ALWAYS run (not conditional) — prevents next task context bloat
+3. Next task: Phase 0 [X] in mece_plan.md + read handoff carry-forward → G0 restore → skip Phase 0 → start Phase 1
 
 ---
 
@@ -80,7 +86,7 @@ Input  = (user_msg_chars × 0.3) + context_overhead + (tool_result_tokens)
 Output = (thai_chars × 1.7) + (en_chars × 0.3)
 context_overhead: Turn 1 = ~4,000 | subsequent = 200 + (SESSION_TOTAL × 0.08)
 ```
-Write to file ONLY at: token pause · blocked halt · completion gate. Emit `*(Session total: ~NNN tokens)*` every response.
+Write to file ONLY at: token pause · blocked halt · completion gate · TOKEN CHECK point (write working memory SESSION_TOTAL before reading). Emit `*(Session total: ~NNN tokens)*` every response.
 → Thresholds and pause rules → **R3** · audit → **token_auditor/SKILL.md**
 
 ---
@@ -225,10 +231,23 @@ On detection (before resuming original task):
 1. Emit `[self-improve] Rule: <R-N> · Missed: <what>`
 2. Execute missed step NOW (ask user if context insufficient, then wait)
 3. Emit `[✓ backfilled] <what done>`
-4. Log CFP: `grep -c "^## CFP-"` → N+1 → append entry (Symptom · Root cause · Prevention · Detection signal)
+4. Log CFP:
+   a. `grep -c "^## CFP-"` → N+1 → append entry to CODING_FAILURE_PATTERNS.md
+      Fields: Symptom · Root cause · Prevention · Detection signal · Model: `<current_model_id>`
+   b. Write occurrence to `knowledge/index_cfp_fix.json`:
+      ```
+      entry = index_cfp_fix[CFP-N]
+      entry.occurrences.append({ date: TODAY, model: <model_id>, session: <session_id> })
+      entry.last_seen = TODAY
+      entry.status = "active"
+      write back to index_cfp_fix.json
+      ```
+      If CFP-N not yet in index → create entry with group from CFP title keywords
+      (skip_planning / boot_gap / skip_verification / rule_drift / premature_report / index_desync / db_safety / token_management)
 5. Set c0_resolved=true → re-run C0→C1→C2→C3 with original user message
 
 → CFP entry format, archive gate, pattern analysis → **self_improve/SKILL.md §CFP Logging Format**
+→ Fix tracking, group classification, recurrence detection → **knowledge/index_cfp_fix.json**
 
 ---
 

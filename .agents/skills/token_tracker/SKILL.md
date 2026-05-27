@@ -31,6 +31,7 @@ context_overhead: Turn 1 = ~4,000 | subsequent = 200 + (SESSION_TOTAL × 0.08)
 - TOKEN PAUSE (R3 >60k)
 - BLOCKED halt
 - Completion Gate (task done)
+- TOKEN CHECK point (write working memory SESSION_TOTAL before reading — do NOT rely on stale file value)
 
 **Footer every response:** `*(Session total: ~NNN tokens)*`
 

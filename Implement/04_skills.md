@@ -728,7 +728,7 @@ Section 3 — Sync & Close:
 **Token Check — mandatory before starting any new Cycle or Section:**
 ```
 TOKEN CHECK before Cycle/Section N+1:
-- Read SESSION_TOTAL from .sessions/session_tokens.md
+- Write SESSION_TOTAL (working memory) to file: `printf "SESSION_TOTAL: ___k\n" > .sessions/session_tokens.md` (fill ___k from memory) · then read + verify: `cat .sessions/session_tokens.md`
 - > 50k AND compact not yet run this cycle? → run Mid-Session Compact (see CLAUDE.md R3) → emit [compact] → then proceed
 - > 60k? → TOKEN PAUSE immediately (do not start next cycle)
 - ≤ 50k? → proceed to next Cycle/Section
