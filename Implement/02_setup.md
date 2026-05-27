@@ -187,3 +187,72 @@ RULES FOR THIS PROJECT:
 ```
 
 ---
+
+## 11. Project .gitignore — Harness Files
+
+The harness is **developer tooling**, not project code. Add the following to your project's `.gitignore` so harness framework files are never committed to the main project repo.
+
+### Paste into project `.gitignore`
+
+```gitignore
+# ─── Claude Code Harness (agent framework — not project source) ───────────────
+# Core harness config (reusable across projects — clone from harness killer repo)
+AGENTS.md
+CLAUDE.md
+CLAUDE.th.md
+INVARIANTS.md
+REPO_MAP.md
+CODING_FAILURE_PATTERNS.md
+Implement.md
+Implement/
+
+# Skill library
+.agents/
+
+# Harness utility scripts
+scripts/lookup.py
+scripts/symbol_indexer.py
+scripts/session_indexer.py
+
+# Session runtime state (changes every agent session)
+.sessions/
+
+# Optional semantic search cache
+.claw-rag/
+
+# Harness reference docs (regeneratable from harness killer repo)
+knowledge/harness_flow*.md
+knowledge/cfp_archive.md
+knowledge/index_sessions.json
+# ──────────────────────────────────────────────────────────────────────────────
+```
+
+### What to KEEP in project repo (project-specific harness state)
+
+| File | Why commit |
+|---|---|
+| `knowledge/error_index.md` | Project-specific bug log — valuable history |
+| `knowledge/index_files.json` | File dependency map — regeneratable but slow |
+| `knowledge/index_variables.json` | Symbol index — regeneratable but slow |
+| `docs/master_roadmap.md` | Task history + feature log |
+
+### Two-repo pattern (recommended)
+
+```
+project-repo/          ← your actual project (commit src/, knowledge/, docs/)
+  .gitignore           ← harness files listed above
+  src/
+  knowledge/error_index.md
+  docs/master_roadmap.md
+
+harness-killer-repo/   ← framework only (separate repo, sync manually)
+  AGENTS.md
+  CLAUDE.md
+  .agents/skills/*/SKILL.md
+  scripts/
+  Implement/
+```
+
+On new project setup: clone harness killer → copy harness files into project dir → add `.gitignore` block above → proceed with setup (Section 1–9).
+
+---
