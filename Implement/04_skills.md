@@ -169,6 +169,75 @@ If during this task a new hard constraint was discovered → add to INVARIANTS.m
 
 ---
 
+## ascii_flow
+
+```markdown
+---
+name: ascii_flow
+description: Skill for creating and updating ASCII flow diagrams, architecture charts, and flow documentation in .md files. Any skill that creates/edits a .md file with box diagrams MUST invoke this skill.
+---
+
+## Sections
+\```
+- id: 1
+  name: "char-palette"
+  steps: ["use box-drawing + connector chars from palette"]
+- id: 2
+  name: "box-templates"
+  steps: ["outer / inner / decision / note patterns — widths: outer=70, inner=66"]
+- id: 3
+  name: "detail-guidelines"
+  steps: ["every box answers What/Why/Output · ≤8 lines per outer box"]
+- id: 4
+  name: "flow-connectors"
+  steps: ["branch / merge / sequence / loop / error patterns"]
+- id: 5
+  name: "doc-structure"
+  steps: ["Title · Layer Architecture · Phase sections · Quick Reference · Changelog"]
+- id: 6
+  name: "invoke-rule"
+  steps: ["any .md file with box diagrams → call ascii_flow · verify box count after"]
+\```
+
+---
+
+## MECE Constraints Block (copy into mece_plan.md for sections using ascii_flow)
+\```
+- Load ascii_flow BEFORE drawing any box diagram in .md files — no exceptions
+- Style reference: knowledge/harness_flow_20260525.md (box widths, connector chars, palette)
+- Outer box: 70 chars wide · inner nested box: 66 chars · ≤5 lines per inner box
+- [✓ written] verify: grep -c "┌" <file> matches expected box count
+- Diagram only — no src/ code changes in same section as diagram creation
+\```
+
+## Char Palette
+\```
+BOX DRAWING
+  top-left: ┌   top-right: ┐   bottom-left: └   bottom-right: ┘
+  horizontal: ─   vertical: │
+  left-branch: ├   right-branch: ┤   top-branch: ┬   bottom-branch: ┴   cross: ┼
+FLOW ARROWS
+  down: ▼   right: →   left: ←   up: ▲
+  branch-right: ├─   last-branch: └─
+ANNOTATIONS
+  new/important: ★   done: ✅   fail: ❌   pending: □
+\```
+
+## Invoke Pattern
+\```
+[→ ascii_flow] Creating flow diagram in <file>
+  Style: knowledge/harness_flow_20260525.md
+  Sections planned: [list]
+\```
+
+After writing: `grep -c "┌" <file>` → must match expected box count.
+
+## Context Gate
+If during this task a new hard constraint was discovered → add to INVARIANTS.md §I2 before closing task
+```
+
+---
+
 ## coder
 
 ```markdown

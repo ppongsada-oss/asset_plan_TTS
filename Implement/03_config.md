@@ -766,6 +766,15 @@ Copy to `.agents/skills/skill-manifest.json`. Add or remove skills to match your
         { "path": "CLAUDE.md",  "when": "proposing rule injection into CLAUDE.md", "how": "targeted" },
         { "path": "AGENTS.md",  "when": "proposing rule injection into AGENTS.md", "how": "targeted" }
       ]
+    },
+    "ascii_flow": {
+      "path": ".agents/skills/ascii_flow/SKILL.md",
+      "trigger": "Creating or updating ASCII flow diagrams, architecture charts, flow documentation in .md files",
+      "keywords": ["flow diagram", "ascii flow", "flowchart", "architecture diagram", "flow doc", "create flow", "update flow", "draw diagram", "draw flow"],
+      "on_demand_files": [
+        { "path": "knowledge/harness_flow_20260525.md", "when": "reading existing flow as style reference", "how": "targeted" }
+      ],
+      "invoke_from": "Any skill that creates/edits a .md file containing box diagrams must call this skill"
     }
   }
 }
