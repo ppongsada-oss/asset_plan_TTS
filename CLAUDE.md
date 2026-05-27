@@ -24,6 +24,7 @@ If `[Boot]` trace has NOT been emitted yet:
 [B2] Read: .agents/skills/skill-manifest.json → match user intent to keywords[] → identify skill_name
 [B3] Read: .agents/skills/<skill_name>/SKILL.md → load sections[] and context_files
 ```
+→ B1 also checks `.sessions/compact_state.md`: if `dt=today` → emit `[compact-restore]` · B2 parses `sk=` (skip manifest) · B3 sha1 checks `sk_h/mece_h` (skip SKILL.md reads if match) · saves ~2.9k tokens — see **AGENTS.md §Boot B1-B3** for full command
 → B1 resets SESSION_TOTAL=0 when phase≠in_progress · Load CFP_COUNT as `cfp_boot_count` in working memory · Warn if >60k
 → [B4] Platform Probe: if `detected.md` has `platform: unknown` → list tools → update · else skip
 
@@ -73,8 +74,9 @@ Missing either → **STOP** → run the missing phase → only then proceed.
 
 **At task complete — Phase 3 close mandatory sequence (no exceptions):**
 1. Write Phase 0 carry-forward → `session_handoff.md`: `skill_name + CFP_COUNT + task` — survives /compact
-2. `/compact` — ALWAYS run (not conditional) — prevents next task context bloat
-3. Next task: Phase 0 [X] in mece_plan.md + read handoff carry-forward → G0 restore → skip Phase 0 → start Phase 1
+2. Write `compact_state.md` → `.sessions/compact_state.md` (dt/sk/sk_h/mece_h/p3) — BEFORE /compact while session memory intact (see session_manager §Step 5.3)
+3. `/compact` — ALWAYS run (not conditional) — prevents next task context bloat
+4. Next task: Phase 0 [X] in mece_plan.md + read handoff carry-forward → G0 restore → skip Phase 0 → start Phase 1
 
 ---
 
@@ -133,7 +135,7 @@ Skip any gate = `[violation] R5` → discard result → re-run. `irrelevant` ver
 `CLAUDE.md` (in memory — never re-read) · `index_files.json` / `index_variables.json` (grep only) · `master_roadmap.md` (grep or tail -30) · `CODING_FAILURE_PATTERNS.md` (grep count + targeted Read ≤30L) · `INVARIANTS.md` (on-demand gate only) · `error_index.md` (grep → Read ≤40L)
 Violation → emit `[violation] never-full-load` → discard result → re-run as grep.
 
-**Full-Read permitted only:** `.agents/skills/*/SKILL.md` (B3, ≤80L cap) · `src/` ≤80L Phase 1 G2 · `.sessions/active_thread.md` · `.sessions/session_handoff.md` · `REPO_MAP.md`
+**Full-Read permitted only:** `.agents/skills/*/SKILL.md` (B3, ≤80L cap) · `src/` ≤80L Phase 1 G2 · `.sessions/active_thread.md` · `.sessions/session_handoff.md` · `.sessions/compact_state.md` (3-line file, B1 read) · `REPO_MAP.md`
 → Lookup tiers T1/T2/T3, blast-radius check → **editor/SKILL.md** · **AGENTS.md §Never-Full-Load**
 
 ---

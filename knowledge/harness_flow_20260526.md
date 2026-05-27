@@ -68,9 +68,13 @@
 │                                    + attempt_count ★                │
 │                                    + mece_plan_hash ★               │
 │  .sessions/session_NNN.json     ← archive (session_001–073)         │
+│  .sessions/compact_state.md    ← B1 restore: dt/sk/sk_h/mece_h/p3 ◆│
+│                                   written at session close (Step 5.3)│
+│                                   same-day → skip B2/B3 (~2.9k tok) │
 └──────────────────────────────────────────────────────────────────────┘
                    ★ = added in 2026-05-25 vulnerability fixes
                    ● = added in 2026-05-26 CFP tracking + harness_doctor + checkpoint gates
+                   ◆ = added in 2026-05-27 compact_state.md + mece_plan_controler fixes
 ```
 
 ---
@@ -84,23 +88,24 @@ USER MESSAGE
 ┌─────────────────────────────────────────────────────────────────┐
 │  BOOT  [AGENTS.md §Boot · CLAUDE.md §Boot · max 3 tool calls]  │
 │                                                                 │
-│  [B1] Bash: read .sessions/active_thread.md                    │
+│  [B1] Bash: check .sessions/compact_state.md dt= field ◆       │
+│       dt=today → emit [compact-restore] · cat compact_state.md │
+│       Then: read .sessions/active_thread.md                    │
 │       ├─ phase = in_progress  → load SESSION_TOTAL             │
 │       └─ phase ≠ in_progress  → SESSION_TOTAL = 0 (reset)      │
-│       + grep roadmap [/] → show open tasks                     │
-│       + echo CFP_COUNT: N  → store as cfp_boot_count ✦         │
+│       + grep roadmap [/] · echo CFP_COUNT: N → cfp_boot_count  │
 │                                                                 │
-│  [B2] IF prompt contains `skill: <name>` → skip manifest read  │
-│       ELSE: grep keywords from skill-manifest.json (not full   │
-│       read) → identify skill_name · cache (never re-read)      │
+│  [B2] IF [compact-restore]: parse sk= → use as skill_name ◆   │
+│            SKIP manifest read (~1,300 tokens saved)            │
+│       ELSE IF prompt `skill: <name>` → skip manifest           │
+│       ELSE: grep skill-manifest.json keywords → skill_name     │
 │                                                                 │
-│  [B3] Read SKILL.md offset=1 limit=80 → sections[] ONLY        │
-│       on_demand_files = lookup table for G2 · NOT loaded here  │
-│       NEVER auto-load on_demand_files at boot                  │
-│       Also: Read mece/SKILL.md offset=31 limit=110             │
-│       → §Plan Format + §Execution Protocol (S1-A→S1-E)        │
-│         loaded before Phase 1 — agent knows required plan      │
-│         fields before writing mece_plan.md (G9)                │
+│  [B3] IF [compact-restore]: sha1 check sk_h + mece_h ◆        │
+│            match → SKIP SKILL.md reads (~2.9k tokens saved)   │
+│            mismatch → re-read (file changed)                   │
+│       ELSE: Read SKILL.md offset=1 limit=80 → sections[] ONLY  │
+│             + Read mece/SKILL.md offset=31 limit=110           │
+│             → §Plan Format + §Execution Protocol in memory     │
 │                                                                 │
 │  [B4] *** only if detected.md has platform: unknown ***        │
 │       → probe available tools → update detected.md             │
@@ -884,3 +889,10 @@ Root cause X15-X16: Agent was computing ~Tok as `chars ÷ 1000` (overcounting 3�
 | X18 | AGENTS.md Boot resume read: when pending > 0, `grep -n "^\- \[ \]\|^\- \[/\]" .sessions/mece_plan.md` → find first pending item → determine resume phase (Phase 2 vs Phase 3) → Read mece_plan.md at that block (offset=N limit=40) for context | `AGENTS.md §Boot` |
 | X19 | mece/SKILL.md Phase 3 close block: /compact line → after compact, agent notifies user: "compact เรียบร้อยครับ session ใหม่เริ่มได้เลย ไม่ต้องรัน /compact เอง" | `.agents/skills/mece/SKILL.md §Phase 3 close block` |
 | X20 | Implement docs sync (2026-05-27): harness_flow B3 diagram + Token Tracking formula · 03_config.md B3 (2 locations) · 04_skills.md TOKEN CHECK format · 06_orchestrator.md mece_plan.md schema (full rewrite to Phase-Checklist Template format) | `Implement/03_config.md` · `Implement/04_skills.md` · `Implement/06_orchestrator.md` · `knowledge/harness_flow_20260526.md` |
+
+**compact_state.md — Read-once-per-chat System (2026-05-27) ◆**
+| Patch | Change | Files Changed |
+|---|---|---|
+| X21 | compact_state.md format: 3-line machine-readable file (dt/s/task/cfp · sk/sk_h/mece_h · p1/p2/p3). Written at session close BEFORE /compact (while session memory intact). B1 reads it next task — same-day dt= → [compact-restore] → B2/B3 skip framework file reads → saves ~2.9k tokens | New file: `.sessions/compact_state.md` |
+| X22 | AGENTS.md B1/B2/B3 updated: B1 adds compact_state.md check; B2 adds [compact-restore] branch (parse sk=, skip manifest); B3 adds [compact-restore] branch (sha1 check sk_h/mece_h, skip SKILL.md reads if match). Full-Read whitelist: added compact_state.md. Bullet note: saves ~2.9k tokens per session restart | `AGENTS.md §Boot B1-B3 + §Never-Full-Load` |
+| X23 | session_manager/SKILL.md Step 5.3: write compact_state.md before /compact (Step 5.5). mece/SKILL.md Phase 3 close + mece_plan.md template: added compact_state.md write checkbox. CLAUDE.md: Boot note + R5 Full-Read + Phase 3 close step 2 added. Implement/03_config.md: B1/B2/B3 updated (both occurrences). harness_flow: Layer 3 + Boot diagram + patch table updated | `session_manager/SKILL.md` · `mece/SKILL.md` · `.sessions/mece_plan.md` · `CLAUDE.md` · `Implement/03_config.md` · `knowledge/harness_flow_20260526.md` |
