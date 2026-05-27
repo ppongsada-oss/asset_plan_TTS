@@ -139,8 +139,9 @@ USER MESSAGE
 ║ CHECKPOINT CK1: Post-Boot — Ready to Route?             ║
 ╠══════════════════════════════════════════════════════════╣
 ║ □ [Boot] trace emitted in reply line 1                  ║
+║ □ compact_state.md checked · [compact-restore] if today ◆║
 ║ □ cfp_boot_count stored in working memory (B1)          ║
-║ □ skill_name cached from B2/B3 (never re-read)          ║
+║ □ skill_name cached from B2/B3 · or from sk= field ◆   ║
 ║ □ SESSION_TOTAL = 0 (fresh) or loaded (resume)          ║
 ║ → any □ missing: re-run missing Boot step before C0     ║
 ╚══════════════════════════════════════════════════════════╝

@@ -17,11 +17,15 @@ Orchestrator writes this file at **end of Phase 2 M5 AFTER user confirm** (align
 ### Files Read
 | File | Tool | TH ch | EN ch | ~Tok |   ← ~Tok = EN_ch × 0.3 / 1000 · TH_ch × 1.7 / 1000
 |---|---|---|---|---|
+| .sessions/compact_state.md | `cat` (if dt=today → [compact-restore]) | ___ | ___ | ___ |
 | .sessions/active_thread.md | `wc -m` | ___ | ___ | ___ |
-| .agents/skills/<name>/SKILL.md | `wc -m` | ___ | ___ | ___ |
-| .agents/skills/mece/SKILL.md (offset=31 limit=110) | `wc -m` | ___ | ___ | ___ |
+| skill-manifest.json (grep) | `grep keywords \| wc -m` (skip if [compact-restore]) | ___ | ___ | ___ |
+| .agents/skills/<name>/SKILL.md | `wc -m` (skip if sk_h match) | ___ | ___ | ___ |
+| .agents/skills/mece/SKILL.md (offset=31 limit=110) | `wc -m` (skip if mece_h match) | ___ | ___ | ___ |
 Phase 0 total: TH ___ch · EN ___ch → ~___tok
-- [ ] B1/B2-B3/C0-C3 checkboxes
+- [ ] B1: compact_state.md checked · active_thread read · SESSION_TOTAL reset/loaded · CFP_COUNT stored
+- [ ] B2-B3: [compact-restore] → sk= + sha1 check · OR manifest grep + SKILL.md read · sections[] loaded
+- [ ] C0-C3: routing confirmed · no topic switch
 → TOKEN CHECK (runtime · NOT at plan creation): write SESSION_TOTAL → file · cat → ___k
 
 ## Phase 1 — Info Gather

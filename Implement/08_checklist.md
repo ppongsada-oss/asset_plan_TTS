@@ -48,10 +48,12 @@ Expected: ≥ 10 matches
 - [ ] `mece/SKILL.md` has Multi-skill Complex Feature template
 - [ ] `mece/SKILL.md` has Token Check block before `[cycle N]` emit
 - [ ] `mece/SKILL.md` has Feedback & Error Summary as Final Step before `[MECE]` done emit
-- [ ] **B2 conditional skip**: prompt contains `skill: <name>` → manifest grep skipped (saves ~1,300 tokens)
-- [ ] **B3 sections-only load**: SKILL.md read with `offset=1 limit=80` — `on_demand_files` NOT auto-loaded at boot
+- [ ] **B1 compact_state check**: B1 reads `.sessions/compact_state.md` first — `dt=today` → emit `[compact-restore]` · enables B2/B3 skip (~2.9k tokens saved)
+- [ ] **B2 conditional skip**: `[compact-restore]` → parse `sk=` (skip manifest) · OR prompt `skill: <name>` → skip · OR manifest grep
+- [ ] **B3 hash check**: `[compact-restore]` → `sha1sum` check `sk_h` + `mece_h` → match → skip SKILL.md reads
+- [ ] **B3 sections-only load** (non-restore path): SKILL.md read with `offset=1 limit=80` — `on_demand_files` NOT auto-loaded at boot
 - [ ] **Never-Full-Load list** in CLAUDE.md §R5: 7 files listed (CLAUDE.md, index_files.json, index_variables.json, master_roadmap.md, CODING_FAILURE_PATTERNS.md, INVARIANTS.md, error_index.md) with `[violation] never-full-load` emit on breach
-- [ ] **Full-Read whitelist** present: only SKILL.md (B3 ≤80L), src/ ≤80 lines (Phase 1 G2 only), REPO_MAP.md, session files
+- [ ] **Full-Read whitelist** present: SKILL.md (B3 ≤80L) · src/ ≤80L (Phase 1 G2) · REPO_MAP.md · session files · `.sessions/compact_state.md` (3-line, B1)
 - [ ] Verify with: `grep -c "Never-Full-Load\|Full-Read whitelist" CLAUDE.md` → ≥ 2
 - [ ] **L4.5 PURGE step**: drops raw tool results after Cycle N aggregation · keeps only verdict + artifact path
 - [ ] **Delegation Contract ≤800 tokens**: `constraints:` = rule numbers only · `cycle_context:` = ≤5 bullets ≤150 chars
