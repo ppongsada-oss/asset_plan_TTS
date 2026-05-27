@@ -26,9 +26,43 @@ Output: JSON array sorted by score desc, each item:
 """
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
+
+RAG_BASE_URL = os.environ.get("RAG_BASE_URL", "")
+
+
+def _rag_query(query: str, top_k: int = 8) -> list[dict]:
+    """Semantic search via claw-rag-service. Returns [] if service unavailable."""
+    if not RAG_BASE_URL:
+        return []
+    import urllib.request
+    try:
+        payload = json.dumps({"query": query, "top_k": top_k}).encode()
+        req = urllib.request.Request(
+            f"{RAG_BASE_URL}/v1/query",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=2) as resp:
+            data = json.loads(resp.read())
+        return [{
+            "type": "file",
+            "name": h["path"],
+            "file": h["path"],
+            "line": None,
+            "line_end": None,
+            "read_hint": {},
+            "keywords": [],
+            "best_section": h.get("snippet", "")[:120],
+            "score": round((h.get("score") or 0) * 10, 2),
+            "source": "rag",
+        } for h in data.get("hits", [])]
+    except Exception:
+        return []
 
 PROJECT_ROOT   = Path("/Volumes/BriteBrain/Projects/Asset Plan")
 INDEX_VARS     = PROJECT_ROOT / "knowledge/index_variables.json"
@@ -113,6 +147,7 @@ def search_symbols(query: str, top_n: int = 8) -> list[dict]:
             "read_hint": read_hint,
             "keywords": entry.get("keywords", []),
             "score": score,
+            "source": "index_variables",
         })
     return out
 
@@ -190,6 +225,7 @@ def search_files(query: str, top_n: int = 5) -> list[dict]:
             "keywords": entry.get("keywords", []),
             "best_section": best_section.get("name") if best_section else None,
             "score": score,
+            "source": "index_files",
         })
     return out
 
@@ -255,6 +291,7 @@ def search_sessions(query: str, top_n: int = 5) -> list[dict]:
             "summary":   entry.get("summary", ""),
             "keywords":  entry.get("keywords", []),
             "score":     score,
+            "source":    "index_sessions",
         })
     return out
 
@@ -307,7 +344,17 @@ def main():
     file_results    = [] if session_only else search_files(query)
     session_results = search_sessions(query)
 
-    combined = sym_results + file_results + session_results
+    if not session_only and RAG_BASE_URL:
+        rag_hits = _rag_query(query)
+        if rag_hits:
+            seen = {h["file"] for h in rag_hits}
+            sym_results  = [r for r in sym_results  if r.get("file") not in seen]
+            file_results = [r for r in file_results if r.get("file") not in seen]
+            combined = rag_hits + sym_results + file_results + session_results
+        else:
+            combined = sym_results + file_results + session_results
+    else:
+        combined = sym_results + file_results + session_results
     combined.sort(key=lambda x: -x["score"])
 
     if json_out:

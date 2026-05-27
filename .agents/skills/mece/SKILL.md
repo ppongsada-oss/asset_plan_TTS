@@ -7,7 +7,7 @@ description: Loop Phase 2 — builds a section-based plan that maps 1:1 to targe
 ```
 - id: 1
   name: "Build Plan"
-  steps: ["read target Skill sections[]", "map steps to each section", "add verify + rollback per section"]
+  steps: ["read target Skill sections[]", "extended reasoning pass (dependency_map + risk_flags)", "map steps to each section", "add verify + rollback per section"]
 - id: 2
   name: "Confirm & Register"
   steps: ["send plan to user", "wait confirm", "add R-Roadmap entry per section"]
@@ -58,8 +58,8 @@ Section 2 — <name from Skill sections[1]>:
 Independent (any section): [X] · [Y]
 
 Cycle grouping (add when plan has ≥ 2 sections):
-  Cycle 1: [S1, S2]          ← sections with no dependencies between them
-  Cycle 2: [S3]              ← depends on output of S1 or S2
+  Cycle 1: [S1, S2]          ← no mutual dependency (from M1.5 dependency_map[])
+  Cycle 2: [S3]              ← depends on output of S1 or S2 · flag from M1.5 risk_flags[] if irreversible
   S3 context-input: cycle_1_S1.json, cycle_1_S2.json
   S3 skill: editor            ← declare Skill: for every Cycle N+1 section
 ```
@@ -114,6 +114,14 @@ Rules:
 ```
 Section 1 — Build Plan:
   [S1-A] Load sections[] from B3 Boot context (already in context window) — re-read .agents/skills/<skill>/SKILL.md only if skill changed since Boot
+  [S1-A.5] REASON — extended reasoning pass across ALL sections (one pass only):
+    □ Dependencies: section A output → section B input? → mark Sequential
+    □ Parallelizable: sections with no shared state → mark Parallel
+    □ Irreversible: any [gate] / delete / DB write? → flag + note scope
+    □ Risk surface: which section has highest blast-radius if wrong?
+    □ Outcome sketch: "done" per section → feeds S1-C Verify-N criteria
+    Budget: ≤600 tokens · working memory only · do NOT write to file
+    → result informs: Sequential/Parallel grouping in S1-B + Verify-N in S1-C
   [S1-B] Map MECE steps to each section (use templates below as base)
   [S1-C] Add Verify + Rollback per section
   [S1-D] Copy Constraints: for each section, grep `## MECE Constraints Block` from that section's SKILL.md → paste ≤5 most relevant lines into `Constraints:` field of that section
@@ -274,7 +282,7 @@ Section 1 — Scope & Design:
     - Pre-assign ALL T-IDs before any spawn (INVARIANTS.md §I6) · no src/ edit without gather + mece plan
     - [pre-read] T0 lookup → emit [pre-read] · [post-read] verdict · skip = [violation R5/CFP-004]
   [A] R4 scope probe → `find src/ -name "*.ts" | wc -l` (baseline)
-  [B] identify which sections need coder vs editor vs file_manager
+  [B] identify which sections need coder vs editor vs file_manager · use M1.5 dependency_map[] → assign Cycle grouping · flag M1.5 risk_flags[] (gate/DB/delete) for user attention at M3
   [C] pre-assign roadmap T-IDs for all sections (INVARIANTS.md §I6)
   Verify: `grep -c "? " .sessions/mece_plan.md` = 0 · no unresolved placeholders
   Rollback: n/a (read-only section)
@@ -383,6 +391,7 @@ Phase 1 total: TH ___ch · EN ___ch → ~___tok
 | .agents/skills/mece/SKILL.md (offset) | `sed -n 'N,Mp' \| wc -m` | ___ | ___ | ___ |
 Phase 2 total: TH ___ch · EN ___ch → ~___tok
 
+- [ ] M1.5: reasoning pass done · dependency_map[] + risk_flags[] in working memory
 - [ ] M2: plan 1:1 sections · Skill: + Tool: per section · ≥2 Verify-N
 - [ ] M3: user confirmed · M4: roadmap entries written
 - [ ] M5: [✓ MECE] emitted · mece_plan.md written today

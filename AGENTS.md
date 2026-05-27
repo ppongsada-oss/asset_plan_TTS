@@ -220,6 +220,15 @@ After 3 loops without `[✓ gather]`:
 
 ```
 [M1] Read: .agents/skills/mece/SKILL.md offset=1 limit=100  ← format + rules section only, skip examples
+[M1.5] REASON — extended reasoning pass across ALL Skill sections (before building plan):
+       In one pass, think through:
+         □ Dependencies: does section A output feed section B? → mark Sequential
+         □ Parallelizable: sections with no shared state → mark Parallel
+         □ Irreversible: any [gate] / delete / DB write / overwrite? → flag + note scope
+         □ Risk surface: which section has highest blast-radius if wrong?
+         □ Outcome sketch: what does "done" look like per section? (feeds M2.5 Verify-N)
+       Output: dependency_map[] + risk_flags[] + draft_verify[] — working memory only
+       Token budget: ≤600 tokens · do NOT write to file · feeds M2 grouping + M2.5 Verify-N
 [M2] Build: plan covering ALL sections defined in Skill (must map 1:1, not generic)
 [M2.5] DoD: for each section, define ≥1 runnable verify command or measurable success criterion
         Format: Verify-<N>: `<command>` → expected: <output or condition>
@@ -409,6 +418,23 @@ constraints:
 ```
 
 Missing `constraints:` block in execution sub-agent prompt = **CFP violation**.
+
+---
+
+### OmO Role Assignment (apply when sections > 2 OR any section has [gate] / DB action)
+
+| Role | Maps to | Model | Responsibility |
+|---|---|---|---|
+| Architect | Phase 2 (main agent) | sonnet | Build MECE plan · dependency_map from M1.5 · draft Verify-N per section |
+| Executor | Phase 3 REACT loop | sonnet | Run sections · emit [✓ written] per step · write session_handoff after each section |
+| Reviewer | Completion Gate | haiku sub-agent | Verify all □ pass · report PASS or FAIL list · read-only |
+
+**Reviewer sub-agent rules:**
+- Spawn AFTER all sections executed, BEFORE reporting done to user
+- Prompt: paste Verify-N list from mece_plan.md + grep commands for each criterion
+- Output: `PASS` (all criteria met) OR `FAIL: [section, criterion, actual_output]`
+- On FAIL → structured diff → main agent retries that section (1× max) → R13 escalate if still fails
+- Reviewer is read-only — no Edit/Write tools · cannot modify src/
 
 ---
 

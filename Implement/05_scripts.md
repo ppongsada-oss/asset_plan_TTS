@@ -67,21 +67,23 @@ Output format (--json):
       "line_end": <N>,
       "read_hint": "offset=<N> limit=<N>",
       "keywords": ["..."],
-      "score": <0.0–1.0>
+      "score": <int 0–12>,
+      "source": "index_variables" | "index_files" | "index_sessions" | "rag"
     },
     ...
   ]
 
-Returns: top 5 results sorted by score descending.
+Returns: top results sorted by score descending.
 Empty result → proceed to T1 grep tier.
 ```
 
 Data sources searched:
-- `knowledge/index_variables.json` — symbols (`type: "symbol"`)
-- `knowledge/index_files.json` — files (`type: "file"`)
-- `knowledge/index_sessions.json` — session history (`type: "session"`, --session flag)
+- `knowledge/index_variables.json` — symbols (`type: "symbol"`, `source: "index_variables"`)
+- `knowledge/index_files.json` — files (`type: "file"`, `source: "index_files"`)
+- `knowledge/index_sessions.json` — session history (`type: "session"`, `source: "index_sessions"`, --session flag)
+- `claw-rag-service` — semantic search (`source: "rag"`) · enabled when `RAG_BASE_URL` env var is set · results prepended before index hits · fallback to index on service unavailable
 
-Scoring: exact name match = 1.0 · substring match = 0.7 · keyword overlap = 0.3–0.6
+Scoring: token overlap scoring (int) · rag source: cosine similarity normalized 0–10
 
 Integration points:
 - **`editor/SKILL.md §T0`** — run before any Read: `python scripts/lookup.py "SymbolName" --json`

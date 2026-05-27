@@ -124,7 +124,8 @@ Execution sub-agents MUST include `constraints:` block (roadmap, gather/mece fil
 ## R5 · Index-First Lookup
 
 **T0 (run before T1–T3):** `python scripts/lookup.py "<symbol or keyword>" --json`
-→ Returns file + line + read_hint (offset/limit) + keywords · Skip if result empty → proceed to T1.
+→ Returns file + line + read_hint (offset/limit) + keywords + score + source (index_variables|index_files|index_sessions|rag) · Skip if result empty → proceed to T1.
+→ Session-only: add `--session` flag (bypasses RAG · searches index_sessions only) · Semantic search: set `RAG_BASE_URL` env var when claw-rag-service is running.
 
 Emit BEFORE every Read: `**[pre-read]** Target: \`<symbol>\` · Tier: T<0|1|2|3> · Line: <N> · Will read: offset=<N> limit=60`
 Emit AFTER every Read: `**[post-read]** File: \`<path>\` · Verdict: relevant|partial|irrelevant`

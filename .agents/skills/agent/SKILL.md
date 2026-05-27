@@ -65,7 +65,13 @@ Orchestrator skill. Handles two responsibilities:
 - > 60k? → TOKEN PAUSE (do not spawn next cycle until user confirms resume)
 - ≤ 50k? → spawn immediately
 6. Call `<spawn_tool>` for Cycle N+1 — inject cycle_N results as `cycle_context:` in each Subagent Prompt
-7. Repeat until all Cycles done → Completion Gate
+7. Repeat until all Cycles done → Completion Gate:
+   **[Reviewer] Spawn haiku sub-agent (read-only) — BEFORE reporting done to user:**
+   - Prompt: Verify-N list from mece_plan.md + grep commands per criterion
+   - Output: `PASS` (all criteria met) OR `FAIL: [section, criterion, actual_output]`
+   - On FAIL → structured diff → main agent retries that section (1× max) → R13 escalate if still fails
+   - Reviewer has no Edit/Write tools — read-only verification only
+   - Skip Reviewer if task has ≤2 sections AND no [gate]/DB actions (lightweight tasks)
 ```
 
 **Delegation Contract — every sub-agent prompt must include:**

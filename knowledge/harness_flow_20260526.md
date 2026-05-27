@@ -291,6 +291,13 @@ Runs ONCE per task. Resume → skip if plan is still valid.
 ┌─────────────────────────────────────────────────────────────────────┐
 │  [M1] Load .agents/skills/mece/SKILL.md                             │
 │                                                                     │
+│  [M1.5] REASON — extended reasoning pass across ALL sections:       │
+│   □ Dependencies: A→B output chain? → Sequential                   │
+│   □ Parallelizable: no shared state → Parallel (feeds Cycle groups) │
+│   □ Irreversible: [gate]/delete/DB? → flag for M3 user attention    │
+│   □ Risk surface + Outcome sketch → feeds M2.5 Verify-N            │
+│   Budget: ≤600 tokens · working memory only · not written to file   │
+│                                                                     │
 │  [M2] Build plan 1:1 with Skill sections — REQUIRED per section:    │
 │   Section N — <name from Skill sections[]>:                         │
 │     Skill:    <editor|coder|file_manager|variable_manager|agent>    │
@@ -589,6 +596,15 @@ CHECKPOINT CK6 — Agent may NOT report done until ALL pass:
 │    (errors/retries listed + new CFP if pattern found)               │
 │                                                                      │
 │  Any unchecked → continue Phase 3 (never report done prematurely)   │
+│                                                                      │
+│  OmO Reviewer (apply when sections > 2 OR any [gate]/DB action):    │
+│  Spawn haiku sub-agent (read-only) BEFORE reporting done:            │
+│    Prompt: Verify-N list from mece_plan.md + grep commands           │
+│    Output: PASS or FAIL: [section, criterion, actual_output]         │
+│    On FAIL → retry section (1× max) → R13 escalate if still fails   │
+│    Reviewer has no Edit/Write tools — read-only only                 │
+│  → [agent/SKILL.md §Orchestration step 7]                           │
+│                                                                      │
 │  All checked   → Task Complete ✅                                   │
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -898,3 +914,15 @@ Root cause X15-X16: Agent was computing ~Tok as `chars ÷ 1000` (overcounting 3�
 | X22 | AGENTS.md B1/B2/B3 updated: B1 adds compact_state.md check; B2 adds [compact-restore] branch (parse sk=, skip manifest); B3 adds [compact-restore] branch (sha1 check sk_h/mece_h, skip SKILL.md reads if match). Full-Read whitelist: added compact_state.md. Bullet note: saves ~2.9k tokens per session restart | `AGENTS.md §Boot B1-B3 + §Never-Full-Load` |
 | X23 | session_manager/SKILL.md Step 5.3: write compact_state.md before /compact (Step 5.5). mece/SKILL.md Phase 3 close + mece_plan.md template: added compact_state.md write checkbox. CLAUDE.md: Boot note + R5 Full-Read + Phase 3 close step 2 added. Implement/03_config.md: B1/B2/B3 updated (both occurrences). harness_flow: Layer 3 + Boot diagram + patch table updated | `session_manager/SKILL.md` · `mece/SKILL.md` · `.sessions/mece_plan.md` · `CLAUDE.md` · `Implement/03_config.md` · `knowledge/harness_flow_20260526.md` |
 | X24 | .gitignore: added session runtime files (compact_state.md · gather_complete.md · cycle_*.json · context_compact_*.md) — prevent accidental commits. session_manager MECE Constraints Block: added Step 5.3 entry. harness_flow CK1: added compact_state.md checkbox. Implement/06 Phase 0 table + Implement/08 B1/B2/B3 checklist items updated | `.gitignore` · `session_manager/SKILL.md §MECE Constraints Block` · `harness_flow §CK1` · `Implement/06_orchestrator.md` · `Implement/08_checklist.md` |
+
+---
+
+**Harness Upgrade — claw-code Patterns (2026-05-27) ◇**
+
+| Y# | Change | Files Changed |
+|---|---|---|
+| Y1 | `[M1.5]` extended reasoning pass added to Phase 2 between M1→M2: dependency_map[] + risk_flags[] + outcome_sketch[] in working memory (≤600 tokens · feeds Cycle grouping + Verify-N) | `AGENTS.md §Phase 2` · `harness_flow §Phase 2` |
+| Y2 | OmO Role Assignment table added to Sub-agent R4: Architect(sonnet)/Executor(sonnet)/Reviewer(haiku) · Reviewer spawns at Completion Gate (read-only, PASS/FAIL output) | `AGENTS.md §Sub-agent R4` · `agent/SKILL.md §step 7` · `harness_flow §Completion Gate` |
+| Y3 | `[S1-A.5]` added to mece Execution Protocol between S1-A→S1-B: mirrors M1.5 at skill level | `mece/SKILL.md §Execution Protocol` |
+| Y4 | M1.5 checkbox added to Phase-Checklist Phase 2 block; Sections[] steps list updated; Cycle grouping annotated with M1.5 source; Multi-skill S1[B] references M1.5 dependency_map[] | `mece/SKILL.md §Phase-Checklist` · `§Sections[]` · `§Plan Format` · `§Multi-skill template` |
+| Y5 | `lookup.py` upgraded: `source` field (index_variables/index_files/index_sessions/rag) in all 3 search functions · `RAG_BASE_URL` env var + `_rag_query()` stub · `.claw-rag/` added to .gitignore · CLAUDE.md R5 T0 updated with source + --session + RAG_BASE_URL note | `scripts/lookup.py` · `.gitignore` · `CLAUDE.md §R5` |

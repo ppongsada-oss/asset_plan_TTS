@@ -77,7 +77,12 @@ Orchestrator skill. Handles two responsibilities:
 - > 60k? → TOKEN PAUSE (do not spawn next cycle until user confirms resume)
 - ≤ 50k? → spawn immediately
 6. Call `<spawn_tool>` for Cycle N+1 — inject cycle_N results as `cycle_context:` in each Subagent Prompt
-7. Repeat until all Cycles done → Completion Gate
+7. Repeat until all Cycles done → Completion Gate:
+   **[OmO Reviewer]** Spawn haiku sub-agent (read-only) BEFORE reporting done — when sections > 2 OR any [gate]/DB action:
+   - Prompt: Verify-N list from mece_plan.md + grep commands
+   - Output: `PASS` or `FAIL: [section, criterion, actual_output]`
+   - On FAIL → retry section (1× max) → R13 escalate
+   - Reviewer has no Edit/Write tools
 \```
 
 **Delegation Contract — every sub-agent prompt must include:**
@@ -599,6 +604,9 @@ Rules:
 \```
 Section 1 — Build Plan:
   [S1-A] Read target Skill SKILL.md → parse sections[]
+  [S1-A.5] REASON — extended reasoning pass across ALL sections:
+    □ Dependencies → Sequential · Parallelizable → Parallel · Irreversible → flag
+    □ Risk surface + Outcome sketch → feeds S1-C Verify-N · Budget: ≤600 tokens working memory only
   [S1-B] Map MECE steps to each section (use templates below as base)
   [S1-C] Add Verify + Rollback per section
   Verify: plan section count = Skill section count

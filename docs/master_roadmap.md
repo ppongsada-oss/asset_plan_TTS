@@ -60,15 +60,12 @@
 - [X] T-008.7: หน้าต่างขยายดูรายการอุปกรณ์ภายใต้หมวดหมู่ย่อย และระบบแนะนำรหัสอัตโนมัติ (→ T-077) · attempts: 1 · tool_calls: 1
 - [X] T-008.8: ปุ่มเพิ่มหมวดหมู่หลักพร้อมระบุ Alphabet ตัวถัดไปอัตโนมัติ (→ T-077) · attempts: 1 · tool_calls: 1
 
-
-
 ### Feature 2.2: Data Initialization & Import
 - [X] T-009: สร้างฟังก์ชัน Import/Migration ข้อมูลจาก Excel เข้า DB
 - [X] T-009.1: แก้ไข Bulk Upload route — FK constraint + CSV quoted-field parser (session_023)
 - [X] T-038: เพิ่มการแสดงยอด Site Inventory ในหน้า Admin Project (session_038)
 - [X] T-040: ปรับฟิลด์ Stock ในหน้า Admin ให้เป็น Read-only (session_040)
 - [X] T-038-001-01: แก้ไข Bug Tooltip โดน Card ทับ (overflow-hidden) ในหน้า Admin Projects (→ ERR-027) · attempts: 1 · tool_calls: 10
-
 
 ---
 
@@ -94,7 +91,9 @@
 - [X] T-011.2: เพิ่มคอลัมน์ Running Number (#) ใน PM Review Table (session_056) · attempts: 1 · tool_calls: 3
 - [X] T-011.3: เพิ่มคอลัมน์ Running Number (#) ใน Planning Worksheet (Site) (session_056) · attempts: 1 · tool_calls: 1
 - [X] T-011.4: ปรับปรุงหัวตาราง (Header Polish) ให้สวยงามและสมบูรณ์ในทุก Dashboard (session_056)
-- [X] T-011-003-01: แก้ไข 500 Error และ Variable Inconsistency ใน Store Center Hub (→ ERR-028) · attempts: 1 · tool_calls: 15
+- [X] T-011-004-01: แก้ไขยอดและสถานะในตาราง Store Center Hub ไม่แสดงอัปเดตหลังจากกดส่งเบิกจ่าย/จัดหา (→ ERR-045) · attempts: 1 · tool_calls: 8
+- [X] T-011-004-02: แก้ไขตารางไม่แสดงข้อมูลเนื่องจาก API requests 500 D1 parameter limit (Attempt 2) (→ ERR-048) · attempts: 2 · tool_calls: 61
+- [X] T-011-005-01: เพิ่มการป้องกันการกรอกข้อมูลที่ไม่ใช่ตัวเลข (Input Validation) ในช่องป้อนจำนวนและราคาของโครงการ (→ ERR-049) · attempts: 1 · tool_calls: 38
 
 ---
 
@@ -182,10 +181,59 @@
   - [X] T-084.1: Scope & Index · attempts: 1 · tool_calls: 3
   - [X] T-084.2: Build · attempts: 1 · tool_calls: 12
   - [X] T-084.3: Sync & Close · attempts: 1 · tool_calls: 3
+- [X] T-085: Revert Deletions & Align Project/Matrix Card Colors · attempts: 1 · tool_calls: 18
+  - [X] T-085.1: Diagnose — คืนค่าไฟล์ทั้งหมดใน src/ กลับมาเป็น HEAD
+  - [X] T-085.2: Edit & Verify — ปรับสีการ์ด Matrix Report ให้ตรงกับ Projects ใน page.tsx
+  - [X] T-085.3: Sync & Close — index + error_index + roadmap · attempts: 1 · tool_calls: 6
+- [X] T-085-002-01: กู้คืนปุ่ม Preview และ Export Category/Subcategory ในหน้า Master Data (→ ERR-044) · attempts: 1 · tool_calls: 15
+- [X] T-085-002-02: สร้างหน้าต่าง Popup ซ้อนและระบบแนะนำรหัสใน Category Preview Modal (→ ERR-041) · attempts: 1 · tool_calls: 10
+- [X] T-084-001-01: ปรับแต่งหน้างวดงานและการอนุมัติโครงการให้ใช้งาน Component การ์ดมาตรฐาน (JobCard) เพื่อความสอดคล้องกันทั้งโครงการ (→ ERR-045) · attempts: 1 · tool_calls: 3
+- [X] T-084-002-01: ปรับปรุงการ์ดในหน้าจัดการรอบประเมินให้เป็นแบบมาตรฐาน พร้อมตัวจัดการล็อค/ปลดล็อคด้วยตนเอง และแสดงผลวันที่อัปเดตและระยะเวลาก่อนกำหนดแบบไดนามิก (→ ERR-046) · attempts: 1 · tool_calls: 12
 
+- [X] T-086: Build CFP tracking index + harness_doctor Skill
+  - [X] T-086.1: Create knowledge/index_cfp_fix.json
+  - [X] T-086.2: Update CLAUDE.md R16 — add index_cfp_fix write step
+  - [X] T-086.3: Update session_manager/SKILL.md §3 — mece_plan audit + fix-date-compare
+  - [X] T-086.4: Update self_improve/SKILL.md §1+§2 — group analysis from index
+  - [X] T-086.5: Create harness_doctor/SKILL.md
+  - [X] T-086.6: Update skill-manifest.json — add harness_doctor entry
 
+- [X] T-087: Enhanced mece_plan — Phase 0-3 Checklist + Token Checkpoints + TH/EN Data_Sent
+  - [X] T-087.1: Update mece/SKILL.md — Phase-Checklist Template + Tool/Data_Sent/Token fields
+  - [X] T-087.2: Update AGENTS.md Phase 2 — checklist reference
+  - [X] T-087.3: Update CLAUDE.md PHASE TRANSITION GATE — checklist reference
+  - [X] T-087.4: Update settings.json — TOKEN CHECK hook
+  - [X] T-087.5: Update harness_flow_20260526.md — W# patch table
 
+- [X] T-088: MECE Constraints Block + Structure Gate + Size Index · attempts: 2 · tool_calls: 18
+  - [X] T-088.1: MECE Constraints Block added to 9 skill SKILL.md files
+  - [X] T-088.2: mece/SKILL.md Plan Format + Templates with Constraints:/Tool: fields
+  - [X] T-088.3: AGENTS.md M5 Constraints: required field
+  - [X] T-088.4: index_files.json size field via symbol_indexer.py update_file_sizes()
+  - [X] T-088.5: file_manager/SKILL.md Entry Format + size rules + read strategy
+  - [X] T-088.G1: mece/SKILL.md [S1-E] post-write structure validation
+  - [X] T-088.G2: settings.json PostToolUse Write hook — structural validation of mece_plan.md
+  - [X] T-088.G3: session_manager/SKILL.md Step 0.5d — structure check at session resume
+  - [X] T-088.G4: harness_flow_20260526.md X1-X10 patch rows
+  - [X] T-088.G5: mece/SKILL.md Plan Format Token: fill timing note
+  - [X] T-088.G6: settings.json PreToolUse gate — Constraints:/Tool: count check added
+  - [X] T-088.G7: mece/SKILL.md Plan Format Section 2 timing note (Data_Sent:/Token:)
+  - [X] T-088.G8: .sessions/mece_plan.md reset to blank ready-to-use template
+  - [X] T-088.G9: AGENTS.md B3 — also load mece/SKILL.md offset=31 limit=110 (Plan Format + Execution Protocol) at every boot
+  - [X] T-088.G10: AGENTS.md Boot resume — read mece_plan.md when pending > 0 to identify resume phase before Phase 3
 
+- [X] T-089: Harness Upgrade B3+C2 — extended reasoning pass (M1.5/S1-A.5) + OmO role formalization (Architect/Executor/Reviewer)
+
+- [X] T-090: lookup.py upgrade — source field + RAG_BASE_URL stub + .gitignore + CLAUDE.md R5 note
+  - [X] T-089.1: AGENTS.md — M1.5 extended reasoning step in Phase 2
+  - [X] T-089.2: AGENTS.md — OmO Role Assignment table in Sub-agent R4
+  - [X] T-089.3: mece/SKILL.md — S1-A.5 step in Execution Protocol
+  - [X] T-089.4: mece/SKILL.md — M1.5 checkbox in Phase-Checklist Phase 2
+  - [X] T-089.5: agent/SKILL.md — Reviewer spawn at Completion Gate
+
+- [X] T-056-002-02: ปรับปรุงการเลือกปีและเดือนเป้าหมายในหน้าสร้างงวดงานใหม่ ให้มีฟังก์ชันเลือกปี AD/BE (Attempt 2) (→ ERR-031) · attempts: 2 · tool_calls: 14
+
+- [X] T-077-008-02: ตรวจสอบและแก้ไขระบบลบหมวดหมู่หลัก/ย่อยโดยการ Archive และบล็อกการลบหากถูกใช้งานในแผนงาน (Attempt 2) (→ ERR-042) · attempts: 2 · tool_calls: 21
 
 ---
 ### 🐛 Bug & Error Task Format Reference

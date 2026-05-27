@@ -35,6 +35,7 @@ Phase 0 total: TH ___ch · EN ___ch → ~___tok
 
 ## Phase 2 — Plan
 ### Files Read  (same table format)
+- [ ] M1.5: reasoning pass done · dependency_map[] + risk_flags[] in working memory
 - [ ] M2/M3/M4/M5 checkboxes
 → TOKEN CHECK (runtime · NOT at plan creation) → ___k  (>60k → TOKEN PAUSE)
 
