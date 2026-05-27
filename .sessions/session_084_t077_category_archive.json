@@ -1,8 +1,0 @@
-{
-  "session_id": "session_084_t077_category_archive",
-  "associated_tasks": ["T-077-008-01"],
-  "status": "completed",
-  "estimated_tokens": 18000,
-  "summary_context": "Implemented soft-delete (archiving) for Categories and Subcategories by adding status column to drizzle schema. Updated DELETE endpoint in categories API to mark status as ARCHIVED and cascade update. Created check subqueries inside equipment GET route to check project_plans and project_inventory links. Added conditional DELETE endpoint to equipment API. Added conditional delete button to frontend EquipmentListTable and integrated deletion handlers in EquipmentTable.",
-  "History": []
-}

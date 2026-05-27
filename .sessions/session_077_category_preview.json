@@ -1,8 +1,0 @@
-{
-  "session_id": "session_077_category_preview",
-  "associated_tasks": ["T-077"],
-  "status": "completed",
-  "estimated_tokens": 28000,
-  "summary_context": "Successfully fixed category and subcategory creation and listing bugs. Resolved local D1 database write errors by replacing onConflictDoNothing() with select checks + single-row inserts. Handled Next.js API caching via force-dynamic exports. Fixed CategoryPreviewModal navigation/redirection by adding type='button', e.preventDefault(), and e.stopPropagation() to all modal buttons, and updated routing to cleanly switch activeTab to 'CATEGORY' upon closing the modal without reloading or resetting states. Logged CFP-012 in CODING_FAILURE_PATTERNS.md and SI-2 in self_improve_log.md. ALSO resolved human-readable Thai names override during CSV Catalog upload by implementing static lookup dictionaries mapping codes to names inside the upload API endpoint. Fixed unresponsive 'อัปโหลด Catalog (CSV)' button by adding the missing HTML file input tag bound to fileInputRef.",
-  "History": []
-}

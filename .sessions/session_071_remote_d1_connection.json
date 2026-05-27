@@ -1,8 +1,0 @@
-{
-  "session_id": "session_071_remote_d1_connection",
-  "associated_tasks": ["T-002-002-01"],
-  "status": "completed",
-  "estimated_tokens": 145000,
-  "summary_context": "Switched local Next.js development server to query the live remote Cloudflare D1 database and removed the development-only HTTP seed route. Documented the resolution as ERR-029. Migrated all local SQLite tables and 5713 rows of data to the remote Cloudflare D1 database after applying Drizzle schema migrations to the remote database.",
-  "History": []
-}

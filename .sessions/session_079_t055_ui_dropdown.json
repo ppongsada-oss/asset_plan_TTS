@@ -1,8 +1,0 @@
-{
-  "session_id": "session_079_t055_ui_dropdown",
-  "associated_tasks": ["T-055.4"],
-  "status": "completed",
-  "estimated_tokens": 0,
-  "summary_context": "Completed T-055.4: Refactored Equipment Master Data header into vertical dropdown menus (Catalog + Stock). Fixed '+ เพิ่มรายการใหม่' button inside dropdown to open creation modal.",
-  "History": []
-}

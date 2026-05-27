@@ -1,8 +1,0 @@
-{
-  "session_id": "session_077_category_preview_attempt2",
-  "associated_tasks": ["T-077-004-01", "T-077-004-02"],
-  "status": "completed",
-  "estimated_tokens": 12000,
-  "summary_context": "Implemented backend Upsert logic in Catalog CSV upload API route, permitting overwrite correction of shifted columns and historical database corruption on future re-uploads. Designed and implemented premium Glassmorphic comparison preview modal in EquipmentTable.tsx to display differences (New, Modified, Unchanged items) with side-by-side field diffs, allowing users to choose between Overwrite and Skip modes.",
-  "History": []
-}

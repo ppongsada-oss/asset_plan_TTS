@@ -1,8 +1,0 @@
-{
-  "session_id": "session_068_pm_approval_card_names",
-  "associated_tasks": ["T-014-001-01"],
-  "status": "completed",
-  "estimated_tokens": 0,
-  "summary_context": "Added project_name field to PendingJob type and updated the card rendering in the PM Approval Hub dashboard (src/app/site-plan/pm-approval/page.tsx) to display the project name prominently, aligning the style with SiteJobDashboard.tsx.",
-  "History": []
-}

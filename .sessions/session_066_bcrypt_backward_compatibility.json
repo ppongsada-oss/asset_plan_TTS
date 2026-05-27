@@ -1,8 +1,0 @@
-{
-  "session_id": "session_066_bcrypt_backward_compatibility",
-  "associated_tasks": ["Bugfix"],
-  "status": "completed",
-  "estimated_tokens": 30000,
-  "summary_context": "Fixed login issue by adding backward compatibility for old WebCrypto SHA-256 hashes in password.ts and jwt.ts, allowing all users to login after bcrypt upgrade.",
-  "History": []
-}
