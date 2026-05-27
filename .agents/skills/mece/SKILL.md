@@ -408,9 +408,10 @@ Phase 2 total: TH ___ch · EN ___ch → ~___tok
 - [ ] active_thread.md → phase: done
 - [ ] Write Phase 0 carry-forward → `.sessions/session_handoff.md` (Tool: Write): `skill_name + CFP_COUNT + task` — survives /compact
 - [ ] SESSION_TOTAL written: `printf "SESSION_TOTAL: ___k\n" > .sessions/session_tokens.md` (fill ___k from working memory · do NOT hardcode 0k at plan creation)
-- [ ] Write compact_state.md (BEFORE /compact — session memory intact): fill dt/sk/sk_h/mece_h/p3 → `.sessions/compact_state.md`
+- [ ] Write compact_state.md (BEFORE /compact — session memory intact) (Tool: Bash): fill dt/sk/sk_h/mece_h/p3 → `.sessions/compact_state.md`
+      → Tool MUST be Bash (needs sha1sum + printf — NOT Write tool)
       → format: `dt=<today> s=___k task=___ cfp=___\nsk=___ sk_h=<8chars> mece_h=<8chars>\np1=done p2=done p3=___`
-      → see session_manager/SKILL.md §Step 5.3 for write command · enables B1 [compact-restore] → saves ~2.9k tokens next task
+      → see session_manager/SKILL.md §Step 5.3 for exact Bash command · enables B1 [compact-restore] → saves ~2.9k tokens next task
 - [ ] /compact — ALWAYS run at task complete (carry-forward written FIRST · prevents next-task context bloat)
       → ✅ เมื่อ compact แล้ว แจ้ง user: "compact เรียบร้อยครับ session ใหม่เริ่มได้เลย ไม่ต้องรัน /compact เอง"
 - [ ] [mece-audit] all Verify-N PASS confirmed
