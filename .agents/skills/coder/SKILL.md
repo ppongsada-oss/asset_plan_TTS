@@ -77,3 +77,16 @@ Creating any `.md` file that contains a flow diagram or architecture chart → *
 [→ ascii_flow] Before drawing any box diagram in <file>
 ```
 Style reference: `knowledge/harness_flow_20260525.md` · Skill: `.agents/skills/ascii_flow/SKILL.md`
+
+---
+
+## MECE Constraints Block (copy into mece_plan.md for sections using `coder`)
+```
+- [pre-read]  T0 `lookup.py` first → emit [pre-read] before every Read · skip = [violation R5]
+- [post-read] emit verdict (relevant/partial/irrelevant) after every Read · skip = [violation CFP-004]
+- [✓ written] grep verify after every file created — mandatory
+- Do NOT edit index files directly — call `file_manager` + `variable_manager` after creation
+- Edge Runtime: no Node.js APIs — WebCrypto only (no `crypto.createHash`, no `fs`, no `path`)
+- R15: `src/db/` → [db-gate] → HALT → wait explicit "yes"
+- Roadmap: `[ ] T-N` written before any file creation begins
+```

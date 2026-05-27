@@ -131,6 +131,22 @@
         { "path": "AGENTS.md",  "when": "proposing rule injection into AGENTS.md",  "how": "targeted" }
       ],
       "auto_trigger": "session_manager §3 Step 0 — always called before session close writes"
+    },
+    "harness_doctor": {
+      "path": ".agents/skills/harness_doctor/SKILL.md",
+      "trigger": "CFP recurred after a fix was applied (recurrence_after_fix ≥ 1 in index_cfp_fix.json) OR user asks for structural harness fix",
+      "keywords": [
+        "harness doctor", "fix harness pattern", "recurring cfp", "ซ่อม harness",
+        "cfp ซ้ำหลังแก้", "structural fix", "pattern recurred", "fix still broken"
+      ],
+      "on_demand_files": [
+        { "path": "knowledge/index_cfp_fix.json", "when": "finding top recurred CFP + fix history", "how": "full_ok" },
+        { "path": "CODING_FAILURE_PATTERNS.md", "when": "reading target CFP entry", "how": "targeted" },
+        { "path": "CLAUDE.md", "when": "auditing gap location + applying structural fix", "how": "targeted" },
+        { "path": "AGENTS.md", "when": "auditing gap location + applying structural fix", "how": "targeted" },
+        { "path": ".claude/settings.json", "when": "checking or adding hooks", "how": "targeted" }
+      ],
+      "auto_trigger": "self_improve §2.5 when recurred_after_fix[] not empty — recommend harness_doctor to user"
     }
   },
 

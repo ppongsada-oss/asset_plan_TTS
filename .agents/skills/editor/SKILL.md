@@ -276,3 +276,16 @@ R12 verify fail → write `### Failed Approaches:` → then emit `[blocked]` per
 
 ## Limitations
 - Do not create entirely new architectures here. If a task requires widespread new file scaffolding, the Agent Orchestrator should use the `coder` skill instead.
+
+---
+
+## MECE Constraints Block (copy into mece_plan.md for sections using `editor`)
+```
+- [pre-read]  T0 `lookup.py` first → emit [pre-read] before every Read · skip = [violation R5]
+- [post-read] emit verdict (relevant/partial/irrelevant) after every Read · skip = [violation CFP-004]
+- [pre-edit]  grep `index_variables.json` → check `used_in` → emit [pre-edit] before symbol Edit · skip = [violation R5-edit] · HALT
+- [✓ written] grep verify after every Edit — mandatory before marking step done
+- R12: re-read changed section after Edit — confirm no broken imports
+- R14: [gate] before delete/overwrite/batch >5 files → wait user confirm
+- R15: `src/db/` edit → [db-gate] → HALT → wait explicit "yes"
+```

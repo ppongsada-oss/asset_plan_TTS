@@ -22,3 +22,14 @@ You must execute your duties on `knowledge/index_variables.json` under these con
 
 ## Pre-Analysis Role
 Before doing any structural refactoring, query this index to find all dependencies that rely on a specific variable to ensure zero downtime.
+
+---
+
+## MECE Constraints Block (copy into mece_plan.md for sections using `variable_manager`)
+```
+- `python scripts/symbol_indexer.py` after every symbol add/delete/rename — prevents silent line drift
+- Rename: update JSON key AND trace all `used_in` files → call `editor` for every call site
+- `used_in` link: append new file path when symbol imported into new location
+- Deletion: erase JSON entry AND remove from all `used_in` arrays that referenced it
+- [✓ written] grep verify key exists in `index_variables.json` after every update
+```

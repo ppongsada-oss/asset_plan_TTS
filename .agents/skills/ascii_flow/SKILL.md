@@ -189,3 +189,14 @@ After diagram is written:
 - Verify: `grep -c "┌" <file>` → matches expected box count
 - Verify: no broken box chars (┌ without matching └ on same indent level)
 - Reference file: add to `knowledge/session_index.md` if it's a knowledge doc
+
+---
+
+## MECE Constraints Block (copy into mece_plan.md for sections using `ascii_flow`)
+```
+- Load ascii_flow BEFORE drawing any box diagram in .md files — no exceptions
+- Style reference: `knowledge/harness_flow_20260525.md` (box widths, connector chars, palette)
+- Outer box: 70 chars wide · inner nested box: 66 chars · ≤5 lines per inner box
+- [✓ written] verify: `grep -c "┌" <file>` matches expected box count
+- Diagram only — no src/ code changes in same section as diagram creation
+```

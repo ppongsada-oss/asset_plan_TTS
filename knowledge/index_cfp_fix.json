@@ -1,0 +1,213 @@
+{
+  "_schema": {
+    "version": "1.0",
+    "description": "CFP fix tracking index — occurrence log, fix attempts, group classification",
+    "groups": ["skip_planning", "skip_verification", "rule_drift", "index_desync", "premature_report", "boot_gap", "db_safety", "token_management"],
+    "status_values": ["active", "resolved-pending", "resolved", "recurred"],
+    "fix_status_values": ["pending", "recurred", "resolved"],
+    "detection": "occurrence.date > fixes[-1].applied_date AND fixes[-1].status=pending → set fixes[-1].status=recurred · recurrence_after_fix += 1"
+  },
+  "CFP-005": {
+    "title": "Skipping MECE Plan / Modifying Code Without Plan Alignment",
+    "group": "skip_planning",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-006": {
+    "title": "Unbounded Loop → Token Exhaustion",
+    "group": "token_management",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-007": {
+    "title": "Using Local Date/Time APIs Without Gregorian Safety → Buddhist Year Corruption",
+    "group": "rule_drift",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-008": {
+    "title": "MECE Plan Staleness on Resume → Edits Target Wrong Lines",
+    "group": "skip_planning",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-009": {
+    "title": "Parallel Sub-agent Token Accounting Gap → Missed Threshold Triggers",
+    "group": "token_management",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-010": {
+    "title": "Skipping Loop Architecture Phases 1 & 2 (Info Gather & MECE Plan)",
+    "group": "skip_planning",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-011": {
+    "title": "Creating Implementation Plan Artifact Before MECE Plan Approval",
+    "group": "skip_planning",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-012": {
+    "title": "Skipping MECE Plan for Bug Fixes and Follow-up Tasks",
+    "group": "skip_planning",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-013": {
+    "title": "Omitting Harness Trace Tokens During Implementation → Silent Execution",
+    "group": "skip_verification",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-014": {
+    "title": "Closing Session with Incomplete/Unchecked MECE Plan or Compilation Errors",
+    "group": "premature_report",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-015": {
+    "title": "MECE Plan Written to Chat/Artifact Instead of .sessions/mece_plan.md",
+    "group": "skip_planning",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-016": {
+    "title": "Skipping Per-Turn Routing (C1-C3) Checks and Working Before Boot in Subsequent Turns",
+    "group": "boot_gap",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-017": {
+    "title": "Skipping Boot Sequence, Per-Turn Routing, and Info Gather/MECE Plan Loop on Task Resumption/Topic Switch",
+    "group": "boot_gap",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-018": {
+    "title": "Missing Resume Staleness Gate Check on Task Resumption",
+    "group": "boot_gap",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-019": {
+    "title": "Incorrect MECE Plan Format or Placement",
+    "group": "skip_planning",
+    "occurrences": [],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": null,
+    "backfilled": true
+  },
+  "CFP-020": {
+    "title": "Creating Implementation Plan Artifact Before MECE Plan User Confirmation (Recurrence of CFP-011)",
+    "group": "skip_planning",
+    "occurrences": [
+      {
+        "date": "2026-05-26",
+        "model": "gemini-3.5-flash-medium",
+        "session": "session_092"
+      },
+      {
+        "date": "2026-05-26",
+        "model": "gemini-3.5-flash-medium",
+        "session": "session_093_category_archive"
+      }
+    ],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": "2026-05-26",
+    "backfilled": false
+  },
+  "CFP-021": {
+    "title": "Missing mece_plan.md Reset to Blank Template at Task Completion (Recurrence of CFP-019)",
+    "group": "skip_planning",
+    "occurrences": [
+      {
+        "date": "2026-05-26",
+        "model": "gemini-3.5-flash-medium",
+        "session": "session_092"
+      }
+    ],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": "2026-05-26",
+    "backfilled": false
+  },
+  "CFP-022": {
+    "title": "Resetting Phase 0 in mece_plan.md Within Same Session (Recurrence of CFP-019)",
+    "group": "skip_planning",
+    "occurrences": [
+      {
+        "date": "2026-05-26",
+        "model": "gemini-3.5-flash-medium",
+        "session": "session_092"
+      }
+    ],
+    "fixes": [],
+    "recurrence_after_fix": 0,
+    "status": "active",
+    "last_seen": "2026-05-26",
+    "backfilled": false
+  }
+}

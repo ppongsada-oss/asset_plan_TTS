@@ -132,3 +132,9 @@ On merge: orchestrator verifies each placeholder was filled. Missing fill = sub-
 If sub-agent logs beyond its assigned range → orchestrator renumbers on merge and updates CODING_FAILURE_PATTERNS.md.
 
 **Missing this step = duplicate CFP numbers when ≥2 agents both call `grep -c` simultaneously (V6 vulnerability)**
+
+**index_cfp_fix.json race condition (same pattern):**
+When parallel sub-agents may log CFP occurrences to index_cfp_fix.json:
+- Orchestrator locks the update: read → modify → write in ONE agent only (orchestrator, not sub-agent)
+- Sub-agents MUST pass occurrence data back to orchestrator via output JSON — never write to index_cfp_fix.json directly
+- Missing this = two agents overwrite each other's occurrence entries silently

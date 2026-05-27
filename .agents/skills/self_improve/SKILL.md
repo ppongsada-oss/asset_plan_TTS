@@ -60,6 +60,29 @@ Step 1: grep "^## CFP-" CODING_FAILURE_PATTERNS.md
 Step 2: grep -cE "recurrence of CFP-[0-9]+" CODING_FAILURE_PATTERNS.md per CFP-N
          (use [0-9]+ not [0-9] — supports CFP-10, CFP-11, … without truncation)
          → build frequency table: CFP-N → recurrence count
+
+Step 2.5 — Index Group Analysis (reads knowledge/index_cfp_fix.json):
+  python3 -c "
+import json
+idx = json.load(open('knowledge/index_cfp_fix.json'))
+group_counts = {}
+recurred = []
+for cfp_id, entry in idx.items():
+    if not isinstance(entry, dict) or 'group' not in entry:
+        continue
+    g = entry['group']
+    occ = len(entry.get('occurrences', []))
+    group_counts[g] = group_counts.get(g, 0) + occ
+    if entry.get('recurrence_after_fix', 0) > 0:
+        recurred.append(cfp_id)
+top_group = max(group_counts, key=group_counts.get) if group_counts else 'unknown'
+print('group_summary:', group_counts)
+print('top_group:', top_group)
+print('recurred_after_fix:', recurred)
+  "
+  → store as: group_summary{} · top_group · recurred_after_fix[]
+  → recurred_after_fix not empty → flag for harness_doctor (structural fix needed)
+
 Step 3: Identify top pattern using PRIORITY QUEUE (NH2 + V13 fix ◆):
   Priority 1 — CURRENT SESSION: CFP-N where N > cfp_boot_count
     These happened THIS session → always address first, regardless of recurrence count
@@ -83,6 +106,9 @@ Step 5: Emit:
   · Root cause: <one-line summary from Prevention section>
   · Session context: <what task + action triggered it> (if found in Step 4.5)
   · Other patterns: <list remaining titles briefly>
+  · Group summary: { skip_planning: N, boot_gap: N, ... } (from index_cfp_fix.json Step 2.5)
+  · Top group: <group_name> — <total_occurrences> occurrences across <M> CFPs
+  · ⚠️ Recurred after fix: <recurred_after_fix list> → harness_doctor recommended (if non-empty)
 ```
 
 ---
@@ -263,3 +289,14 @@ Hard rules: never skip · never re-use CFP number · same pattern recurs → new
 - Proposals must be minimal and specific — one rule change per session
 - If user rejects proposal: log `[cfp-deferred CFP-N]` in session_handoff.md
   so next session can re-propose if pattern recurs
+
+---
+
+## MECE Constraints Block (copy into mece_plan.md for sections using `self_improve`)
+```
+- Only runs if current_count > cfp_boot_count OR user explicitly requested
+- Never delete existing CFP entries — append only
+- CFP Archive Gate: if count > 20 → archive oldest entries first (before new entry)
+- [✓ written] verify CFP-N entry exists in CODING_FAILURE_PATTERNS.md after append
+- Update `knowledge/index_cfp_fix.json` with occurrence + model + date for every new CFP
+```

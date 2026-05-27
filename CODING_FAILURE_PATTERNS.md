@@ -262,3 +262,52 @@ In applications where dates are compared as strings (`YYYY-MM-DD` or `YYYY-MM`),
 2. Format the plan with structured sections and Verify-N criteria for each section, and await user approval.
 
 **Detection signal:** User or system warns about invalid MECE plan format or placement.
+
+---
+
+## CFP-020 · Creating Implementation Plan Artifact Before MECE Plan User Confirmation (Recurrence of CFP-011)
+
+**Symptom:** The agent creates the user-facing `implementation_plan.md` artifact and writes the MECE plan file `.sessions/mece_plan.md` before presenting the plan and obtaining user confirmation on both plan steps and DoD (Verify-N criteria).
+
+**Root cause:**
+- Rushing into writing files and artifacts under planning mode rules, while violating the strict sequence of Phase 2 which requires presenting the plan and obtaining user confirmation (M3) before writing the MECE plan (M5) and writing/creating the implementation plan.
+
+**Prevention:**
+1. Under Loop Phase 2, always present the proposed plan and verify criteria in the chat first to wait for user confirmation (M3).
+2. Never write the plan to `.sessions/mece_plan.md` (M5) or create `implementation_plan.md` before the user explicitly approves the plan steps and DoD.
+
+**Detection signal:** User message contains "ทำนอกเหนื่อ harness" or "ทำนอกเหนือ harness" or complains about working outside the process.
+
+**Model:** gemini-3.5-flash-medium
+
+---
+
+## CFP-021 · Missing mece_plan.md Reset to Blank Template at Task Completion (Recurrence of CFP-019)
+
+**Symptom:** The agent completes the execution phase (Phase 3) and closes the session, but leaves `.sessions/mece_plan.md` filled with the completed task details instead of resetting it to a blank template.
+
+**Root cause:**
+- Forgetting to reset `.sessions/mece_plan.md` to a blank template at the end of task execution, violating the clean-up sequence which prepares the MECE plan file for the next task.
+
+**Prevention:**
+1. Under Loop Phase 3 close sequence, always reset `.sessions/mece_plan.md` to the blank template before confirming task completion to the user.
+
+**Detection signal:** User message contains "เคลึยน mece_plan" or "เคลียร์ mece_plan" or complains that the plan was not reset.
+
+**Model:** gemini-3.5-flash-medium
+
+---
+
+## CFP-022 · Resetting Phase 0 in mece_plan.md Within Same Session (Recurrence of CFP-019)
+
+**Symptom:** The agent resets Phase 0 checks and carry-forward metadata to blank placeholders in `.sessions/mece_plan.md` even when continuing under the same active session, causing a loss of boot verification state.
+
+**Root cause:**
+- Overwriting the entire `.sessions/mece_plan.md` file with a blank template on task completion without checking if the session continues, thereby clearing the active Phase 0 boot checks.
+
+**Prevention:**
+1. Under Loop Phase 3 close sequence, check if the session is continuing. If so, preserve Phase 0 `[X]` checkmarks and carry-forward metadata in `.sessions/mece_plan.md`, resetting only Phase 1, Phase 2, and Phase 3 sections.
+
+**Detection signal:** User message contains "เคลึยน mece_plan phase 1-3" or "ล้าง phase 1-3" or asks if Phase 0 should be preserved.
+
+**Model:** gemini-3.5-flash-medium

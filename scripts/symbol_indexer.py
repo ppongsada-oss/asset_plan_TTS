@@ -175,6 +175,41 @@ def merge_into_index(new_symbols: dict[str, dict]) -> None:
     update_files_index(symbols_by_file)
 
 
+def update_file_sizes() -> None:
+    """Compute and store lines/th_chars/en_chars/~tokens for every entry in index_files.json."""
+    if not INDEX_FILES_PATH.exists():
+        return
+    with open(INDEX_FILES_PATH, "r", encoding="utf-8") as f:
+        index = json.load(f)
+
+    files_dict = index.get("files", index) if isinstance(index, dict) else index
+    updated = 0
+
+    for file_path, entry in files_dict.items():
+        full_path = PROJECT_ROOT / file_path
+        if not full_path.exists():
+            continue
+        try:
+            text = full_path.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        line_count = text.count("\n") + (1 if text and not text.endswith("\n") else 0)
+        th_chars = sum(1 for c in text if "฀" <= c <= "๿")
+        en_chars = len(text) - th_chars
+        tokens_est = round(th_chars * 1.7 + en_chars * 0.3)
+        entry["size"] = {
+            "lines": line_count,
+            "th_chars": th_chars,
+            "en_chars": en_chars,
+            "~tokens": tokens_est,
+        }
+        updated += 1
+
+    with open(INDEX_FILES_PATH, "w", encoding="utf-8") as f:
+        json.dump(index, f, indent=2, ensure_ascii=False)
+    print(f"  knowledge/index_files.json updated (size: {updated} entries refreshed).")
+
+
 def main():
     print("Scanning exported symbols in src/ ...")
     symbols = scan_symbols()
@@ -182,6 +217,7 @@ def main():
     merge_into_index(symbols)
     print(f"  knowledge/index_variables.json updated (line, line_end, read_hint, keywords).")
     print(f"  knowledge/index_files.json updated (key_sections, keywords).")
+    update_file_sizes()
     print("\nSample (first 5):")
     for name, info in list(symbols.items())[:5]:
         print(f"  {name}: {info['file']}:{info['line']}–{info['line_end']} hint={info['read_hint']}")

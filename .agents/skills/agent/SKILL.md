@@ -151,6 +151,17 @@ If section has `Skill: coder` → spawn coder sub-agent regardless of action typ
 - NEVER write code or run modifying Bash directly — always delegate to correct skill
 - Sub-agents MUST NOT spawn further agents (max depth = 1)
 
+## MECE Constraints Block (copy into mece_plan.md for sections using `agent`)
+```
+- Pre-assign ALL T-IDs before spawning any sub-agent (INVARIANTS.md §I6)
+- Sub-agent prompts MUST include `constraints:` block (AGENTS.md §Sub-agent Rules R4)
+- Each section agent outputs `.sessions/cycle_N_<section_id>.json` — required before Cycle N+1
+- TOKEN CHECK before each Cycle spawn: >50k → compact first · >60k → TOKEN PAUSE
+- HALT all remaining Cycles if any section status = blocked (no auto-proceed)
+```
+
+---
+
 ## Environment & Paths
 - Libraries: `/Volumes/BriteBrain/Libraries`
 - IDE Context: `/Volumes/BriteBrain/IDE`
