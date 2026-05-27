@@ -190,6 +190,60 @@ Triggered from Loop Phase 3 when verify or observe fails twice.
     "ทำเลย" / "yes" → run self_improve §Section 4 · then proceed to Step 1
 ```
 
+**Step 0.5 — MECE Plan Audit (run if mece_plan.md exists and has sections):**
+```
+0.5a. grep -cE "^\- \[" .sessions/mece_plan.md 2>/dev/null → section_count
+      section_count = 0 → emit [mece-audit-skip] No plan · proceed to Step 0.6
+0.5b. For each Verify-N line in mece_plan.md:
+        FAST-ONLY filter: skip commands matching (npm|yarn|bun|wrangler|tsc|build|compile|test)
+        → slow commands (build/test) are skipped silently — not flagged as failures
+        → only run: grep · wc · ls · python3 -c (read-only) · find
+        Extract command → run it → compare to expected output
+        PASS → collect in audit_passed[]
+        FAIL → collect in audit_failed[]
+0.5c. Emit:
+        [✓ mece-audit] Passed: N/N      (if all pass)
+        [mece-audit-fail] Failed: <section> · Criterion: `<cmd>` → got: <actual>
+      Any FAIL → log as CFP candidate (agent-caused failure, not env)
+        → check if same symptom already in CODING_FAILURE_PATTERNS.md before logging new CFP
+0.5d. Structure check (plan format validation):
+        grep -cE "^  Constraints:" .sessions/mece_plan.md → must = section_count (from 0.5a)
+        grep -c "## Phase 0" .sessions/mece_plan.md → must = 1
+        grep -cE "^  Tool:" .sessions/mece_plan.md → must = section_count
+        FAIL → emit [mece-structure-fail] Missing: <field>
+               Warn user: plan was written without required fields — suggest rebuild Phase 2
+```
+
+**Step 0.6 — Fix Date-Compare (update index_cfp_fix.json recurrence detection):**
+```
+0.6a. python3 -c "
+import json, sys, os
+from datetime import date
+today = str(date.today())
+if not os.path.exists('knowledge/index_cfp_fix.json'):
+    print('index_cfp_fix.json missing — skip'); sys.exit(0)
+idx = json.load(open('knowledge/index_cfp_fix.json'))
+updated = []
+for cfp_id, entry in idx.items():
+    if not isinstance(entry, dict) or not entry.get('fixes'):
+        continue
+    last_fix = entry['fixes'][-1]
+    if last_fix.get('status') == 'pending':
+        later_occ = [o for o in entry.get('occurrences', []) if o['date'] > last_fix['applied_date']]
+        if later_occ:
+            last_fix['status'] = 'recurred'
+            last_fix['recurred_date'] = later_occ[0]['date']
+            last_fix['recurred_session'] = later_occ[0].get('session', 'unknown')
+            entry['recurrence_after_fix'] = entry.get('recurrence_after_fix', 0) + 1
+            entry['status'] = 'recurred'
+            updated.append(cfp_id)
+json.dump(idx, open('knowledge/index_cfp_fix.json','w'), indent=2)
+print('updated:', updated if updated else 'none')
+"
+0.6b. If any recurred detected → emit [cfp-recurred] CFP-N · Fix applied <date> · Still recurred <date>
+      recurrence_after_fix ≥ 1 → flag for harness_doctor on next explicit self-improve run
+```
+
 **5 mandatory file writes — do NOT summarize without completing all:**
 
 ```
@@ -230,7 +284,10 @@ Step 4 — Write session_handoff.md (ALWAYS — even if task is complete)
     tasks_pending: [list of T-IDs still open, or "none"]
     last_action: <final action taken>
     next_session_start: <what to do first next time>
+    # Phase 0 carry-forward — survives /compact · read by G0 restore on next task boot
+    skill_name: <cached skill from working memory>
     cfp_boot_count: <cfp_boot_count from working memory>
+    task: <last completed T-ID>
     cfp_deferred: <merged dict from Step 3.5>
     cfp_dismissed: <merged list from Step 3.5>
     last_self_improve_session: <session_id if §4 ran, else carry from Step 3.5>
@@ -240,6 +297,25 @@ Step 5 — Sync session index
   → updates knowledge/index_sessions.json with this session's keywords + summary
   → enables future lookup.py --session queries to find this session by topic or task ID
   Verify: grep -c "session_<NNN>" knowledge/index_sessions.json → ≥1
+
+Step 5.3 — Write compact_state.md (BEFORE /compact — session memory still intact)
+  Write .sessions/compact_state.md in 3-line machine-readable format:
+  ```
+  dt=<YYYY-MM-DD> s=<SESSION_TOTAL>k task=<task_short> cfp=<cfp_boot_count>
+  sk=<skill_name> sk_h=<sha1sum .agents/skills/<skill>/SKILL.md 2>/dev/null | cut -c1-8> mece_h=<sha1sum .agents/skills/mece/SKILL.md 2>/dev/null | cut -c1-8>
+  p1=done p2=done p3=<done | pending:S3,S4>
+  ```
+  Example Bash write:
+  ```bash
+  printf "dt=$(date +%Y-%m-%d) s=${SESSION_TOTAL}k task=${task} cfp=${cfp_boot_count}\nsk=${skill_name} sk_h=$(sha1sum .agents/skills/${skill_name}/SKILL.md 2>/dev/null | cut -c1-8) mece_h=$(sha1sum .agents/skills/mece/SKILL.md 2>/dev/null | cut -c1-8)\np1=done p2=done p3=${p3_status}\n" > .sessions/compact_state.md
+  ```
+  Purpose: B1 next session reads → same-day dt= → [compact-restore] → B2 skips manifest read · B3 skips SKILL.md reads if sk_h+mece_h match → saves ~2.9k tokens
+  Verify: `grep "^dt=$(date +%Y-%m-%d)" .sessions/compact_state.md` → must return a line
+
+Step 5.5 — Mandatory /compact (ALWAYS — not conditional)
+  Run /compact AFTER Step 5.3 (compact_state.md written) · BEFORE confirming to user
+  Rationale: prevents next-task context bloat · Phase 0 carry-forward in session_handoff.md survives compact · compact_state.md enables skip B2/B3 on restart
+  G0 restore (next task): Read `.sessions/session_handoff.md` → restore skill_name + cfp_boot_count + task → skip Phase 0 → start Phase 1
 
 Step 6 — Confirm to user (list every file written)
   Reply format:
@@ -252,3 +328,14 @@ Step 6 — Confirm to user (list every file written)
 ```
 
 **Never report "session closed" before all 5 files are written.** Summary text alone = incomplete close.
+
+---
+
+## MECE Constraints Block (copy into mece_plan.md for sections using `session_manager`)
+```
+- Step 0 (CFP review) + Step 0.5 (MECE audit) + Step 0.6 (date-compare) run BEFORE 5 file writes
+- Step 3.5: read-merge existing CFP state before writing `session_handoff.md`
+- Step 4: `session_handoff.md` MUST include Phase 0 carry-forward: `skill_name + cfp_boot_count + task`
+- Step 5.5: `/compact` ALWAYS — after index sync · before confirming to user
+- Never report "session closed" before all 5 files written AND Step 5.5 compact run
+```

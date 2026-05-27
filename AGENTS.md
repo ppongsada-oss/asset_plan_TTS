@@ -18,26 +18,40 @@ You are operating inside the **Asset Plan** project. Rules apply to ALL agents r
 ## Boot Sequence (3 tool calls max)
 
 ```
-[B1] Bash: (phase=$(grep "^phase:" .sessions/active_thread.md 2>/dev/null | awk '{print $2}'); [ "$phase" != "in_progress" ] && printf "SESSION_TOTAL: 0\n" > .sessions/session_tokens.md; cat .sessions/active_thread.md 2>/dev/null | tail -4; echo "---"; cat .sessions/session_tokens.md 2>/dev/null; echo "---"; grep -n "\[/\]" docs/master_roadmap.md 2>/dev/null | head -3; echo "---"; echo "CFP_COUNT: $(grep -c '^## CFP-' CODING_FAILURE_PATTERNS.md 2>/dev/null || echo 0)")
-[B2] IF incoming prompt contains `skill: <name>` (orchestrator pre-resolved):
+[B1] Bash: (cs_dt=$(grep "^dt=" .sessions/compact_state.md 2>/dev/null | cut -d= -f2 | cut -d' ' -f1); today=$(date +%Y-%m-%d); [ "$cs_dt" = "$today" ] && echo "[compact-restore]" && cat .sessions/compact_state.md && echo "---"; phase=$(grep "^phase:" .sessions/active_thread.md 2>/dev/null | awk '{print $2}'); [ "$phase" != "in_progress" ] && printf "SESSION_TOTAL: 0\n" > .sessions/session_tokens.md; cat .sessions/active_thread.md 2>/dev/null | tail -4; echo "---"; cat .sessions/session_tokens.md 2>/dev/null; echo "---"; grep -n "\[/\]" docs/master_roadmap.md 2>/dev/null | head -3; echo "---"; echo "CFP_COUNT: $(grep -c '^## CFP-' CODING_FAILURE_PATTERNS.md 2>/dev/null || echo 0)")
+[B2] IF [compact-restore] in B1 output:
+       → parse `sk=<name>` from compact_state.md output → use as skill_name · SKIP manifest read (~1,300 tokens saved)
+       → cache skill_name in working memory
+     ELSE IF incoming prompt contains `skill: <name>` (orchestrator pre-resolved):
        → use that skill_name directly · SKIP manifest read (saves ~1,300 tokens)
      ELSE:
        → Bash: grep -B1 -A6 '"keywords"' .agents/skills/skill-manifest.json | head -80
          Match user intent against keywords[] → identify skill_name
          → Cache skill_name in working memory · NEVER re-read manifest this session
-[B3] Read: .agents/skills/<skill_name>/SKILL.md offset=1 limit=80
-     → load sections[] ONLY · cache in working memory
+[B3] IF [compact-restore] in B1 output:
+       → Bash: `sha1sum .agents/skills/<skill_name>/SKILL.md 2>/dev/null | cut -c1-8`
+         compare to `sk_h=` field in compact_state.md
+         Hash match → SKIP SKILL.md read · skill sections still in context (~1,600 tokens saved)
+         Hash mismatch → file changed → must re-read (proceed to ELSE branch below)
+       → Bash: `sha1sum .agents/skills/mece/SKILL.md 2>/dev/null | cut -c1-8`
+         compare to `mece_h=` field in compact_state.md
+         Hash match → SKIP mece/SKILL.md read (~1,300 tokens saved)
+         Hash mismatch → must re-read
+     ELSE:
+       → Read: .agents/skills/<skill_name>/SKILL.md offset=1 limit=80
+       → Also: Read .agents/skills/mece/SKILL.md offset=31 limit=110
+          → load §Plan Format (required fields: Skill/Tool/Constraints/Verify/Data_Sent/Token) +
+             §Execution Protocol (S1-A through S1-E steps) into working memory
+          → agent knows required plan fields BEFORE Phase 1 — avoids confusion at plan creation
+     (Either path: ensure §Plan Format + §Execution Protocol are in working memory)
      → on_demand_files from manifest = lookup table for G2, NOT loaded at boot
      → NEVER auto-load on_demand_files at B3 — they are read on-demand during G2 only
      → NEVER re-read SKILL.md mid-session unless skill changes (check cached skill_name first)
-     Also: Read .agents/skills/mece/SKILL.md offset=31 limit=110
-     → load §Plan Format (required fields: Skill/Tool/Constraints/Verify/Data_Sent/Token) +
-        §Execution Protocol (S1-A through S1-E steps) into working memory
-     → agent knows required plan fields BEFORE Phase 1 — avoids confusion at plan creation
      → NEVER re-read mece/SKILL.md mid-session (Plan Format + Execution Protocol stay in context)
 ```
 
 - B1 auto-resets SESSION_TOTAL to 0 when phase ≠ in_progress
+- B1 checks compact_state.md: `dt=today` → `[compact-restore]` → B2 skips manifest · B3 skips SKILL.md reads if hashes match → saves ~2.9k tokens per session restart
 - Load CFP_COUNT from B1 output → store as `cfp_boot_count` in working memory
 - If SESSION_TOTAL > 50k → run Mid-Session Compact (non-blocking — see CLAUDE.md R3)
 - If SESSION_TOTAL > 60k → warn user before proceeding
@@ -337,6 +351,7 @@ src/*.tsx / src/*.ts            → Phase 1 G2 only AND file ≤80 lines (else g
 REPO_MAP.md                     → on-demand for directory structure questions
 .sessions/active_thread.md      → C1 routing check
 .sessions/session_handoff.md    → resume flow only
+.sessions/compact_state.md      → B1 [compact-restore] read (3-line file, always full)
 ```
 
 **Violation:** Reading any Never-Full-Load file in full → emit `[violation] never-full-load` → discard result → re-run as grep.
