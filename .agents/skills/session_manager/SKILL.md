@@ -336,6 +336,7 @@ Step 6 — Confirm to user (list every file written)
 - Step 0 (CFP review) + Step 0.5 (MECE audit) + Step 0.6 (date-compare) run BEFORE 5 file writes
 - Step 3.5: read-merge existing CFP state before writing `session_handoff.md`
 - Step 4: `session_handoff.md` MUST include Phase 0 carry-forward: `skill_name + cfp_boot_count + task`
-- Step 5.5: `/compact` ALWAYS — after index sync · before confirming to user
-- Never report "session closed" before all 5 files written AND Step 5.5 compact run
+- Step 5.3: write compact_state.md (Tool: Bash) BEFORE Step 5.5 — session memory must still be intact
+- Step 5.5: `/compact` ALWAYS — after Step 5.3 compact_state.md written · before confirming to user
+- Never report "session closed" before all 5 files written AND Step 5.3+5.5 run
 ```
