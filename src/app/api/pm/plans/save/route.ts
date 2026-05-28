@@ -26,15 +26,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
-    // 1. Update project_plans
+    // 1. Update, Insert or Delete project_plans
     for (const change of changes) {
-      await db.update(project_plans)
-        .set({ required_qty: change.new_qty })
+      const existing = await db.select()
+        .from(project_plans)
         .where(and(
           eq(project_plans.job_id, job_id),
           eq(project_plans.equipment_id, change.equipment_id),
           eq(project_plans.month, change.month)
-        ));
+        ))
+        .get();
+
+      if (existing) {
+        if (change.new_qty === 0) {
+          await db.delete(project_plans)
+            .where(and(
+              eq(project_plans.job_id, job_id),
+              eq(project_plans.equipment_id, change.equipment_id),
+              eq(project_plans.month, change.month)
+            ));
+        } else {
+          await db.update(project_plans)
+            .set({ required_qty: change.new_qty })
+            .where(and(
+              eq(project_plans.job_id, job_id),
+              eq(project_plans.equipment_id, change.equipment_id),
+              eq(project_plans.month, change.month)
+            ));
+        }
+      } else if (change.new_qty > 0) {
+        await db.insert(project_plans)
+          .values({
+            job_id,
+            project_id,
+            equipment_id: change.equipment_id,
+            month: change.month,
+            required_qty: change.new_qty,
+            created_by: payload.id
+          });
+      }
     }
 
     // 2. Create log entry

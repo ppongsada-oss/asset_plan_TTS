@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { UserPlus, Shield, Trash2, ArrowLeft, Search, Check, X } from "lucide-react";
 import Link from "next/link";
+import useSWR, { mutate } from "swr";
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 type User = { id: number; email: string; global_role: string };
 type ProjectRole = { id: number; project_id: string; role: string; user_id: number; email: string };
@@ -17,30 +20,34 @@ export default function ProjectRolesPage() {
   const [projectSearch, setProjectSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const { data: usersRes } = useSWR("/api/users", fetcher);
+  const { data: rolesRes } = useSWR("/api/projects/roles", fetcher);
+  const { data: projectsRes } = useSWR("/api/projects", fetcher);
+
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (usersRes?.success) setUsers(usersRes.data);
+  }, [usersRes]);
+
+  useEffect(() => {
+    if (rolesRes?.success) setRoles(rolesRes.data);
+  }, [rolesRes]);
+
+  useEffect(() => {
+    if (projectsRes?.success) setProjects(projectsRes.data);
+  }, [projectsRes]);
+
+  useEffect(() => {
+    if (usersRes && rolesRes && projectsRes) {
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [usersRes, rolesRes, projectsRes]);
 
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [usersRes, rolesRes, projectsRes] = await Promise.all([
-        fetch("/api/users"),
-        fetch("/api/projects/roles"),
-        fetch("/api/projects")
-      ]);
-      const usersData = await usersRes.json();
-      const rolesData = await rolesRes.json();
-      const projectsData = await projectsRes.json();
-
-      if (usersData.success) setUsers(usersData.data);
-      if (rolesData.success) setRoles(rolesData.data);
-      if (projectsData.success) setProjects(projectsData.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    mutate("/api/users");
+    mutate("/api/projects/roles");
+    mutate("/api/projects");
   };
 
   const handleAssign = async (e: React.FormEvent) => {

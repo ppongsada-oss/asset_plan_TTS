@@ -37,7 +37,9 @@ export default async function JobPlanPage({
 
   const { job, cycle, project } = jobData;
   const targetMonths = JSON.parse(cycle.target_months);
-  const isClosed = job.status === "CLOSED" || new Date(cycle.end_date) < new Date();
+  const isOverdue = new Date(cycle.end_date) < new Date();
+  const isUnlocked = job.is_unlocked === 1;
+  const isClosed = job.status === "CLOSED" || (isOverdue && !isUnlocked);
 
   return (
     <main className="min-h-screen bg-slate-50 p-6 md:p-8">
@@ -85,6 +87,7 @@ export default async function JobPlanPage({
           targetMonths={targetMonths} 
           isClosed={isClosed}
           jobStatus={job.status}
+          isUnlocked={isUnlocked}
         />
       </div>
     </main>

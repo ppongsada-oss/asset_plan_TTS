@@ -44,31 +44,31 @@ export default async function Home() {
           {/* Card 1: Master Data (Store Center/Admin) */}
           {isStoreCenter && (
             <>
-              <Link href="/admin/projects" className="group bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-300 transition-all duration-300 relative overflow-hidden">
+              <Link href="/admin/projects" className="group bg-white p-8 rounded-3xl border border-slate-200 border-l-4 border-l-indigo-500 shadow-sm hover:shadow-xl hover:border-indigo-300 hover:bg-indigo-50/20 transition-all duration-300 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                   <Building2 size={100} />
                 </div>
-                <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-indigo-100 transition-all">
                   <Building2 size={28} />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-800 mb-2">Projects</h2>
                 <p className="text-slate-500 mb-8">จัดการรายชื่อไซต์งานและคลังสินค้า รวมถึงการปิด/Archive โครงการ</p>
                 <div className="flex items-center text-indigo-600 font-semibold group-hover:gap-2 transition-all">
-                  จัดการโครงการ <ArrowRight size={20} className="ml-1" />
+                  จัดการโครงการ <ArrowRight size={20} className="ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>
 
-              <Link href="/master-data" className="group bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-300 transition-all duration-300 relative overflow-hidden">
+              <Link href="/master-data" className="group bg-white p-8 rounded-3xl border border-slate-200 border-l-4 border-l-violet-500 shadow-sm hover:shadow-xl hover:border-violet-300 hover:bg-violet-50/20 transition-all duration-300 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                   <Database size={100} />
                 </div>
-                <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-violet-50 text-violet-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-violet-100 transition-all">
                   <ShieldCheck size={28} />
                 </div>
                 <h2 className="text-2xl font-bold text-slate-800 mb-2">Master Data</h2>
                 <p className="text-slate-500 mb-8">จัดการฐานข้อมูลอุปกรณ์ และตั้งค่ายอดคงเหลือของคลังสินค้ากลาง</p>
-                <div className="flex items-center text-indigo-600 font-semibold group-hover:gap-2 transition-all">
-                  เข้าสู่ระบบหลังบ้าน <ArrowRight size={20} className="ml-1" />
+                <div className="flex items-center text-violet-600 font-semibold group-hover:gap-2 transition-all">
+                  เข้าสู่ระบบหลังบ้าน <ArrowRight size={20} className="ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>
             </>
@@ -76,68 +76,68 @@ export default async function Home() {
 
           {/* Card 2: Store Site (Site Users Only) */}
           {((user?.projectRoles && Object.keys(user.projectRoles).length > 0) || isAdmin || user?.role === "USER") && (
-            <Link href="/site-plan" className="group bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-emerald-300 transition-all duration-300 relative overflow-hidden">
+            <Link href="/site-plan" className="group bg-white p-8 rounded-3xl border border-slate-200 border-l-4 border-l-emerald-500 shadow-sm hover:shadow-xl hover:border-emerald-300 hover:bg-emerald-50/20 transition-all duration-300 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                 <Building2 size={100} />
               </div>
-              <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-emerald-100 transition-all">
                 <Building2 size={28} />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 mb-2">Store Site</h2>
               <p className="text-slate-500 mb-8">สำหรับหน้างาน: บันทึกสต็อกคงเหลือ และร่างแผนความต้องการอุปกรณ์</p>
               <div className="flex items-center text-emerald-600 font-semibold group-hover:gap-2 transition-all">
-                เข้าสู่หน้าจอไซต์งาน <ArrowRight size={20} className="ml-1" />
+                เข้าสู่หน้าจอไซต์งาน <ArrowRight size={20} className="ml-1 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
           )}
 
           {/* Card: Project Approval (PM/Admin) */}
           {canApprove && (
-            <Link href="/site-plan/pm-approval" className="group bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-amber-300 transition-all duration-300 relative overflow-hidden border-l-4 border-l-amber-500">
+            <Link href="/site-plan/pm-approval" className="group bg-white p-8 rounded-3xl border border-slate-200 border-l-4 border-l-amber-500 shadow-sm hover:shadow-xl hover:border-amber-300 hover:bg-amber-50/20 transition-all duration-300 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                 <UserCheck size={100} />
               </div>
-              <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-amber-100 transition-all">
                 <UserCheck size={28} />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 mb-2">Project Approval</h2>
               <p className="text-slate-500 mb-8">สำหรับ PM: ตรวจสอบและอนุมัติแผนการใช้อุปกรณ์จาก Store Site</p>
               <div className="flex items-center text-amber-600 font-semibold group-hover:gap-2 transition-all">
-                เข้าสู่หน้าอนุมัติ <ArrowRight size={20} className="ml-1" />
+                เข้าสู่หน้าอนุมัติ <ArrowRight size={20} className="ml-1 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
           )}
 
           {/* Card 3: Store Center */}
           {isStoreCenter && (
-            <Link href="/store-center" className="group bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-rose-300 transition-all duration-300 relative overflow-hidden">
+            <Link href="/store-center" className="group bg-white p-8 rounded-3xl border border-slate-200 border-l-4 border-l-rose-500 shadow-sm hover:shadow-xl hover:border-rose-300 hover:bg-rose-50/20 transition-all duration-300 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                 <LayoutDashboard size={100} />
               </div>
-              <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-rose-100 transition-all">
                 <LayoutDashboard size={28} />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 mb-2">Store Center</h2>
               <p className="text-slate-500 mb-8">สำหรับคลังกลาง: ตรวจสอบความต้องการ และตัดสินใจจัดหา (Buy/Rent)</p>
               <div className="flex items-center text-rose-600 font-semibold group-hover:gap-2 transition-all">
-                เข้าสู่หน้าจอคลังกลาง <ArrowRight size={20} className="ml-1" />
+                เข้าสู่หน้าจอคลังกลาง <ArrowRight size={20} className="ml-1 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
           )}
 
           {/* Card 4: Matrix Report (Store Center/Admin) */}
           {(isAdmin || user?.role === "STORE_CENTER") && (
-            <Link href="/matrix-report" className="group bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-sky-300 transition-all duration-300 relative overflow-hidden">
+            <Link href="/matrix-report" className="group bg-white p-8 rounded-3xl border border-slate-200 border-l-4 border-l-sky-500 shadow-sm hover:shadow-xl hover:border-sky-300 hover:bg-sky-50/20 transition-all duration-300 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                 <TableProperties size={100} />
               </div>
-              <div className="w-14 h-14 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-sky-100 transition-all">
                 <TableProperties size={28} />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 mb-2">Matrix Report</h2>
               <p className="text-slate-500 mb-8">ดูรายงานภาพรวมการกระจายอุปกรณ์ข้ามโครงการทั้งหมด</p>
               <div className="flex items-center text-sky-600 font-semibold group-hover:gap-2 transition-all">
-                ดูรายงาน Matrix <ArrowRight size={20} className="ml-1" />
+                ดูรายงาน Matrix <ArrowRight size={20} className="ml-1 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
           )}

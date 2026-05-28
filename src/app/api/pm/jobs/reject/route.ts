@@ -5,6 +5,7 @@ import { planning_jobs, project_plans, planning_logs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { invalidateCache } from "@/lib/cache";
 
 export const runtime = "edge";
 
@@ -45,6 +46,12 @@ export async function POST(req: NextRequest) {
       details: JSON.stringify({ notes: notes || "No notes provided" }),
       user_id: payload.id,
     });
+
+    // 4. Invalidate Cache
+    const kv = (env as any).CACHE_KV;
+    if (kv) {
+      await invalidateCache(kv);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

@@ -3,6 +3,9 @@
 import { UserCheck, FileSearch, Loader2, ChevronRight, AlertCircle, LayoutGrid, History, CheckCircle2, XCircle } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 type PendingJob = {
   id: number;
@@ -18,25 +21,21 @@ export default function PMApprovalDashboard() {
   const [loading, setLoading] = useState(true);
   const [viewTab, setViewTab] = useState<"PENDING" | "HISTORY">("PENDING");
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  const { data: jobsResponse } = useSWR("/api/site/jobs", fetcher);
 
-  const fetchJobs = () => {
-    setLoading(true);
-    fetch("/api/site/jobs")
-      .then(res => res.json())
-      .then(json => {
-        if (json.success) {
-          setJobs(json.data);
-        }
-        setLoading(false);
-      })
-      .catch(e => {
-        console.error(e);
-        setLoading(false);
-      });
-  };
+  useEffect(() => {
+    if (jobsResponse?.success) {
+      setJobs(jobsResponse.data);
+    }
+  }, [jobsResponse]);
+
+  useEffect(() => {
+    if (jobsResponse) {
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [jobsResponse]);
 
   const filteredJobs = useMemo(() => {
     if (viewTab === "PENDING") {

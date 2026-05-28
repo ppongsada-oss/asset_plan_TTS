@@ -5,6 +5,7 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 import { eq, sql, and } from "drizzle-orm";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
+import { invalidateCache } from "@/lib/cache";
 
 export const runtime = "edge";
 
@@ -91,12 +92,7 @@ export async function POST(request: NextRequest) {
     // 5. Invalidate Matrix Report Cache
     const kv = (env as any).CACHE_KV;
     if (kv) {
-      const matrixKeys = await kv.list({ prefix: "matrix_report_v3_" });
-      for (const key of matrixKeys.keys) {
-        await kv.delete(key.name);
-      }
-      await kv.delete("dashboard_alerts");
-      console.log(`[POST Decision] ${matrixKeys.keys.length} Matrix Caches invalidated`);
+      await invalidateCache(kv);
     }
 
     return NextResponse.json({ success: true });
@@ -180,12 +176,7 @@ export async function DELETE(request: NextRequest) {
     // 5. Invalidate Matrix Report Cache
     const kv = (env as any).CACHE_KV;
     if (kv) {
-      const matrixKeys = await kv.list({ prefix: "matrix_report_v3_" });
-      for (const key of matrixKeys.keys) {
-        await kv.delete(key.name);
-      }
-      await kv.delete("dashboard_alerts");
-      console.log(`[DELETE Decision] ${matrixKeys.keys.length} Matrix Caches invalidated`);
+      await invalidateCache(kv);
     }
 
     return NextResponse.json({ success: true });

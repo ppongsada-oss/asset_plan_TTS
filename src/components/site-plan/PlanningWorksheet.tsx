@@ -10,6 +10,7 @@ type PlanningWorksheetProps = {
   targetMonths: string[];
   isClosed: boolean;
   jobStatus: string;
+  isUnlocked?: boolean;
 };
 
 type Equipment = {
@@ -20,7 +21,7 @@ type Equipment = {
   remaining_stock: number;
 };
 
-export default function PlanningWorksheet({ jobId, projectId, targetMonths, isClosed, jobStatus }: PlanningWorksheetProps) {
+export default function PlanningWorksheet({ jobId, projectId, targetMonths, isClosed, jobStatus, isUnlocked = false }: PlanningWorksheetProps) {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [plans, setPlans] = useState<Record<number, Record<string, number>>>({}); // equipment_id -> { month: qty }
   const [prevPlans, setPrevPlans] = useState<Record<number, number>>({}); // equipment_id -> prev_month_qty
@@ -279,7 +280,7 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
     }
   };
 
-  const isLocked = isClosed || jobStatus === "SUBMITTED" || jobStatus === "APPROVED";
+  const isLocked = isClosed || (jobStatus === "SUBMITTED" && !isUnlocked) || (jobStatus === "APPROVED" && !isUnlocked);
 
   if (loading) {
     return (
@@ -353,6 +354,15 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
         type="success"
         isLoading={saving}
       />
+
+      {isUnlocked && (
+        <div className="bg-emerald-50 border-b border-emerald-100 p-3 px-6 flex items-start sm:items-center gap-3 text-sm text-emerald-800">
+          <AlertCircle size={18} className="shrink-0 mt-0.5 sm:mt-0 text-emerald-600" />
+          <p>
+            🔓 <strong>ปลดล็อคชั่วคราว:</strong> Store Center ได้เปิดสิทธิ์การเข้าถึงให้คุณเป็นกรณีพิเศษ สามารถแก้ไขข้อมูลและส่งแผนงานได้ตามปกติ
+          </p>
+        </div>
+      )}
 
       {isLocked && (
         <div className="bg-amber-50 border-b border-amber-100 p-3 px-6 flex items-start sm:items-center gap-3 text-sm text-amber-800">

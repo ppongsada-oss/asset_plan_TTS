@@ -3,6 +3,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Filter, Loader2, Table, ChevronDown, CheckCircle2, Info, ArrowUpDown, ChevronUp, ChevronDown as ChevronDownIcon, Download } from "lucide-react";
 import * as XLSX from "xlsx";
+import useSWR from "swr";
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function MatrixReport() {
   const [data, setData] = useState<any[]>([]);
@@ -20,51 +23,41 @@ export default function MatrixReport() {
   // Sorting
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: "", direction: null });
 
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    // Cancel previous request if exists
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-
+  const getMatrixUrl = () => {
     let url = "/api/reports/matrix";
     const params = new URLSearchParams();
     if (selectedCycleId) params.append("cycleId", selectedCycleId.toString());
     if (selectedMonths.length > 0) params.append("months", selectedMonths.join(","));
     if (showArchived) params.append("showArchived", "true");
-    
     if (params.toString()) url += `?${params.toString()}`;
+    return url;
+  };
 
-    setLoading(true);
-    fetch(url, { signal: abortControllerRef.current.signal })
-      .then(res => res.json())
-      .then(json => {
-        if (json.success) {
-          setData(json.matrix);
-          setProjects(json.projects);
-          setProjectMapping(json.projectMapping || []);
-          setCycles(json.cycles || []);
-          
-          if (!selectedCycleId && json.activeCycleId) {
-            setSelectedCycleId(json.activeCycleId);
-          }
-          if (selectedMonths.length === 0 && json.activeMonths) {
-            setSelectedMonths(json.activeMonths);
-          }
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        if (err.name === 'AbortError') return;
-        setLoading(false);
-      });
+  const { data: matrixResponse } = useSWR(getMatrixUrl(), fetcher);
 
-    return () => {
-      if (abortControllerRef.current) abortControllerRef.current.abort();
-    };
-  }, [selectedCycleId, selectedMonths, showArchived]);
+  useEffect(() => {
+    if (matrixResponse?.success) {
+      setData(matrixResponse.matrix);
+      setProjects(matrixResponse.projects);
+      setProjectMapping(matrixResponse.projectMapping || []);
+      setCycles(matrixResponse.cycles || []);
+      
+      if (!selectedCycleId && matrixResponse.activeCycleId) {
+        setSelectedCycleId(matrixResponse.activeCycleId);
+      }
+      if (selectedMonths.length === 0 && matrixResponse.activeMonths && matrixResponse.activeMonths.length > 0) {
+        setSelectedMonths(matrixResponse.activeMonths);
+      }
+    }
+  }, [matrixResponse]);
+
+  useEffect(() => {
+    if (matrixResponse) {
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [matrixResponse]);
 
   const projectMap = useMemo(() => {
     const map: Record<string, string> = {};

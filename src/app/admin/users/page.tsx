@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, X, AlertCircle } from "lucide-react";
+import useSWR, { mutate } from "swr";
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 type User = {
   id: number;
@@ -20,24 +23,27 @@ export default function UsersManagementPage() {
   const [formData, setFormData] = useState({ email: "", password: "", global_role: "USER" });
   const [saving, setSaving] = useState(false);
 
+  const { data: usersResponse } = useSWR("/api/users", fetcher);
+
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (usersResponse?.success) {
+      setUsers(usersResponse.data);
+      setError(null);
+    } else if (usersResponse) {
+      setError(usersResponse.error || "Failed to fetch users");
+    }
+  }, [usersResponse]);
+
+  useEffect(() => {
+    if (usersResponse) {
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [usersResponse]);
 
   const fetchUsers = async () => {
-    try {
-      const res = await fetch("/api/users");
-      const data = await res.json();
-      if (data.success) {
-        setUsers(data.data);
-      } else {
-        setError(data.error || "Failed to fetch users");
-      }
-    } catch (err) {
-      setError("Network error");
-    } finally {
-      setLoading(false);
-    }
+    mutate("/api/users");
   };
 
   const handleOpenModal = (user?: User) => {

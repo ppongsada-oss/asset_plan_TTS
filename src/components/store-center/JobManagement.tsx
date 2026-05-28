@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Calendar, Loader2, CheckCircle2, Edit2, ShieldAlert, Search, X, Trash2 } from "lucide-react";
+import { Plus, Calendar, Loader2, CheckCircle2, Edit2, ShieldAlert, Search, X, Trash2, Clock, AlertTriangle, Timer, Lock, LockOpen } from "lucide-react";
 
 type Project = {
   id: string;
@@ -15,6 +15,7 @@ type Job = {
   project_id: string;
   job_number: string;
   status: string;
+  is_unlocked: number;
 };
 
 type Cycle = {
@@ -26,11 +27,12 @@ type Cycle = {
   jobs: Job[];
 };
 
-const AVAILABLE_MONTHS = [
-  "2026-01", "2026-02", "2026-03", "2026-04", 
-  "2026-05", "2026-06", "2026-07", "2026-08",
-  "2026-09", "2026-10", "2026-11", "2026-12"
-];
+const getDynamicMonths = (year: number) => {
+  return Array.from({ length: 12 }, (_, i) => {
+    const monthNum = String(i + 1).padStart(2, "0");
+    return `${year}-${monthNum}`;
+  });
+};
 
 export default function JobManagement() {
   const [cycles, setCycles] = useState<Cycle[]>([]);
@@ -46,6 +48,7 @@ export default function JobManagement() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [projectFilter, setProjectFilter] = useState<string>("SITE");
   const [projectSearch, setProjectSearch] = useState<string>("");
 
@@ -191,6 +194,27 @@ export default function JobManagement() {
     }
   };
 
+  const handleToggleUnlock = async (jobId: number, currentUnlocked: number) => {
+    const newState = currentUnlocked === 1 ? 0 : 1;
+    const label = newState === 1 ? "ปลดล็อค" : "ล็อคคืน";
+    if (!confirm(`คุณต้องการ${label}การ์ดงานนี้ใช่หรือไม่?`)) return;
+    try {
+      const res = await fetch(`/api/center/jobs/${jobId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_unlocked: newState }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        fetchData();
+      } else {
+        alert("Error: " + json.error);
+      }
+    } catch (e) {
+      alert("เกิดข้อผิดพลาด");
+    }
+  };
+
   const filteredProjects = projects.filter(p => {
     // Hide archived projects UNLESS they are already part of the editing cycle
     const isAlreadyInCycle = editingCycle?.jobs.find(j => j.project_id === p.id);
@@ -248,62 +272,201 @@ export default function JobManagement() {
           <div className="py-12 flex justify-center"><Loader2 className="animate-spin text-slate-400" size={32} /></div>
         ) : cycles.length === 0 ? (
           <div className="py-12 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">ยังไม่มีประวัติการสร้างงวดงาน</div>
-        ) : cycles.map((cycle) => (
-          <div key={cycle.id} className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-200 p-4 flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-                  {cycle.cycle_number}
-                  <span className="text-xs font-normal px-2.5 py-1 bg-slate-200 text-slate-600 rounded-full">
-                    {JSON.parse(cycle.target_months).length} เดือน
-                  </span>
-                </h3>
-                <p className="text-sm text-slate-500 mt-1">เริ่ม: {cycle.start_date} | สิ้นสุด: {cycle.end_date}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => openEditModal(cycle)}
-                  className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-indigo-100"
-                  title="แก้ไขโครงการในงวด"
-                >
-                  <Edit2 size={18} />
-                </button>
-                <button 
-                  onClick={() => handleDeleteCycle(cycle.id, cycle.jobs.some(j => j.status === "APPROVED"))}
-                  className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-rose-100"
-                  title="ลบงวดงานนี้"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {cycle.jobs.length === 0 && <div className="text-sm text-slate-400">ไม่มีโครงการในงวดนี้</div>}
-              {cycle.jobs.map(job => {
-                const project = projects.find(p => p.id === job.project_id);
-                return (
-                  <div key={job.id} className="border border-slate-100 p-3 rounded-lg flex justify-between items-center bg-slate-50/50 hover:border-slate-300 transition-colors">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-bold text-slate-700 truncate">{job.project_id}</div>
-                      <div className="text-[11px] text-slate-600 truncate font-medium mb-0.5">{project?.name || "ไม่พบชื่อโครงการ"}</div>
-                      <div className="text-[10px] text-slate-400 truncate">{job.job_number}</div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-3 shrink-0">
-                      <span className={`px-2 py-1 text-[10px] font-bold rounded-md border ${
-                        job.status === "APPROVED" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                        job.status === "SUBMITTED" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                        "bg-slate-100 text-slate-600 border-slate-200"
-                      }`}>
-                        {job.status}
+        ) : cycles.map((cycle) => {
+          const now = new Date();
+          const endDate = new Date(cycle.end_date);
+          const msPerDay = 1000 * 60 * 60 * 24;
+          const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / msPerDay);
+          const isOverdue = daysLeft < 0;
+          const hasApproved = cycle.jobs.some(j => j.status === "APPROVED");
+
+          return (
+            <div key={cycle.id} className={`rounded-2xl border shadow-sm overflow-hidden border-l-4 ${
+              isOverdue ? "border-rose-200 border-l-rose-500 bg-rose-50/30" :
+              daysLeft <= 3 ? "border-amber-200 border-l-amber-500 bg-amber-50/10" :
+              "border-slate-200 border-l-indigo-500 bg-white"
+            }`}>
+              {/* Cycle Header */}
+              <div className="border-b border-slate-200/80 p-5 flex justify-between items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className={`font-bold text-lg ${
+                      isOverdue ? "text-rose-700" : "text-slate-800"
+                    }`}>
+                      {cycle.cycle_number}
+                    </h3>
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
+                      {JSON.parse(cycle.target_months).length} เดือน
+                    </span>
+                    {hasApproved && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
+                        <Lock size={9} /> มี APPROVED
                       </span>
-                    </div>
+                    )}
+                    {/* Countdown badge */}
+                    {isOverdue ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">
+                        <AlertTriangle size={10} />
+                        เกินกำหนด {Math.abs(daysLeft)} วัน
+                      </span>
+                    ) : daysLeft === 0 ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 animate-pulse">
+                        <Timer size={10} /> ปิดรับวันนี้!
+                      </span>
+                    ) : daysLeft <= 3 ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600">
+                        <Timer size={10} /> เหลือ {daysLeft} วัน
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-50 text-slate-400">
+                        <Clock size={10} /> เหลือ {daysLeft} วัน
+                      </span>
+                    )}
                   </div>
-                );
-              })}
+                  <p className={`text-sm mt-1.5 flex items-center gap-1.5 ${
+                    isOverdue ? "text-rose-500" : "text-slate-500"
+                  }`}>
+                    <Clock size={13} />
+                    เริ่ม: {cycle.start_date} &nbsp;·&nbsp; สิ้นสุด:
+                    <span className={`font-semibold ${
+                      isOverdue ? "text-rose-600" : daysLeft <= 3 ? "text-amber-600" : "text-slate-700"
+                    }`}>{cycle.end_date}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => openEditModal(cycle)}
+                    className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors border border-indigo-100"
+                    title="แก้ไขโครงการในงวด"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCycle(cycle.id, cycle.jobs.some(j => j.status === "APPROVED"))}
+                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors border border-rose-100"
+                    title="ลบงวดงานนี้"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Job cards inside cycle — SiteJobDashboard style */}
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {cycle.jobs.length === 0 && <div className="text-sm text-slate-400 col-span-3 py-6 text-center border-2 border-dashed border-slate-200 rounded-xl">ไม่มีโครงการในงวดนี้</div>}
+                {cycle.jobs.map(job => {
+                  const project = projects.find(p => p.id === job.project_id);
+                  const isApproved = job.status === "APPROVED";
+                  const isSubmitted = job.status === "SUBMITTED";
+                  const isLocked = isApproved || isOverdue;
+
+                  let targetMonthsCount = 0;
+                  try { targetMonthsCount = JSON.parse(cycle.target_months).length; } catch { targetMonthsCount = 0; }
+
+                  return (
+                    <div key={job.id} className={`relative bg-white rounded-2xl border p-5 transition-all shadow-sm hover:shadow-md ${
+                      isOverdue ? "border-rose-200 bg-rose-50/20" :
+                      isApproved ? "border-emerald-200 opacity-90" :
+                      isSubmitted ? "border-amber-200" :
+                      daysLeft <= 3 ? "border-amber-200 hover:border-amber-300" :
+                      "border-indigo-100 hover:border-indigo-300"
+                    }`}>
+
+                      {/* Lock overlay */}
+                      {isLocked && (
+                        <div className="absolute top-4 right-4 text-slate-400">
+                          <Lock size={14} className="opacity-60" />
+                        </div>
+                      )}
+
+                      {/* Status + countdown badges */}
+                      <div className="flex flex-col gap-1.5 mb-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider w-fit ${
+                          isApproved ? "bg-emerald-50 text-emerald-700" :
+                          isSubmitted ? "bg-amber-50 text-amber-700" :
+                          isOverdue ? "bg-rose-100 text-rose-700" :
+                          "bg-indigo-50 text-indigo-700"
+                        }`}>
+                          {job.status}
+                        </span>
+                        {isOverdue ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 w-fit">
+                            <AlertTriangle size={10} /> เกินกำหนด {Math.abs(daysLeft)} วัน
+                          </span>
+                        ) : daysLeft === 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 animate-pulse w-fit">
+                            <Timer size={10} /> ปิดรับวันนี้!
+                          </span>
+                        ) : daysLeft <= 3 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 w-fit">
+                            <Timer size={10} /> เหลือ {daysLeft} วัน
+                          </span>
+                        ) : !isLocked ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-50 text-slate-500 w-fit">
+                            <Clock size={10} /> เหลือ {daysLeft} วัน
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Project name */}
+                      <h4 className={`text-base font-black leading-tight mb-1 ${
+                        isOverdue ? "text-rose-700" :
+                        isLocked ? "text-slate-600" :
+                        "text-indigo-700"
+                      }`}>
+                        {project?.name || job.project_id}
+                      </h4>
+
+                      {/* ID + job number */}
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                          ID: {job.project_id}
+                        </span>
+                        <span className="text-xs font-bold text-slate-500">{job.job_number}</span>
+                      </div>
+
+                      {/* Info rows */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={14} className="text-slate-400 shrink-0" />
+                          <span className="text-xs text-slate-600">เดือนที่ประเมิน: <span className="font-semibold">{targetMonthsCount} เดือน</span></span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock size={14} className={`shrink-0 ${isOverdue ? "text-rose-400" : daysLeft <= 3 ? "text-amber-400" : "text-slate-400"}`} />
+                          <span className="text-xs text-slate-600">Deadline: <span className={`font-semibold ${isOverdue ? "text-rose-600" : daysLeft <= 3 && !isLocked ? "text-amber-600" : ""}`}>{cycle.end_date}</span></span>
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                        <span className={`text-xs font-semibold ${
+                          job.is_unlocked === 1 ? "text-emerald-600" :
+                          isOverdue ? "text-rose-500" : isLocked ? "text-slate-400" : "text-indigo-600"
+                        }`}>
+                          {job.is_unlocked === 1 ? "🔓 ปลดล็อคชั่วคราว" : isApproved ? "อนุมัติแล้ว" : isSubmitted ? "รออนุมัติ" : isOverdue ? "เลยกำหนด" : "เปิดงาน"}
+                        </span>
+                        {(isOverdue || isApproved) && (
+                          <button
+                            onClick={() => handleToggleUnlock(job.id, job.is_unlocked)}
+                            title={job.is_unlocked === 1 ? "ล็อคคืน" : "ปลดล็อค"}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
+                              job.is_unlocked === 1
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                            }`}
+                          >
+                            {job.is_unlocked === 1 ? <><Lock size={10} /> ล็อคคืน</> : <><LockOpen size={10} /> ปลดล็อค</>}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {isModalOpen && (
@@ -341,9 +504,23 @@ export default function JobManagement() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">เลือกเดือนเป้าหมาย (Target Months)</label>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+                      <label className="block text-sm font-medium text-slate-700">เลือกเดือนเป้าหมาย (Target Months)</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500 font-medium">ปีเป้าหมาย (Target Year):</span>
+                        <select 
+                          value={selectedYear}
+                          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                          className="px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white font-medium text-slate-700 outline-none focus:border-indigo-500"
+                        >
+                          {[2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035].map(y => (
+                            <option key={y} value={y}>{y + 543} ({y})</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                      {AVAILABLE_MONTHS.map(m => (
+                      {getDynamicMonths(selectedYear).map(m => (
                         <button
                           type="button"
                           key={m}

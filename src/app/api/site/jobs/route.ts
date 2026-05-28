@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
       project_name: projects.name,
       job_number: planning_jobs.job_number,
       status: planning_jobs.status,
+      is_unlocked: planning_jobs.is_unlocked,
       cycle_number: planning_cycles.cycle_number,
       start_date: planning_cycles.start_date,
       end_date: planning_cycles.end_date,

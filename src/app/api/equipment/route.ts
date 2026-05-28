@@ -3,6 +3,7 @@ import { getDb } from "@/db";
 import { equipment_items, categories, sub_categories } from "@/db/schema";
 import { getRequestContext } from "@cloudflare/next-on-pages";
 import { desc, eq } from "drizzle-orm";
+import { invalidateCache } from "@/lib/cache";
 
 export const runtime = "edge";
 
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
       remaining_stock: Number(body.remaining_stock) || 0,
     }).returning();
 
+    await invalidateCache(env.CACHE_KV);
     return NextResponse.json({ success: true, data: newItem[0] });
   } catch (error) {
     console.error("POST Equipment Error:", error);
@@ -86,6 +88,7 @@ export async function PUT(request: NextRequest) {
       })
       .where(eq(equipment_items.id, body.id));
 
+    await invalidateCache(env.CACHE_KV);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("PUT Equipment Error:", error);

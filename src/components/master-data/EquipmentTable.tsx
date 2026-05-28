@@ -1,8 +1,12 @@
 "use client";
 
-import { Plus, Search, Download, UploadCloud, Loader2, Layers, ChevronDown, ChevronRight, Settings, Database } from "lucide-react";
+import { Plus, Search, Download, UploadCloud, Loader2, Layers, ChevronDown, ChevronRight, Settings, Database, Eye } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import useSWR, { mutate } from "swr";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 import EquipmentListTable from "./EquipmentListTable";
+import * as XLSX from "xlsx";
 
 type EquipmentItem = {
   id: number;
@@ -50,6 +54,58 @@ export default function EquipmentTable() {
   const [viewCycleId, setViewCycleId] = useState<string>(""); // Default to empty, will be set to latest
   const [calibratedInventory, setCalibratedInventory] = useState<Record<number, { wh: number, site: number }>>({});
 
+  // SWR Hook calls for client-side caching & Stale-While-Revalidate
+  const { data: eqData } = useSWR("/api/equipment", fetcher);
+  const { data: catData } = useSWR("/api/categories", fetcher);
+  const { data: cyclesData } = useSWR("/api/center/cycles", fetcher);
+  const { data: invData } = useSWR(viewCycleId ? `/api/inventory?cycle_id=${viewCycleId}` : null, fetcher);
+
+  useEffect(() => {
+    if (eqData?.success) setData(eqData.data);
+  }, [eqData]);
+
+  useEffect(() => {
+    if (catData?.success) {
+      setCategories(catData.categories);
+      setSubCategories(catData.sub_categories);
+    }
+  }, [catData]);
+
+  useEffect(() => {
+    if (cyclesData?.success && cyclesData.data.length > 0) {
+      setCycles(cyclesData.data);
+      if (!viewCycleId) {
+        setViewCycleId(String(cyclesData.data[0].id));
+      }
+    }
+  }, [cyclesData, viewCycleId]);
+
+  useEffect(() => {
+    if (invData?.success) {
+      const invMap: Record<number, { wh: number, site: number }> = {};
+      invData.data.forEach((item: any) => {
+        if (!invMap[item.equipment_id]) {
+          invMap[item.equipment_id] = { wh: 0, site: 0 };
+        }
+        if (item.project_id.startsWith("WH")) {
+          invMap[item.equipment_id].wh += item.qty;
+        } else {
+          invMap[item.equipment_id].site += item.qty;
+        }
+      });
+      setCalibratedInventory(invMap);
+    }
+  }, [invData]);
+
+  useEffect(() => {
+    if (eqData && catData && cyclesData) {
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, [eqData, catData, cyclesData]);
+
+
   // Form states for Category
   const [newCatCode, setNewCatCode] = useState("");
   const [newCatName, setNewCatName] = useState("");
@@ -60,6 +116,253 @@ export default function EquipmentTable() {
   const [editItem, setEditItem] = useState<EquipmentItem | null>(null);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [editSubCategory, setEditSubCategory] = useState<SubCategory | null>(null);
+
+  // Category Preview Modal states
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const [showAddCatModal, setShowAddCatModal] = useState(false);
+  const [showAddSubCatModal, setShowAddSubCatModal] = useState(false);
+  const [previewCatCode, setPreviewCatCode] = useState("");
+  const [previewCatName, setPreviewCatName] = useState("");
+  const [previewSubCatCode, setPreviewSubCatCode] = useState("");
+  const [previewSubCatName, setPreviewSubCatName] = useState("");
+  const [previewSubCatParent, setPreviewSubCatParent] = useState("");
+
+  // Sub-category and Equipment add states
+  const [expandedSubCategories, setExpandedSubCategories] = useState<Record<string, boolean>>({});
+  const [showAddEqModal, setShowAddEqModal] = useState(false);
+  const [selectedSubForAddEq, setSelectedSubForAddEq] = useState<SubCategory | null>(null);
+  const [newEqCode, setNewEqCode] = useState("");
+  const [newEqName, setNewEqName] = useState("");
+  const [newEqUnit, setNewEqUnit] = useState("ชิ้น");
+  const [newEqBuyPrice, setNewEqBuyPrice] = useState(0);
+  const [newEqRentPrice, setNewEqRentPrice] = useState(0);
+  const [newEqLeadTime, setNewEqLeadTime] = useState("30 วัน");
+  const [newEqStock, setNewEqStock] = useState(0);
+
+  // Helpers for code generation
+  const getNextCategoryCode = () => {
+    if (categories.length === 0) return "A";
+    const codes = categories.map(c => c.code.toUpperCase()).sort();
+    const lastCode = codes[codes.length - 1];
+    
+    let charCodes = Array.from(lastCode).map(c => c.charCodeAt(0));
+    let i = charCodes.length - 1;
+    while (i >= 0) {
+      if (charCodes[i] < 90) { // < 'Z'
+        charCodes[i]++;
+        break;
+      } else {
+        charCodes[i] = 65; // 'A'
+        i--;
+      }
+    }
+    if (i < 0) {
+      charCodes.unshift(65);
+    }
+    return String.fromCharCode(...charCodes);
+  };
+
+  const getNextSubCategoryCode = (parentCode: string) => {
+    const subsOfParent = subCategories.filter(s => s.category_code === parentCode);
+    if (subsOfParent.length === 0) {
+      return `${parentCode}01`;
+    }
+    let maxNum = 0;
+    let hasPrefix = false;
+    subsOfParent.forEach(s => {
+      let codeStr = s.code;
+      if (codeStr.startsWith(parentCode)) {
+        hasPrefix = true;
+        codeStr = codeStr.substring(parentCode.length);
+      }
+      const num = parseInt(codeStr);
+      if (!isNaN(num) && num > maxNum) {
+        maxNum = num;
+      }
+    });
+    const nextNumStr = String(maxNum + 1).padStart(2, "0");
+    return hasPrefix ? `${parentCode}${nextNumStr}` : nextNumStr;
+  };
+
+  const getSubCategoryEquipmentCount = (subCode: string) => {
+    return data.filter(item => item.sub_category_code === subCode).length;
+  };
+
+  const toggleCategoryExpand = (code: string) => {
+    setExpandedCategories(prev => ({ ...prev, [code]: !prev[code] }));
+  };
+
+  const getNextEquipmentCode = (subCode: string) => {
+    const itemsInSub = data.filter(item => item.sub_category_code === subCode);
+    if (itemsInSub.length === 0) {
+      return `${subCode}-001`;
+    }
+    
+    let maxNum = 0;
+    let separator = "-";
+    itemsInSub.forEach(item => {
+      let codeStr = item.item_code;
+      if (codeStr.startsWith(subCode)) {
+        let suffix = codeStr.substring(subCode.length);
+        if (suffix.startsWith("-")) {
+          separator = "-";
+          suffix = suffix.substring(1);
+        } else {
+          separator = "";
+        }
+        const num = parseInt(suffix);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    
+    const nextNumStr = String(maxNum + 1).padStart(3, "0");
+    return `${subCode}${separator}${nextNumStr}`;
+  };
+
+  const toggleSubCategoryExpand = (code: string) => {
+    setExpandedSubCategories(prev => ({ ...prev, [code]: !prev[code] }));
+  };
+
+  const handleExportCategories = () => {
+    const exportData: any[] = [];
+    categories.forEach(cat => {
+      const subs = subCategories.filter(s => s.category_code === cat.code);
+      if (subs.length === 0) {
+        exportData.push({
+          'รหัสหมวดหลัก (Main Code)': cat.code,
+          'ชื่อหมวดหลัก (Main Name)': cat.name,
+          'รหัสหมวดย่อย (Sub Code)': '-',
+          'ชื่อหมวดย่อย (Sub Name)': '-',
+          'จำนวนอุปกรณ์ (Count)': 0
+        });
+      } else {
+        subs.forEach(sub => {
+          exportData.push({
+            'รหัสหมวดหลัก (Main Code)': cat.code,
+            'ชื่อหมวดหลัก (Main Name)': cat.name,
+            'รหัสหมวดย่อย (Sub Code)': sub.code,
+            'ชื่อหมวดย่อย (Sub Name)': sub.name,
+            'จำนวนอุปกรณ์ (Count)': getSubCategoryEquipmentCount(sub.code)
+          });
+        });
+      }
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Categories");
+    XLSX.writeFile(wb, `Category_Structure_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  const handleAddCatFromPreview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!previewCatCode || !previewCatName) return;
+
+    if (categories.some(c => c.code.toLowerCase() === previewCatCode.toLowerCase())) {
+      alert("รหัสหมวดหมู่ซ้ำในระบบ");
+      return;
+    }
+    if (categories.some(c => c.name.toLowerCase() === previewCatName.toLowerCase())) {
+      alert("ชื่อหมวดหมู่ซ้ำในระบบ");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "category", code: previewCatCode, name: previewCatName }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setShowAddCatModal(false);
+        setPreviewCatName("");
+        fetchData();
+      } else {
+        alert(json.message);
+      }
+    } catch (e) {
+      alert("Failed to add category");
+    }
+  };
+
+  const handleAddSubCatFromPreview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!previewSubCatCode || !previewSubCatName || !previewSubCatParent) return;
+
+    if (subCategories.some(s => s.code.toLowerCase() === previewSubCatCode.toLowerCase())) {
+      alert("รหัสหมวดย่อยซ้ำในระบบ");
+      return;
+    }
+    if (subCategories.some(s => s.name.toLowerCase() === previewSubCatName.toLowerCase() && s.category_code === previewSubCatParent)) {
+      alert("ชื่อหมวดย่อยซ้ำในหมวดหมู่นี้");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "sub_category", code: previewSubCatCode, name: previewSubCatName, category_code: previewSubCatParent }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setShowAddSubCatModal(false);
+        setPreviewSubCatName("");
+        setPreviewSubCatParent("");
+        fetchData();
+      } else {
+        alert(json.message);
+      }
+    } catch (e) {
+      alert("Failed to add sub-category");
+    }
+  };
+
+  const handleAddEquipmentFromPreview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEqCode || !newEqName || !selectedSubForAddEq) return;
+
+    if (data.some(item => item.item_code.toLowerCase() === newEqCode.toLowerCase())) {
+      alert(`รหัสอุปกรณ์ "${newEqCode}" มีอยู่ในระบบแล้ว!`);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/equipment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          item_code: newEqCode,
+          name: newEqName,
+          category_code: selectedSubForAddEq.category_code,
+          sub_category_code: selectedSubForAddEq.code,
+          unit: newEqUnit,
+          buy_price: newEqBuyPrice,
+          rent_price: newEqRentPrice,
+          lead_time: newEqLeadTime,
+          remaining_stock: newEqStock,
+        }),
+      });
+      const json = await res.json() as any;
+      if (json.success) {
+        setShowAddEqModal(false);
+        setNewEqName("");
+        setNewEqBuyPrice(0);
+        setNewEqRentPrice(0);
+        setNewEqStock(0);
+        fetchData();
+      } else {
+        alert("Failed to create equipment: " + json.error);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error creating equipment.");
+    }
+  };
 
   // Dropdown States
   const [activeMenu, setActiveMenu] = useState<"CATALOG" | "STOCK" | null>(null);
@@ -81,69 +384,16 @@ export default function EquipmentTable() {
   }, [activeMenu]);
 
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      const resEq = await fetch("/api/equipment");
-      const jsonEq = (await resEq.json()) as any;
-      if (jsonEq.success) setData(jsonEq.data);
-
-      const resCat = await fetch("/api/categories");
-      const jsonCat = (await resCat.json()) as any;
-      if (jsonCat.success) {
-        setCategories(jsonCat.categories);
-        setSubCategories(jsonCat.sub_categories);
-      }
-
-      // Fetch cycles for inventory calibration
-      const resCycles = await fetch("/api/center/cycles");
-      const jsonCycles = await resCycles.json();
-      if (jsonCycles.success && jsonCycles.data.length > 0) {
-        setCycles(jsonCycles.data);
-        // Auto-select latest cycle if none selected
-        if (!viewCycleId) {
-          setViewCycleId(String(jsonCycles.data[0].id));
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    setLoading(false);
+    mutate("/api/equipment");
+    mutate("/api/categories");
+    mutate("/api/center/cycles");
   };
 
   const fetchCalibratedInventory = async (cycleId: string) => {
-    if (!cycleId) {
-      setCalibratedInventory({});
-      return;
-    }
-    try {
-      const res = await fetch(`/api/inventory?cycle_id=${cycleId}`);
-      const json = await res.json();
-      if (json.success) {
-        const invMap: Record<number, { wh: number, site: number }> = {};
-        json.data.forEach((item: any) => {
-          if (!invMap[item.equipment_id]) {
-            invMap[item.equipment_id] = { wh: 0, site: 0 };
-          }
-          if (item.project_id.startsWith("WH")) {
-            invMap[item.equipment_id].wh += item.qty;
-          } else {
-            invMap[item.equipment_id].site += item.qty;
-          }
-        });
-        setCalibratedInventory(invMap);
-      }
-    } catch (e) {
-      console.error("Failed to fetch calibrated inventory", e);
+    if (cycleId) {
+      mutate(`/api/inventory?cycle_id=${cycleId}`);
     }
   };
-
-  useEffect(() => {
-    fetchCalibratedInventory(viewCycleId);
-  }, [viewCycleId]);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const handleDownloadTemplate = () => {
     window.location.href = "/api/equipment/template";
@@ -153,12 +403,18 @@ export default function EquipmentTable() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const overwrite = confirm(
+      "ต้องการเขียนทับข้อมูลอุปกรณ์เดิมที่รหัสตรงกันด้วยข้อมูลใหม่จากไฟล์ใช่หรือไม่?\n\n" +
+      "• กด 'ตกลง' (OK) เพื่อเขียนทับ (Overwrite) ข้อมูลเดิม\n" +
+      "• กด 'ยกเลิก' (Cancel) เพื่อปฏิเสธ (Skip) และคงข้อมูลเดิมไว้"
+    );
+
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const res = await fetch("/api/equipment/upload", {
+      const res = await fetch(`/api/equipment/upload?overwrite=${overwrite}`, {
         method: "POST",
         body: formData,
       });
@@ -178,6 +434,7 @@ export default function EquipmentTable() {
 
   const inventoryInputRef = useRef<HTMLInputElement>(null);
   const [inventoryUploading, setInventoryUploading] = useState(false);
+  const [inventoryUploadProgress, setInventoryUploadProgress] = useState({ current: 0, total: 0 });
 
   const handleInventoryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -188,28 +445,73 @@ export default function EquipmentTable() {
     }
 
     setInventoryUploading(true);
+    setInventoryUploadProgress({ current: 0, total: 0 });
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const res = await fetch(`/api/inventory/upload?cycle_id=${selectedCycleForUpload}`, {
+      // 1. PARSE: Upload and parse excel rows
+      const parseRes = await fetch(`/api/inventory/upload?action=parse&cycle_id=${selectedCycleForUpload}`, {
         method: "POST",
         body: formData,
       });
-      const json = (await res.json()) as any;
-      if (json.success) {
-        alert(json.message);
-        setShowUploadModal(false);
-        fetchData();
-      } else {
-        alert("Error: " + (json.error || "Unknown error"));
+      const parseJson = (await parseRes.json()) as any;
+      if (!parseJson.success) {
+        alert("Parse Error: " + (parseJson.error || "Unknown error"));
+        setInventoryUploading(false);
+        if (inventoryInputRef.current) inventoryInputRef.current.value = "";
+        return;
       }
-    } catch (error) {
-      alert("Inventory upload failed.");
+
+      const inserts = parseJson.validInserts || [];
+      const total = inserts.length;
+      if (total === 0) {
+        alert("ไม่พบข้อมูลอุปกรณ์คงเหลือที่ถูกต้องในไฟล์ Excel");
+        setInventoryUploading(false);
+        if (inventoryInputRef.current) inventoryInputRef.current.value = "";
+        return;
+      }
+
+      setInventoryUploadProgress({ current: 0, total });
+
+      // 2. CLEAR: Wipe current inventory baseline of the cycle
+      const clearRes = await fetch(`/api/inventory/upload?action=clear&cycle_id=${selectedCycleForUpload}`, {
+        method: "POST",
+      });
+      const clearJson = (await clearRes.json()) as any;
+      if (!clearJson.success) {
+        alert("Clear Error: " + (clearJson.error || "Failed to clear existing stock"));
+        setInventoryUploading(false);
+        if (inventoryInputRef.current) inventoryInputRef.current.value = "";
+        return;
+      }
+
+      // 3. INSERT: Upload batches of 500
+      const chunkSize = 500;
+      for (let i = 0; i < total; i += chunkSize) {
+        const batch = inserts.slice(i, i + chunkSize);
+        const insertRes = await fetch(`/api/inventory/upload?action=insert&cycle_id=${selectedCycleForUpload}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inserts: batch }),
+        });
+        const insertJson = (await insertRes.json()) as any;
+        if (!insertJson.success) {
+          throw new Error(insertJson.error || "Failed to insert batch");
+        }
+        setInventoryUploadProgress({ current: Math.min(i + batch.length, total), total });
+      }
+
+      alert(`อัปเดตยอดสต็อกสำเร็จทั้งหมด ${total} รายการ!`);
+      setShowUploadModal(false);
+      fetchData();
+      fetchCalibratedInventory(viewCycleId);
+    } catch (error: any) {
+      alert("Inventory upload failed: " + (error.message || error));
+    } finally {
+      setInventoryUploading(false);
+      if (inventoryInputRef.current) inventoryInputRef.current.value = "";
     }
-    setInventoryUploading(true); // Wait, why true? Ah, should be false.
-    setInventoryUploading(false);
-    if (inventoryInputRef.current) inventoryInputRef.current.value = "";
   };
 
   const handleAddCategory = async (e: React.FormEvent) => {
@@ -460,7 +762,7 @@ export default function EquipmentTable() {
                         <ChevronRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
                       </button>
                       <div className="my-1 border-t border-slate-100" />
-                      <button onClick={() => setActiveMenu(null)} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">
+                      <button onClick={() => { setShowPreviewModal(true); setActiveMenu(null); }} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm">
                         <Plus size={16} />
                         <span className="font-medium">เพิ่มรายการใหม่</span>
                       </button>
@@ -521,10 +823,22 @@ export default function EquipmentTable() {
 
       {activeTab === "CATEGORY" && (
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-slate-800 mb-6 flex items-center gap-2">
-            <Layers className="text-indigo-600" />
-            ลงทะเบียนหมวดหมู่อุปกรณ์
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-slate-800 flex items-center gap-2 m-0">
+              <Layers className="text-indigo-600" />
+              ลงทะเบียนหมวดหมู่อุปกรณ์
+            </h2>
+            <button 
+              type="button"
+              onClick={() => {
+                setShowPreviewModal(true);
+              }}
+              className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 px-4 py-2.5 rounded-xl hover:bg-indigo-100 transition-all font-semibold text-sm shadow-sm"
+            >
+              <Eye size={16} />
+              ดูตัวอย่าง & ส่งออก (Preview / Export)
+            </button>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Category Form */}
@@ -808,6 +1122,460 @@ export default function EquipmentTable() {
                 <button type="submit" className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg transition-colors text-sm">Save Changes</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Category Preview / Export Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200 animate-in fade-in duration-200">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">ผังหมวดหมู่และหมวดย่อยอุปกรณ์ (Category Tree Preview)</h3>
+                <p className="text-xs text-slate-500 mt-1">ดูโครงสร้างของหมวดหมู่หลัก หมวดย่อย และตรวจสอบรหัส</p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowPreviewModal(false)} 
+                className="text-slate-400 hover:text-slate-600 font-bold text-xl px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="p-6 flex-1 overflow-y-auto space-y-4">
+              {/* Top actions */}
+              <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewCatCode(getNextCategoryCode());
+                      setPreviewCatName("");
+                      setShowAddCatModal(true);
+                    }}
+                    className="flex items-center gap-1.5 bg-indigo-600 text-white px-3.5 py-2 rounded-lg hover:bg-indigo-700 transition-all font-semibold text-xs shadow-sm"
+                  >
+                    <Plus size={14} />
+                    เพิ่มหมวดหลัก
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleExportCategories}
+                  className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-all font-semibold text-xs shadow-sm"
+                >
+                  <Download size={14} />
+                  ส่งออกเป็น Excel
+                </button>
+              </div>
+
+              {/* Tree view list */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-inner max-h-[50vh] overflow-y-auto custom-scrollbar">
+                {categories.length === 0 ? (
+                  <div className="p-12 text-center text-slate-400">ยังไม่มีหมวดหมู่หลักในระบบ</div>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {[...categories].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })).map(cat => {
+                      const isExpanded = expandedCategories[cat.code] !== false; // Default expanded
+                      const subItems = subCategories.filter(s => s.category_code === cat.code);
+
+                      return (
+                        <div key={cat.code} className="bg-white">
+                          {/* Main Category Row */}
+                          <div 
+                            onClick={() => toggleCategoryExpand(cat.code)}
+                            className="flex items-center justify-between p-4 hover:bg-indigo-50/20 cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="font-mono bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-md text-xs">{cat.code}</span>
+                              <span className="font-bold text-slate-800 text-sm">{cat.name}</span>
+                              <span className="text-[10px] text-slate-400">({subItems.length} หมวดย่อย)</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent toggling category expansion
+                                  setPreviewSubCatParent(cat.code);
+                                  setPreviewSubCatCode(getNextSubCategoryCode(cat.code));
+                                  setPreviewSubCatName("");
+                                  setShowAddSubCatModal(true);
+                                }}
+                                className="flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md text-[10px] font-semibold border border-indigo-100 transition-colors"
+                              >
+                                <Plus size={10} />
+                                เพิ่มหมวดย่อย
+                              </button>
+                              <ChevronDown size={16} className={`text-slate-400 transition-transform ${isExpanded ? "rotate-0" : "-rotate-90"}`} />
+                            </div>
+                          </div>
+
+                          {/* Nested Sub-Categories */}
+                          {isExpanded && (
+                            <div className="bg-slate-50/50 pl-8 pr-4 pb-2 border-t border-slate-50 divide-y divide-slate-100">
+                              {subItems.length === 0 ? (
+                                <div className="py-3 text-xs text-slate-400 italic">ไม่มีหมวดย่อยในหมวดนี้</div>
+                              ) : (
+                                [...subItems].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })).map(sub => {
+                                  const eqCount = getSubCategoryEquipmentCount(sub.code);
+                                  const subEqItems = data.filter(item => item.sub_category_code === sub.code);
+                                  const isSubExpanded = expandedSubCategories[sub.code] === true;
+
+                                  return (
+                                    <div key={sub.code} className="py-2 border-b last:border-b-0">
+                                      {/* Sub-Category Header Row */}
+                                      <div 
+                                        onClick={() => toggleSubCategoryExpand(sub.code)}
+                                        className="flex items-center justify-between py-2 cursor-pointer hover:bg-slate-100/50 px-2 rounded-lg transition-colors"
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <ChevronDown size={12} className={`text-slate-400 transition-transform ${isSubExpanded ? "rotate-0" : "-rotate-90"}`} />
+                                          <span className="font-mono text-xs text-indigo-500 font-semibold">{sub.code}</span>
+                                          <span className="text-slate-700 text-xs font-medium">{sub.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation(); // Prevent toggling sub-category expansion
+                                              setSelectedSubForAddEq(sub);
+                                              setNewEqCode(getNextEquipmentCode(sub.code));
+                                              setNewEqName("");
+                                              setNewEqUnit("ชิ้น");
+                                              setNewEqBuyPrice(0);
+                                              setNewEqRentPrice(0);
+                                              setNewEqLeadTime("30 วัน");
+                                              setNewEqStock(0);
+                                              setShowAddEqModal(true);
+                                            }}
+                                            className="flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-[10px] font-semibold border border-emerald-100 transition-colors"
+                                          >
+                                            <Plus size={10} />
+                                            เพิ่มอุปกรณ์
+                                          </button>
+                                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${eqCount > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-400 border-slate-200"}`}>
+                                            {eqCount} อุปกรณ์
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* Equipment Items List */}
+                                      {isSubExpanded && (
+                                        <div className="pl-6 pr-4 py-1.5 bg-white divide-y divide-slate-100 border-l border-indigo-100 ml-4 space-y-1 my-1">
+                                          {subEqItems.length === 0 ? (
+                                            <div className="text-[10px] text-slate-400 italic py-1">ไม่มีรายการอุปกรณ์ในหมวดย่อยนี้</div>
+                                          ) : (
+                                            subEqItems.map(item => (
+                                              <div key={item.id} className="flex justify-between items-center py-2.5 text-xs hover:bg-slate-50 px-2 rounded-md">
+                                                <div className="flex items-center gap-2">
+                                                  <span className="font-mono text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-bold">{item.item_code}</span>
+                                                  <span className="text-slate-700 font-medium text-xs">{item.name}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                  <span className="text-slate-400 text-[10px]">หน่วย: {item.unit}</span>
+                                                  <span className="text-indigo-600 font-semibold text-[10px]">฿{item.buy_price.toLocaleString()}</span>
+                                                </div>
+                                              </div>
+                                            ))
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-200 flex justify-end bg-slate-50 shrink-0">
+              <button 
+                type="button" 
+                onClick={() => setShowPreviewModal(false)} 
+                className="px-5 py-2 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition-colors text-sm"
+              >
+                ปิดหน้าต่าง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Category Modal (stacked) */}
+      {showAddCatModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <h3 className="text-md font-bold text-slate-800">เพิ่มหมวดหลักใหม่</h3>
+              <button 
+                type="button"
+                onClick={() => setShowAddCatModal(false)} 
+                className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleAddCatFromPreview} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">รหัสหมวดหลัก (Code Suggestion)</label>
+                <input 
+                  type="text" 
+                  value={previewCatCode} 
+                  onChange={e => setPreviewCatCode(e.target.value.toUpperCase())}
+                  className="w-full px-3 py-2 border rounded-lg bg-slate-50 text-indigo-600 font-bold font-mono focus:bg-white" 
+                  required 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">ชื่อหมวดหลัก (เช่น เครื่องจักร)</label>
+                <input 
+                  type="text" 
+                  value={previewCatName} 
+                  onChange={e => setPreviewCatName(e.target.value)} 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                  placeholder="กรอกชื่อหมวดหลัก..."
+                  required 
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddCatModal(false)} 
+                  className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg text-xs"
+                >
+                  ยกเลิก
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-5 py-2 bg-indigo-600 text-white font-semibold hover:bg-indigo-700 rounded-lg text-xs shadow-sm"
+                >
+                  บันทึกหมวดหลัก
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Sub Category Modal (stacked) */}
+      {showAddSubCatModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <h3 className="text-md font-bold text-slate-800">เพิ่มหมวดย่อยใหม่</h3>
+              <button 
+                type="button"
+                onClick={() => setShowAddSubCatModal(false)} 
+                className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleAddSubCatFromPreview} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">เลือกหมวดหลัก (Main Category)</label>
+                <select 
+                  value={previewSubCatParent} 
+                  onChange={e => {
+                    const parent = e.target.value;
+                    setPreviewSubCatParent(parent);
+                    setPreviewSubCatCode(parent ? getNextSubCategoryCode(parent) : "");
+                  }} 
+                  className="w-full px-3 py-2 border rounded-lg bg-white" 
+                  required
+                >
+                  <option value="">-- เลือก --</option>
+                  {[...categories].sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true })).map(c => (
+                    <option key={c.code} value={c.code}>{c.code} - {c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">รหัสหมวดย่อย (Code Suggestion)</label>
+                <input 
+                  type="text" 
+                  value={previewSubCatCode} 
+                  onChange={e => setPreviewSubCatCode(e.target.value.toUpperCase())}
+                  className="w-full px-3 py-2 border rounded-lg bg-slate-50 text-indigo-600 font-bold font-mono focus:bg-white" 
+                  required 
+                  disabled={!previewSubCatParent}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">ชื่อหมวดย่อย (เช่น รถขุด)</label>
+                <input 
+                  type="text" 
+                  value={previewSubCatName} 
+                  onChange={e => setPreviewSubCatName(e.target.value)} 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                  placeholder="กรอกชื่อหมวดย่อย..."
+                  required 
+                  disabled={!previewSubCatParent}
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddSubCatModal(false)} 
+                  className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg text-xs"
+                >
+                  ยกเลิก
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-5 py-2 bg-indigo-600 text-white font-semibold hover:bg-indigo-700 rounded-lg text-xs shadow-sm"
+                  disabled={!previewSubCatParent}
+                >
+                  บันทึกหมวดย่อย
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Equipment Modal (stacked) */}
+      {showAddEqModal && selectedSubForAddEq && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <div>
+                <h3 className="text-md font-bold text-slate-800">เพิ่มอุปกรณ์ใหม่</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">หมวด: {selectedSubForAddEq.category_code} / {selectedSubForAddEq.name}</p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowAddEqModal(false)} 
+                className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+              >
+                &times;
+              </button>
+            </div>
+            <form onSubmit={handleAddEquipmentFromPreview} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">รหัสอุปกรณ์ (Code Suggestion)</label>
+                  <input 
+                    type="text" 
+                    value={newEqCode} 
+                    onChange={e => setNewEqCode(e.target.value.toUpperCase())}
+                    className="w-full px-3 py-2 border rounded-lg bg-slate-50 text-indigo-600 font-bold font-mono focus:bg-white" 
+                    required 
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">ชื่ออุปกรณ์</label>
+                  <input 
+                    type="text" 
+                    value={newEqName} 
+                    onChange={e => setNewEqName(e.target.value)} 
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" 
+                    placeholder="กรอกชื่ออุปกรณ์..."
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">หน่วย (Unit)</label>
+                  <input 
+                    type="text" 
+                    value={newEqUnit} 
+                    onChange={e => setNewEqUnit(e.target.value)} 
+                    className="w-full px-3 py-2 border rounded-lg"
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">Lead Time</label>
+                  <input 
+                    type="text" 
+                    value={newEqLeadTime} 
+                    onChange={e => setNewEqLeadTime(e.target.value)} 
+                    className="w-full px-3 py-2 border rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">ราคาซื้อ (Buy Price)</label>
+                  <input 
+                    type="number" 
+                    value={newEqBuyPrice} 
+                    onChange={e => setNewEqBuyPrice(parseInt(e.target.value) || 0)} 
+                    className="w-full px-3 py-2 border rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">ราคาเช่า (Rent Price)</label>
+                  <input 
+                    type="number" 
+                    value={newEqRentPrice} 
+                    onChange={e => setNewEqRentPrice(parseInt(e.target.value) || 0)} 
+                    className="w-full px-3 py-2 border rounded-lg"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">ยอดคงเหลือในคลัง (Remaining Stock)</label>
+                  <input 
+                    type="number" 
+                    value={newEqStock} 
+                    onChange={e => setNewEqStock(parseInt(e.target.value) || 0)} 
+                    className="w-full px-3 py-2 border-2 border-indigo-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-lg font-semibold text-indigo-900"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddEqModal(false)} 
+                  className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg text-xs"
+                >
+                  ยกเลิก
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-5 py-2 bg-indigo-600 text-white font-semibold hover:bg-indigo-700 rounded-lg text-xs shadow-sm"
+                >
+                  บันทึกอุปกรณ์
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {inventoryUploading && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 transition-all duration-300">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-100/50 flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative flex items-center justify-center w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl animate-pulse">
+              <Loader2 className="animate-spin text-indigo-600" size={32} />
+            </div>
+            <div className="text-center space-y-2">
+              <h4 className="text-lg font-bold text-slate-800">กำลังอัปเดตยอดคงเหลือคลังสินค้า...</h4>
+              <p className="text-sm text-slate-500">กรุณารอสักครู่ ระบบกำลังนำเข้าข้อมูลยอดคงเหลือเข้าฐานข้อมูล</p>
+            </div>
+            <div className="w-full space-y-2">
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${inventoryUploadProgress.total > 0 ? (inventoryUploadProgress.current / inventoryUploadProgress.total) * 100 : 0}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
+                <span>สำเร็จ {inventoryUploadProgress.current} จาก {inventoryUploadProgress.total} รายการ</span>
+                <span>
+                  {inventoryUploadProgress.total > 0 
+                    ? Math.round((inventoryUploadProgress.current / inventoryUploadProgress.total) * 100) 
+                    : 0}%
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}

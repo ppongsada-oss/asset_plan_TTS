@@ -2,6 +2,7 @@ import { getRequestContext } from "@cloudflare/next-on-pages";
 import { getDb } from "@/db";
 import { categories, sub_categories } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { invalidateCache } from "@/lib/cache";
 
 export const runtime = "edge";
 
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
 
     if (body.type === "category") {
       await db.insert(categories).values({ code: body.code, name: body.name }).onConflictDoNothing();
+      await invalidateCache(env.CACHE_KV);
       return Response.json({ success: true, message: "Category saved" });
     } else if (body.type === "sub_category") {
       await db.insert(sub_categories).values({
@@ -34,6 +36,7 @@ export async function POST(request: Request) {
         category_code: body.category_code,
         name: body.name
       }).onConflictDoNothing();
+      await invalidateCache(env.CACHE_KV);
       return Response.json({ success: true, message: "Sub-Category saved" });
     }
 
@@ -51,9 +54,11 @@ export async function PUT(request: Request) {
 
     if (body.type === "category") {
       await db.update(categories).set({ name: body.name }).where(eq(categories.code, body.code));
+      await invalidateCache(env.CACHE_KV);
       return Response.json({ success: true, message: "Category updated" });
     } else if (body.type === "sub_category") {
       await db.update(sub_categories).set({ name: body.name }).where(eq(sub_categories.code, body.code));
+      await invalidateCache(env.CACHE_KV);
       return Response.json({ success: true, message: "Sub-Category updated" });
     }
 
@@ -71,9 +76,11 @@ export async function DELETE(request: Request) {
 
     if (body.type === "category") {
       await db.delete(categories).where(eq(categories.code, body.code));
+      await invalidateCache(env.CACHE_KV);
       return Response.json({ success: true, message: "Category deleted" });
     } else if (body.type === "sub_category") {
       await db.delete(sub_categories).where(eq(sub_categories.code, body.code));
+      await invalidateCache(env.CACHE_KV);
       return Response.json({ success: true, message: "Sub-Category deleted" });
     }
 

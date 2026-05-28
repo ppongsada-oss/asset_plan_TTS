@@ -3,6 +3,8 @@ import { getDb } from "@/db";
 import { equipment_items, categories, sub_categories } from "@/db/schema";
 import { getRequestContext } from "@cloudflare/next-on-pages";
 import Papa from "papaparse";
+import { eq } from "drizzle-orm";
+import { invalidateCache } from "@/lib/cache";
 
 export const runtime = "edge";
 
@@ -10,6 +12,9 @@ export async function POST(request: NextRequest) {
   try {
     const env = getRequestContext().env;
     const db = getDb(env as any);
+
+    const { searchParams } = new URL(request.url);
+    const overwrite = searchParams.get("overwrite") === "true";
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -97,19 +102,29 @@ export async function POST(request: NextRequest) {
     // 3. Insert only equipment items that don't exist yet
     // — avoids onConflictDoNothing which fails silently in Miniflare D1
     // — Drizzle includes `id` col → 10 cols/row, so SQLite 999-param limit = max 99 rows/batch
-    const existingItems = await db.select({ item_code: equipment_items.item_code }).from(equipment_items);
+    const existingItems = await db.select().from(equipment_items);
+    const existingItemMap = new Map(existingItems.map((e) => [e.item_code, e]));
     
     // Use a Set to track both existing DB items AND duplicates within the CSV itself
-    const seenItemCodes = new Set(existingItems.map((e) => e.item_code));
+    const seenItemCodes = new Set();
     const newInserts = [];
+    const updates = [];
     let duplicateCsvCount = 0;
 
     for (const item of inserts) {
-      if (!seenItemCodes.has(item.item_code)) {
-        seenItemCodes.add(item.item_code);
-        newInserts.push(item);
-      } else {
+      if (seenItemCodes.has(item.item_code)) {
         duplicateCsvCount++;
+        continue;
+      }
+      seenItemCodes.add(item.item_code);
+
+      const existing = existingItemMap.get(item.item_code);
+      if (existing) {
+        if (overwrite) {
+          updates.push({ id: existing.id, ...item });
+        }
+      } else {
+        newInserts.push(item);
       }
     }
 
@@ -118,9 +133,31 @@ export async function POST(request: NextRequest) {
       await db.insert(equipment_items).values(item);
     }
 
+    // Update existing items if overwrite is true
+    if (overwrite && updates.length > 0) {
+      for (const item of updates) {
+        await db.update(equipment_items)
+          .set({
+            name: item.name,
+            category_code: item.category_code,
+            sub_category_code: item.sub_category_code,
+            unit: item.unit,
+            buy_price: item.buy_price,
+            rent_price: item.rent_price,
+            lead_time: item.lead_time,
+            remaining_stock: item.remaining_stock,
+          })
+          .where(eq(equipment_items.id, item.id));
+      }
+    }
+
+    await invalidateCache(env.CACHE_KV);
     return NextResponse.json({
       success: true,
-      message: `นำเข้าสำเร็จ: ${newInserts.length} รายการ | ข้ามรายการซ้ำในระบบ/ในไฟล์: ${inserts.length - newInserts.length} | หมวดหลักใหม่: ${newCats.length} | หมวดย่อยใหม่: ${newSubs.length}`,
+      message: `นำเข้าข้อมูลสำเร็จ: ` +
+        `เพิ่มรายการใหม่ ${newInserts.length} รายการ | ` +
+        (overwrite ? `เขียนทับข้อมูลเดิม ${updates.length} รายการ | ` : `ข้ามรายการซ้ำในระบบ/ในไฟล์ ${inserts.length - newInserts.length} รายการ | `) +
+        `หมวดหลักใหม่ ${newCats.length} | หมวดย่อยใหม่ ${newSubs.length}`,
     });
   } catch (error) {
     console.error("Upload Equipment Error:", error);

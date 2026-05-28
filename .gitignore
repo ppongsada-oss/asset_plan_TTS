@@ -55,3 +55,49 @@ next-env.d.ts
 
 # macOS
 ._*
+
+# Agent & Harness files (Excluded from Web App deployment)
+/.agents/
+/.claude/
+/.sessions/
+/knowledge/
+/Implement/
+/src_backup/
+
+# Agent documentation files
+/AGENTS.md
+/CLAUDE.md
+/CLAUDE.th.md
+/CODING_FAILURE_PATTERNS.md
+/INVARIANTS.md
+/REPO_MAP.md
+/Implement.md
+/TESTING.md
+
+# Agent roadmaps & logs
+/docs/master_roadmap.md
+/docs/optimization_logs.md
+/docs/permissions_summary.md
+
+# Agent / Harness indexer scripts
+/scripts/index_manager.py
+/scripts/session_compactor.py
+/scripts/symbol_indexer.js
+/scripts/symbol_indexer.py
+
+# Local databases & temp SQLite files
+/*.db
+/*.sqlite
+
+# Local development / helper scripts
+/download_zip.py
+/query_local.js
+/query_remote_d1.py
+/temp_test_d1.js
+/test_d1.js
+/test_hash.js
+/patch.js
+/update_src.sh
+
+# Excel datasets / miscellaneous files
+/*.xlsx

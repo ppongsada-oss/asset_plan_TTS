@@ -18,6 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       project_id: planning_jobs.project_id,
       job_number: planning_jobs.job_number,
       status: planning_jobs.status,
+      is_unlocked: planning_jobs.is_unlocked,
       cycle_id: planning_jobs.cycle_id,
       cycle_number: planning_cycles.cycle_number,
       target_months: planning_cycles.target_months,

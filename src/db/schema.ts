@@ -69,6 +69,8 @@ export const planning_jobs = sqliteTable("planning_jobs", {
   project_id: text("project_id").notNull().references(() => projects.id),
   job_number: text("job_number").notNull().unique(), 
   status: text("status", { enum: ["OPEN", "SUBMITTED", "APPROVED", "REJECTED", "CLOSED"] }).notNull().default("OPEN"),
+  is_unlocked: integer("is_unlocked").notNull().default(0),
+  updated_at: text("updated_at").default(sql`CURRENT_TIMESTAMP`),
   created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
