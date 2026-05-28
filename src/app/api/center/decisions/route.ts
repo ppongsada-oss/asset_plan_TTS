@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { center_decisions, project_plans, equipment_items } from "@/db/schema";
+import { center_decisions, project_plans, equipment_items, planning_jobs } from "@/db/schema";
 import { getRequestContext } from "@cloudflare/next-on-pages";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, inArray } from "drizzle-orm";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { invalidateCache } from "@/lib/cache";
@@ -27,6 +27,70 @@ export async function POST(request: NextRequest) {
 
     if (!body.plan_id || !body.action_type) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+    }
+
+    // A. Promote virtual plan to real plan in project_plans if needed
+    let planId = body.plan_id;
+    if (typeof planId === "string" && planId.startsWith("v-")) {
+      const parts = planId.split("-");
+      const eqIdStr = parts[parts.length - 1];
+      const eqId = parseInt(eqIdStr);
+      const projId = parts.slice(1, parts.length - 1).join("-");
+
+      if (isNaN(eqId) || !projId) {
+        return NextResponse.json({ success: false, error: "Invalid virtual plan ID" }, { status: 400 });
+      }
+
+      const cycleId = body.cycle_id ? parseInt(body.cycle_id) : null;
+      const month = body.month || "2026-05";
+
+      // Find or create planning_job
+      let jobId = null;
+      if (cycleId) {
+        const job = await db.select()
+          .from(planning_jobs)
+          .where(
+            and(
+              eq(planning_jobs.project_id, projId),
+              eq(planning_jobs.cycle_id, cycleId)
+            )
+          )
+          .limit(1);
+        if (job.length > 0) {
+          jobId = job[0].id;
+        } else {
+          const newJob = await db.insert(planning_jobs).values({
+            project_id: projId,
+            cycle_id: cycleId,
+            status: "APPROVED"
+          }).returning({ id: planning_jobs.id });
+          if (newJob.length > 0) {
+            jobId = newJob[0].id;
+          }
+        }
+      }
+
+      // Create new project_plan record
+      const newPlan = await db.insert(project_plans).values({
+        project_id: projId,
+        equipment_id: eqId,
+        month: month,
+        required_qty: 0,
+        status: "APPROVED",
+        job_id: jobId,
+        created_by: userId,
+        approved_by: userId
+      }).returning({ id: project_plans.id });
+
+      if (newPlan.length === 0) {
+        return NextResponse.json({ success: false, error: "Failed to promote virtual plan" }, { status: 500 });
+      }
+
+      planId = newPlan[0].id;
+      body.plan_id = planId;
+    } else if (typeof planId === "string") {
+      planId = parseInt(planId);
+      body.plan_id = planId;
     }
 
     const actionQty = body.qty || 0;
@@ -74,16 +138,30 @@ export async function POST(request: NextRequest) {
         const targetPlan = await db.select().from(project_plans).where(eq(project_plans.id, body.plan_id)).limit(1);
         if (targetPlan.length > 0) {
           const p = targetPlan[0];
+          
+          const whereConds = [
+            eq(project_plans.project_id, p.project_id),
+            eq(project_plans.equipment_id, p.equipment_id),
+            sql`${project_plans.month} >= ${p.month}`
+          ];
+          
+          if (p.job_id) {
+            const currentJob = await db.select().from(planning_jobs).where(eq(planning_jobs.id, p.job_id)).limit(1);
+            if (currentJob.length > 0) {
+              const cycleJobs = await db.select({ id: planning_jobs.id })
+                .from(planning_jobs)
+                .where(eq(planning_jobs.cycle_id, currentJob[0].cycle_id));
+              const cycleJobIds = cycleJobs.map((cj: any) => cj.id);
+              if (cycleJobIds.length > 0) {
+                whereConds.push(inArray(project_plans.job_id, cycleJobIds));
+              }
+            }
+          }
+
           // Propagate requirement increase to current and all future months for this site/item
           await db.update(project_plans)
             .set({ required_qty: sql`${project_plans.required_qty} + ${actionQty}` })
-            .where(
-              and(
-                eq(project_plans.project_id, p.project_id),
-                eq(project_plans.equipment_id, p.equipment_id),
-                sql`${project_plans.month} >= ${p.month}`
-              )
-            );
+            .where(and(...whereConds));
           console.log(`[POST Decision] REJECT_RETURN: Propagated +${actionQty} to ${p.project_id}/${p.equipment_id} starting ${p.month}`);
         }
       }
@@ -139,15 +217,29 @@ export async function DELETE(request: NextRequest) {
       const targetPlan = await db.select().from(project_plans).where(eq(project_plans.id, d.plan_id)).limit(1);
       if (targetPlan.length > 0) {
         const p = targetPlan[0];
+        
+        const whereConds = [
+          eq(project_plans.project_id, p.project_id),
+          eq(project_plans.equipment_id, p.equipment_id),
+          sql`${project_plans.month} >= ${p.month}`
+        ];
+        
+        if (p.job_id) {
+          const currentJob = await db.select().from(planning_jobs).where(eq(planning_jobs.id, p.job_id)).limit(1);
+          if (currentJob.length > 0) {
+            const cycleJobs = await db.select({ id: planning_jobs.id })
+              .from(planning_jobs)
+              .where(eq(planning_jobs.cycle_id, currentJob[0].cycle_id));
+            const cycleJobIds = cycleJobs.map((cj: any) => cj.id);
+            if (cycleJobIds.length > 0) {
+              whereConds.push(inArray(project_plans.job_id, cycleJobIds));
+            }
+          }
+        }
+
         await db.update(project_plans)
           .set({ required_qty: sql`${project_plans.required_qty} - ${d.qty}` })
-          .where(
-            and(
-              eq(project_plans.project_id, p.project_id),
-              eq(project_plans.equipment_id, p.equipment_id),
-              sql`${project_plans.month} >= ${p.month}`
-            )
-          );
+          .where(and(...whereConds));
         console.log(`[DELETE Decision] REJECT_RETURN Revert: Propagated -${d.qty} to ${p.project_id}/${p.equipment_id} starting ${p.month}`);
       }
     }

@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: [] });
     }
 
-    // 4. Fetch all inventory for ALL relevant projects
+    // 4. Fetch all inventory for ALL relevant projects (include cycle_id for month lookup)
     const inventory = await fetchInChunks(
       db, 
       project_inventory,
@@ -90,7 +90,8 @@ export async function GET(request: NextRequest) {
       {
         project_id: project_inventory.project_id,
         equipment_id: project_inventory.equipment_id,
-        qty: project_inventory.qty
+        qty: project_inventory.qty,
+        cycle_id: project_inventory.cycle_id
       },
       cycleIdNum ? eq(project_inventory.cycle_id, cycleIdNum) : undefined
     );
@@ -98,20 +99,42 @@ export async function GET(request: NextRequest) {
     // 5. Fetch all equipment items for fallback naming
     const allItems = await db.select().from(equipment_items);
 
+    // 5b. Pre-fetch first target month for each cycle_id found in inventory
+    //     (used for virtual RETURN rows that have no associated plan)
+    const inventoryCycleIds = Array.from(new Set(
+      inventory.map((i: any) => i.cycle_id).filter(Boolean)
+    )) as number[];
+    const cycleFirstMonthMap = new Map<number, string>();
+    if (inventoryCycleIds.length > 0) {
+      const cyclesForInv = await fetchInChunks(
+        db,
+        planning_cycles,
+        planning_cycles.id,
+        inventoryCycleIds,
+        { id: planning_cycles.id, target_months: planning_cycles.target_months }
+      );
+      cyclesForInv.forEach((c: any) => {
+        try {
+          const months = JSON.parse(c.target_months);
+          cycleFirstMonthMap.set(c.id, months[0] || "");
+        } catch {}
+      });
+    }
+
     // 6. Fetch ONLY relevant decisions (Using chunking for safety)
     const allDecisions = await fetchInChunks(
       db,
-      db.select({
+      center_decisions,
+      center_decisions.plan_id,
+      allPlans.map(p => p.id),
+      {
         id: center_decisions.id,
         plan_id: center_decisions.plan_id,
         action_type: center_decisions.action_type,
         qty: center_decisions.qty,
         notes: center_decisions.notes,
         created_at: center_decisions.created_at
-      }),
-      center_decisions,
-      center_decisions.plan_id,
-      allPlans.map(p => p.id)
+      }
     );
 
     // 7. Map out ALL (project, equipment) pairs that have either inventory OR a plan
@@ -124,7 +147,8 @@ export async function GET(request: NextRequest) {
     // Get first month of cycle for synthesized returns
     let firstMonth = "";
     if (cycleIdNum) {
-      const cycle = await db.select().from(planning_cycles).where(eq(planning_cycles.id, cycleIdNum)).get();
+      const cycleRows = await db.select().from(planning_cycles).where(eq(planning_cycles.id, cycleIdNum)).limit(1);
+      const cycle = cycleRows[0];
       if (cycle) {
         try {
           const targetMonths = JSON.parse(cycle.target_months);
@@ -165,16 +189,18 @@ export async function GET(request: NextRequest) {
         const item = allItems.find(i => i.id === eqId);
         const projectName = projectMap.get(projId) || projId;
         
+        // Determine month: use inventory's own cycle first month, then URL cycle's first month
+        const invMonth = (inv?.cycle_id ? cycleFirstMonthMap.get(inv.cycle_id) : undefined) || firstMonth;
         centerRequests.push({
           id: `v-${projId}-${eqId}`, // Virtual ID for planless items
           equipment_id: eqId,
-          cycle_id: cycleIdNum,
+          cycle_id: cycleIdNum || inv?.cycle_id,
           project: projectName,
           project_code: projId,
           item_name: item?.name,
           item_code: item?.item_code,
           unit: item?.unit,
-          month: firstMonth,
+          month: invMonth,
           qty: currentMax,
           fulfilled_qty: 0, 
           status: "APPROVED",

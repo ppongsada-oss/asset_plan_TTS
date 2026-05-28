@@ -24,6 +24,7 @@ type RequestItem = {
   urgency: string;
   decisions?: any[];
   type: "DEMAND" | "RETURN";
+  cycle_id?: number | null;
 };
 
 const getActionInfo = (type: string) => {
@@ -136,9 +137,11 @@ export default function CenterDashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const refreshData = () => {
-    mutateRequests();
-    mutateAlerts();
+  const refreshData = async () => {
+    await Promise.all([
+      mutateRequests(),
+      mutateAlerts()
+    ]);
   };
 
   const openModal = (req: RequestItem, type: "DISPATCH" | "CIRCULATE" | "SUBSTITUTE" | "BUY" | "RECEIVE" | "REJECT_RETURN") => {
@@ -162,13 +165,15 @@ export default function CenterDashboard() {
           action_type: actionType,
           notes: notes,
           qty: actionQty,
-          total_qty: activeReq.qty
+          total_qty: activeReq.qty,
+          month: activeReq.month,
+          cycle_id: activeReq.cycle_id
         })
       });
       const json = await res.json() as any;
       if (json.success) {
+        await refreshData();
         setActiveReq(null);
-        refreshData();
       } else {
         alert("Failed: " + json.error);
       }
@@ -193,7 +198,7 @@ export default function CenterDashboard() {
       
       if (json.success) {
         setSelectedIds([]);
-        refreshData();
+        await refreshData();
         setActiveReq(null);
         setShowHistory(false);
         setShowDeleteConfirm(false);
@@ -286,7 +291,7 @@ export default function CenterDashboard() {
         });
       }
       setSelectedIds([]);
-      refreshData();
+      await refreshData();
     } catch (err) {
       alert("Error in bulk dispatch");
     }
@@ -645,8 +650,10 @@ export default function CenterDashboard() {
                     {req.item_code} ({req.unit})
                   </div>
                 </td>
-                <td className="px-2 py-4 text-center w-20">
-                  <span className={`px-1.5 py-0.5 rounded text-[11px] font-mono ${req.fulfilled_qty >= req.qty ? 'bg-slate-100 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>{req.month}</span>
+                <td className="px-2 py-4 text-center w-24">
+                  <span className={`inline-block px-2 py-0.5 rounded text-[12px] font-mono font-medium ${req.fulfilled_qty >= req.qty ? 'bg-slate-100 text-slate-400' : 'bg-indigo-50 text-indigo-700 border border-indigo-100'}`}>
+                    {req.month || "—"}
+                  </span>
                 </td>
                 <td className={`px-2 py-4 text-center font-bold ${req.fulfilled_qty >= req.qty ? 'text-slate-300' : req.type === 'DEMAND' ? 'text-rose-600' : 'text-emerald-600'}`}>
                   <div className="flex flex-col items-center">
@@ -859,10 +866,13 @@ export default function CenterDashboard() {
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button type="button" onClick={() => setActiveReq(null)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors">ยกเลิก</button>
-                <button type="submit" disabled={submitting} className="px-6 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50">
-                  {submitting ? "กำลังบันทึก..." : 
-                   actionType === "RECEIVE" ? "ยืนยันการรับคืน" :
-                   actionType === "REJECT_RETURN" ? "ยืนยันการปฏิเสธ" : "ยืนยันมติการจัดหา"}
+                <button type="submit" disabled={submitting} className="px-6 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                  {submitting && <Loader2 className="animate-spin" size={16} />}
+                  <span>
+                    {submitting ? "กำลังบันทึก..." : 
+                     actionType === "RECEIVE" ? "ยืนยันการรับคืน" :
+                     actionType === "REJECT_RETURN" ? "ยืนยันการปฏิเสธ" : "ยืนยันมติการจัดหา"}
+                  </span>
                 </button>
               </div>
             </form>
@@ -950,8 +960,8 @@ export default function CenterDashboard() {
               disabled={submitting}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
             >
-              <Send size={16} />
-              Bulk Dispatch (เบิกจ่ายรวม)
+              {submitting ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+              {submitting ? "กำลังดำเนินการ..." : "Bulk Dispatch (เบิกจ่ายรวม)"}
             </button>
             <button 
               onClick={() => setSelectedIds([])}
