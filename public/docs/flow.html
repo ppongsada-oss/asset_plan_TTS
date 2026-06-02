@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Plan — System Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --admin:   #ef4444;
+            --center:  #a855f7;
+            --site:    #3b82f6;
+            --pm:      #10b981;
+            --report:  #6366f1;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', 'Sarabun', sans-serif;
+            background: #020617;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        /* ── Phase container ── */
+        .phase { position: relative; }
+        .phase-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            padding: 0.2rem 0.7rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
+        }
+
+        /* ── Swimlane card ── */
+        .lane-card {
+            border-radius: 1rem;
+            border: 1px solid rgba(255,255,255,0.07);
+            background: rgba(30, 41, 59, 0.55);
+            backdrop-filter: blur(8px);
+            padding: 1.25rem 1.5rem;
+            position: relative;
+        }
+        .lane-card.admin   { border-color: rgba(239,68,68,.25);  background: rgba(239,68,68,.06); }
+        .lane-card.center  { border-color: rgba(168,85,247,.25); background: rgba(168,85,247,.06); }
+        .lane-card.site    { border-color: rgba(59,130,246,.25); background: rgba(59,130,246,.06); }
+        .lane-card.pm      { border-color: rgba(16,185,129,.25); background: rgba(16,185,129,.06); }
+        .lane-card.report  { border-color: rgba(99,102,241,.25); background: rgba(99,102,241,.06); }
+
+        /* ── Role pill ── */
+        .rpill {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.2rem 0.7rem;
+            border-radius: 9999px;
+        }
+        .rpill.admin  { background: rgba(239,68,68,.2);  color: #fca5a5; }
+        .rpill.center { background: rgba(168,85,247,.2); color: #d8b4fe; }
+        .rpill.site   { background: rgba(59,130,246,.2); color: #93c5fd; }
+        .rpill.pm     { background: rgba(16,185,129,.2); color: #6ee7b7; }
+        .rpill.report { background: rgba(99,102,241,.2); color: #c7d2fe; }
+
+        /* ── Connector ── */
+        .connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            padding: 0.2rem 0;
+        }
+        .conn-line { width: 2px; height: 28px; background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.05)); }
+        .conn-arrow { color: rgba(255,255,255,.3); font-size: 1rem; line-height: 1; }
+        .conn-label {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,.3);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin: 0.2rem 0;
+        }
+
+        /* ── Status badge ── */
+        .sbadge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+        }
+        .sbadge.open      { background: rgba(59,130,246,.2);  color: #93c5fd; border: 1px solid rgba(59,130,246,.3); }
+        .sbadge.submitted { background: rgba(245,158,11,.2);  color: #fcd34d; border: 1px solid rgba(245,158,11,.3); }
+        .sbadge.approved  { background: rgba(16,185,129,.2);  color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+        .sbadge.rejected  { background: rgba(239,68,68,.2);   color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+        .sbadge.pending   { background: rgba(245,158,11,.15); color: #fcd34d; border: 1px solid rgba(245,158,11,.2); }
+        .sbadge.completed { background: rgba(107,114,128,.2); color: #d1d5db; border: 1px solid rgba(107,114,128,.3); }
+        .sbadge.ready     { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,.2); }
+
+        /* ── Decision diamond ── */
+        .diamond-wrap { display: flex; flex-direction: column; align-items: center; }
+        .diamond {
+            width: 80px; height: 80px;
+            background: rgba(16,185,129,.12);
+            border: 2px solid rgba(16,185,129,.35);
+            transform: rotate(45deg);
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 0.5rem;
+        }
+        .diamond-inner { transform: rotate(-45deg); text-align: center; font-size: 0.7rem; font-weight: 700; color: #6ee7b7; line-height: 1.2; }
+
+        /* ── Branch lines ── */
+        .branch-row { display: flex; align-items: flex-start; gap: 0; position: relative; }
+        .branch-left  { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .branch-right { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .branch-h-line { height: 2px; background: rgba(255,255,255,.1); }
+
+        /* ── Method pill ── */
+        .method-pill {
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,.08);
+            background: rgba(30,41,59,.6);
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* ── Loop indicator ── */
+        .loop-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, rgba(59,130,246,.15), rgba(168,85,247,.15));
+            border: 1px solid rgba(168,85,247,.3);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #c4b5fd;
+        }
+
+        /* ── Scroll hint ── */
+        .scroll-hint { animation: bounce 2s infinite; }
+        @keyframes bounce { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(4px) } }
+
+        /* ── Step list ── */
+        .step-row { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.5rem; }
+        .step-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 0.45rem; flex-shrink: 0; }
+
+        /* ── Inset note ── */
+        .note {
+            border-radius: 0.625rem;
+            padding: 0.6rem 0.875rem;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .note.warn { background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2); color: #fcd34d; }
+        .note.info { background: rgba(59,130,246,.08);  border: 1px solid rgba(59,130,246,.2);  color: #93c5fd; }
+        .note.tip  { background: rgba(16,185,129,.08);  border: 1px solid rgba(16,185,129,.2);  color: #6ee7b7; }
+
+        /* ── Dotted reject line (CSS only) ── */
+        .reject-path {
+            border: 2px dashed rgba(239,68,68,.3);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: rgba(239,68,68,.04);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════════ -->
+<div class="sticky top-0 z-50 px-6 py-3 flex items-center justify-between"
+     style="background:rgba(2,6,23,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)">
+    <div class="flex items-center gap-3">
+        <span class="text-slate-400 text-xs uppercase tracking-widest">Asset Plan</span>
+        <span class="text-slate-700">/</span>
+        <span class="font-bold text-sm">System Flow — Full Loop</span>
+    </div>
+    <!-- Phase dots -->
+    <div class="flex items-center gap-3 text-xs text-slate-500">
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-400"></span>Setup</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-400"></span>Cycle</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-400"></span>Planning</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Approval</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-400"></span>Allocation</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Returns</span>
+        <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-indigo-400"></span>Report</span>
+    </div>
+    <a href="presentation/index.html" class="text-xs text-slate-600 hover:text-slate-400 transition-colors">← Presentation</a>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MAIN FLOW
+═══════════════════════════════════════════════════ -->
+<div class="max-w-3xl mx-auto px-4 py-12 pb-24">
+
+    <!-- ─── TITLE ─── -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-extrabold tracking-tight mb-3">
+            <span style="background:linear-gradient(135deg,#3b82f6,#a855f7,#2dd4bf);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+                Complete Working Flow
+            </span>
+        </h1>
+        <p class="text-slate-500 text-sm">ตั้งแต่เปิดใบงาน จนครบ Loop การจัดหา</p>
+        <div class="mt-3 flex justify-center scroll-hint text-slate-700 text-xs gap-1">
+            <i data-lucide="chevrons-down" class="w-3.5 h-3.5"></i> เลื่อนลง
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         PHASE 1 — SETUP (one-time)
+    ═══════════════════════════════════════════ -->
+    <div class="phase">
+        <div class="phase-label" style="background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.2)">
+            <i data-lucide="wrench" class="w-3 h-3"></i> Phase 1 — Setup <span style="opacity:.6;font-weight:400;font-size:.6rem;margin-left:.25rem">(ทำครั้งแรก)</span>
+        </div>
+        <div class="lane-card admin">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="rpill admin">Admin</span>
+                <span class="text-slate-400 text-sm font-semibold">ตั้งค่าระบบก่อนเริ่มใช้งาน</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2 text-xs text-center">
+                <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:.625rem;padding:.6rem .5rem">
+                    <i data-lucide="database" class="w-4 h-4 text-red-400 mx-auto mb-1"></i>
+                    <div class="font-semibold text-slate-300">Master Data</div>
+                    <div class="text-slate-600 mt-0.5">ครุภัณฑ์ + หมวดหมู่ + สต็อก</div>
+                </div>
+                <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:.625rem;padding:.6rem .5rem">
+                    <i data-lucide="building-2" class="w-4 h-4 text-red-400 mx-auto mb-1"></i>
+                    <div class="font-semibold text-slate-300">โครงการ</div>
+                    <div class="text-slate-600 mt-0.5">SITE / WAREHOUSE</div>
+                </div>
+                <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:.625rem;padding:.6rem .5rem">
+                    <i data-lucide="users" class="w-4 h-4 text-red-400 mx-auto mb-1"></i>
+                    <div class="font-semibold text-slate-300">ผู้ใช้งาน</div>
+                    <div class="text-slate-600 mt-0.5">Email + Global Role</div>
+                </div>
+                <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:.625rem;padding:.6rem .5rem">
+                    <i data-lucide="key-round" class="w-4 h-4 text-red-400 mx-auto mb-1"></i>
+                    <div class="font-semibold text-slate-300">Project Roles</div>
+                    <div class="text-slate-600 mt-0.5">STORE_SITE / PM / VIEWER</div>
+                </div>
+            </div>
+            <div class="note tip"><i data-lucide="check-circle" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>ทำครั้งเดียว — เพิ่ม/แก้ไขได้ตลอดเวลา ไม่กระทบรอบแผนที่รันอยู่</div>
+        </div>
+    </div>
+
+    <!-- connector -->
+    <div class="connector">
+        <div class="conn-line"></div>
+        <div class="conn-arrow">▼</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         PHASE 2 — CYCLE CREATION
+    ═══════════════════════════════════════════ -->
+    <div class="phase">
+        <div class="phase-label" style="background:rgba(168,85,247,.12);color:#d8b4fe;border:1px solid rgba(168,85,247,.2)">
+            <i data-lucide="calendar-plus" class="w-3 h-3"></i> Phase 2 — สร้างรอบแผน (Planning Cycle)
+        </div>
+        <div class="lane-card center">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="rpill center">Store Center</span>
+                <span class="text-slate-400 text-sm font-semibold">กำหนดขอบเขตและเปิดรอบแผน</span>
+            </div>
+            <div class="space-y-2 text-sm">
+                <div class="step-row"><span class="step-dot bg-purple-400"></span><span class="text-slate-300">กด <strong>"+ สร้างรอบแผนใหม่"</strong> — กรอก วันเริ่ม / Deadline / เดือนเป้าหมาย (1–12 เดือน)</span></div>
+                <div class="step-row"><span class="step-dot bg-purple-400"></span><span class="text-slate-300">เลือกโครงการที่เข้าร่วม — ค้นหา, เลือกทีละรายการ หรือ "เลือกทั้งหมด"</span></div>
+                <div class="step-row"><span class="step-dot bg-purple-400"></span><span class="text-slate-300">กด <strong>"สร้าง"</strong></span></div>
+            </div>
+            <!-- System action box -->
+            <div class="mt-3 rounded-xl p-3 flex items-start gap-3"
+                 style="background:rgba(168,85,247,.1);border:1px dashed rgba(168,85,247,.3)">
+                <i data-lucide="cpu" class="w-4 h-4 text-purple-400 mt-0.5 shrink-0"></i>
+                <div class="text-xs">
+                    <span class="text-purple-300 font-semibold">ระบบสร้างอัตโนมัติ</span>
+                    <span class="text-slate-400"> — Job 1 ใบต่อ 1 โครงการ สถานะ </span>
+                    <span class="sbadge open">OPEN</span>
+                    <span class="text-slate-400"> พร้อมให้ทุกไซต์กรอกแผนทันที</span>
+                </div>
+            </div>
+            <div class="note warn"><i data-lucide="alert-triangle" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>วันที่และเดือนเป้าหมาย <strong>แก้ไขไม่ได้</strong>หลังสร้าง — แก้ไขได้เฉพาะโครงการที่เข้าร่วม</div>
+        </div>
+    </div>
+
+    <div class="connector">
+        <div class="conn-line"></div>
+        <div class="conn-arrow">▼</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         PHASE 3 — PLANNING
+    ═══════════════════════════════════════════ -->
+    <div class="phase">
+        <div class="phase-label" style="background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.2)">
+            <i data-lucide="table-2" class="w-3 h-3"></i> Phase 3 — กรอกแผนความต้องการ
+        </div>
+        <div class="lane-card site">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="rpill site">Store Site</span>
+                <span class="text-slate-400 text-sm font-semibold">วางแผนรายเดือนล่วงหน้า</span>
+                <span class="sbadge open ml-auto">OPEN</span>
+            </div>
+            <div class="space-y-2 text-sm">
+                <div class="step-row"><span class="step-dot bg-blue-400"></span><span class="text-slate-300">เปิดหน้า <strong>Site Plan</strong> → เห็น Job ของโครงการตัวเอง พร้อม Countdown ถึง Deadline</span></div>
+                <div class="step-row"><span class="step-dot bg-blue-400"></span><span class="text-slate-300">คลิก <strong>"เริ่มวางแผน"</strong> → เข้าตาราง Worksheet (แถว = ครุภัณฑ์, คอลัมน์ = เดือน)</span></div>
+                <div class="step-row"><span class="step-dot bg-blue-400"></span>
+                    <span class="text-slate-300">พิมพ์จำนวน → กด <kbd style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:0 5px;font-size:.7rem">Enter</kbd>
+                    <span class="text-blue-300 text-xs ml-1">Auto-fill เดือนที่เหลือ + เลื่อนแถวถัดไป</span></span>
+                </div>
+                <div class="step-row"><span class="step-dot bg-blue-300"></span>
+                    <span class="text-slate-400">ระบบแสดง <span class="text-red-400 font-mono text-xs">คืน X</span> อัตโนมัติ เมื่อจำนวนลดลงจากเดือนก่อน</span>
+                </div>
+            </div>
+
+            <!-- Save Draft loop -->
+            <div class="mt-4 flex items-center gap-3">
+                <div class="flex-1 rounded-xl p-3 text-xs flex items-center gap-2"
+                     style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2)">
+                    <i data-lucide="save" class="w-3.5 h-3.5 text-blue-400 shrink-0"></i>
+                    <div><span class="text-blue-300 font-semibold">บันทึกฉบับร่าง</span><span class="text-slate-500"> — สถานะยัง </span><span class="sbadge open">OPEN</span><span class="text-slate-500"> กลับมาแก้ได้เสมอ</span></div>
+                </div>
+                <div class="text-slate-700 text-lg font-thin">|</div>
+                <div class="flex-1 rounded-xl p-3 text-xs flex items-center gap-2"
+                     style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)">
+                    <i data-lucide="send" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+                    <div><span class="text-amber-300 font-semibold">ส่งแผน (Submit)</span><span class="text-slate-500"> — ล็อกตาราง สถานะ → </span><span class="sbadge submitted">SUBMITTED</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="connector">
+        <div class="conn-line"></div>
+        <div class="conn-arrow">▼</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         PHASE 4 — APPROVAL
+    ═══════════════════════════════════════════ -->
+    <div class="phase">
+        <div class="phase-label" style="background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.2)">
+            <i data-lucide="clipboard-check" class="w-3 h-3"></i> Phase 4 — ตรวจสอบและอนุมัติ
+        </div>
+        <div class="lane-card pm">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="rpill pm">Project Manager</span>
+                <span class="text-slate-400 text-sm font-semibold">ตรวจสอบ แก้ไข และตัดสินใจ</span>
+                <span class="sbadge submitted ml-auto">SUBMITTED</span>
+            </div>
+            <div class="space-y-2 text-sm mb-4">
+                <div class="step-row"><span class="step-dot bg-emerald-400"></span><span class="text-slate-300">เปิดหน้า <strong>PM Approval</strong> → เห็น Job ที่รออนุมัติทุกโครงการที่ตัวเองเป็น PM</span></div>
+                <div class="step-row"><span class="step-dot bg-emerald-400"></span>
+                    <span class="text-slate-300">ใช้ <strong>Mode Filter</strong> เพื่อโฟกัส:
+                    <span class="text-xs ml-1 text-slate-500">
+                        DEMAND (ขอเพิ่ม) · RETURN (จะคืน) · CHANGED (แก้แล้ว)
+                    </span></span>
+                </div>
+                <div class="step-row"><span class="step-dot bg-emerald-300"></span>
+                    <span class="text-slate-400">แก้ไขตัวเลขในตารางได้โดยตรง → ระบบ Log ทุก Cell → ดูย้อนหลังใน Mode CHANGED</span>
+                </div>
+            </div>
+
+            <!-- Decision -->
+            <div class="diamond-wrap">
+                <div class="diamond">
+                    <div class="diamond-inner">ตัดสินใจ<br>?</div>
+                </div>
+            </div>
+
+            <!-- Branches -->
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <!-- APPROVE -->
+                <div class="rounded-xl p-3 text-xs"
+                     style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25)">
+                    <div class="flex items-center gap-1.5 mb-2">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        <span class="font-bold text-emerald-300">อนุมัติ (Approve)</span>
+                    </div>
+                    <div class="text-slate-500 mb-2">บันทึกการแก้ไข → ส่งข้อมูลให้ Store Center ทันที</div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="sbadge submitted">SUBMITTED</span>
+                        <span class="text-slate-600">→</span>
+                        <span class="sbadge approved">APPROVED</span>
+                    </div>
+                </div>
+                <!-- REJECT -->
+                <div class="rounded-xl p-3 text-xs"
+                     style="background:rgba(239,68,68,.06);border:1px dashed rgba(239,68,68,.3)">
+                    <div class="flex items-center gap-1.5 mb-2">
+                        <i data-lucide="x-circle" class="w-3.5 h-3.5 text-red-400"></i>
+                        <span class="font-bold text-red-300">ตีกลับ (Reject)</span>
+                    </div>
+                    <div class="text-slate-500 mb-2">กรอกเหตุผล → ไซต์แก้ไขและส่งใหม่</div>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="sbadge submitted">SUBMITTED</span>
+                        <span class="text-slate-600">→</span>
+                        <span class="sbadge open">OPEN</span>
+                        <span class="text-slate-600 ml-1">↩ Phase 3</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject return arrow (visual hint) -->
+    <div class="flex justify-end mb-1 pr-2">
+        <div class="text-xs text-red-500/40 flex items-center gap-1">
+            <i data-lucide="corner-up-left" class="w-3 h-3"></i>
+            <span>ตีกลับ → ไซต์แก้ไขแล้วส่งใหม่ (วนซ้ำ Phase 3–4)</span>
+        </div>
+    </div>
+
+    <div class="connector">
+        <div class="conn-line" style="background:linear-gradient(180deg,rgba(16,185,129,.3),rgba(168,85,247,.2))"></div>
+        <div class="conn-label">APPROVED — ข้อมูลส่งต่อ Store Center</div>
+        <div class="conn-arrow" style="color:rgba(16,185,129,.5)">▼</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         PHASE 5 — ALLOCATION
+    ═══════════════════════════════════════════ -->
+    <div class="phase">
+        <div class="phase-label" style="background:rgba(168,85,247,.12);color:#d8b4fe;border:1px solid rgba(168,85,247,.2)">
+            <i data-lucide="package-check" class="w-3 h-3"></i> Phase 5 — จัดสรรครุภัณฑ์ (Allocation)
+        </div>
+        <div class="lane-card center">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="rpill center">Store Center</span>
+                <span class="text-slate-400 text-sm font-semibold">หน้า Net Demand — แท็บ "ใบขอเบิก/จัดหา"</span>
+            </div>
+            <div class="space-y-2 text-sm mb-4">
+                <div class="step-row"><span class="step-dot bg-purple-400"></span>
+                    <span class="text-slate-300">กรอง Status = <span class="sbadge ready">READY</span> เพื่อดูรายการที่สต็อกพอและทำได้ทันที</span>
+                </div>
+                <div class="step-row"><span class="step-dot bg-purple-400"></span>
+                    <span class="text-slate-300">เลือกวิธีจัดสรรต่อแถว — ระบบกรอกจำนวนค้างให้อัตโนมัติ แก้ได้ถ้าต้องการจัดสรรบางส่วน</span>
+                </div>
+            </div>
+
+            <!-- 5 Methods -->
+            <div class="grid grid-cols-5 gap-2 mb-4 text-xs">
+                <div class="method-pill">
+                    <div class="text-purple-300 font-bold text-base mb-1">⬇</div>
+                    <div class="font-semibold text-slate-300">DISPATCH</div>
+                    <div class="text-slate-600 mt-0.5">เบิกจ่าย</div>
+                    <div class="text-purple-400 text-[10px] mt-1">สต็อก ลด</div>
+                </div>
+                <div class="method-pill">
+                    <div class="text-blue-300 font-bold text-base mb-1">⇄</div>
+                    <div class="font-semibold text-slate-300">CIRCULATE</div>
+                    <div class="text-slate-600 mt-0.5">หมุนเวียน</div>
+                    <div class="text-slate-500 text-[10px] mt-1">สต็อกไม่เปลี่ยน</div>
+                </div>
+                <div class="method-pill">
+                    <div class="text-teal-300 font-bold text-base mb-1">⇌</div>
+                    <div class="font-semibold text-slate-300">SUBSTITUTE</div>
+                    <div class="text-slate-600 mt-0.5">สลับสเปก</div>
+                    <div class="text-slate-500 text-[10px] mt-1">สต็อกไม่เปลี่ยน</div>
+                </div>
+                <div class="method-pill">
+                    <div class="text-amber-300 font-bold text-base mb-1">+</div>
+                    <div class="font-semibold text-slate-300">BUY</div>
+                    <div class="text-slate-600 mt-0.5">จัดซื้อ</div>
+                    <div class="text-slate-500 text-[10px] mt-1">สั่งซื้อใหม่</div>
+                </div>
+                <div class="method-pill">
+                    <div class="text-orange-300 font-bold text-base mb-1">⏱</div>
+                    <div class="font-semibold text-slate-300">RENT</div>
+                    <div class="text-slate-600 mt-0.5">เช่า</div>
+                    <div class="text-slate-500 text-[10px] mt-1">ชั่วคราว</div>
+                </div>
+            </div>
+
+            <!-- Status flow -->
+            <div class="flex items-center gap-2 text-xs mb-3">
+                <span class="sbadge pending">PENDING</span>
+                <span class="text-slate-600">→ จัดสรรทีละส่วนจนครบ →</span>
+                <span class="sbadge completed">COMPLETED</span>
+            </div>
+
+            <!-- Bulk + Rollback -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="note info">
+                    <i data-lucide="layers" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>
+                    <div><strong>Bulk Dispatch</strong> — เลือกหลายแถว → กด "เบิกจ่ายรวม" · ระบบข้ามที่สต็อกไม่พออัตโนมัติ</div>
+                </div>
+                <div class="note warn">
+                    <i data-lucide="history" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>
+                    <div><strong>History Rollback</strong> — ลบ Decision ที่ผิด → สต็อก Reverse คืนอัตโนมัติ · ทำใหม่ได้ทันที</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="connector">
+        <div class="conn-line"></div>
+        <div class="conn-arrow">▼</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         PHASE 6 — RETURNS
+    ═══════════════════════════════════════════ -->
+    <div class="phase">
+        <div class="phase-label" style="background:rgba(245,158,11,.1);color:#fcd34d;border:1px solid rgba(245,158,11,.2)">
+            <i data-lucide="package-open" class="w-3 h-3"></i> Phase 6 — รับของคืน (Returns)
+        </div>
+        <div class="lane-card" style="border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.04)">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="rpill center">Store Center</span>
+                <span class="text-slate-400 text-sm font-semibold">หน้า Net Demand — แท็บ "รายการส่งคืน"</span>
+            </div>
+            <p class="text-slate-400 text-sm mb-4">รายการที่ไซต์มีของ <strong>เกินกว่าที่วางแผน</strong> — ระบบคำนวณยอดคืนให้อัตโนมัติจากแผนที่อนุมัติ</p>
+
+            <div class="grid grid-cols-2 gap-4 text-xs">
+                <div class="rounded-xl p-3" style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2)">
+                    <div class="flex items-center gap-1.5 mb-2">
+                        <i data-lucide="package-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        <span class="font-bold text-emerald-300">รับคืน (RECEIVE)</span>
+                    </div>
+                    <p class="text-slate-500">ของมาถึงคลังแล้ว → ยืนยันรับ</p>
+                    <p class="text-emerald-400 mt-1.5">⬆ สต็อกคลังกลางเพิ่ม</p>
+                </div>
+                <div class="rounded-xl p-3" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2)">
+                    <div class="flex items-center gap-1.5 mb-2">
+                        <i data-lucide="x-circle" class="w-3.5 h-3.5 text-red-400"></i>
+                        <span class="font-bold text-red-300">ปฏิเสธ (REJECT)</span>
+                    </div>
+                    <p class="text-slate-500">ประเมินแล้วว่าไซต์ควรเก็บใช้ต่อ</p>
+                    <p class="text-slate-500 mt-1.5">— สต็อกไม่เปลี่ยน</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="connector">
+        <div class="conn-line"></div>
+        <div class="conn-arrow">▼</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         PHASE 7 — REPORTING
+    ═══════════════════════════════════════════ -->
+    <div class="phase">
+        <div class="phase-label" style="background:rgba(99,102,241,.12);color:#c7d2fe;border:1px solid rgba(99,102,241,.2)">
+            <i data-lucide="bar-chart-3" class="w-3 h-3"></i> Phase 7 — รายงานและการจัดซื้อ
+        </div>
+        <div class="lane-card report">
+            <div class="flex items-center gap-2 mb-3">
+                <span class="rpill report">Store Center / Admin</span>
+                <span class="text-slate-400 text-sm font-semibold">Matrix Report — ภาพรวมทุกไซต์</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-xs">
+                <div class="rounded-xl p-3" style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.15)">
+                    <i data-lucide="table-2" class="w-4 h-4 text-indigo-400 mb-1.5"></i>
+                    <div class="font-semibold text-slate-300 mb-1">Pivot Table</div>
+                    <p class="text-slate-600">ทุกไซต์ × ทุกครุภัณฑ์ × ทุกเดือน ในตารางเดียว</p>
+                </div>
+                <div class="rounded-xl p-3" style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.15)">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 mb-1.5"></i>
+                    <div class="font-semibold text-slate-300 mb-1">Alert สต็อกไม่พอ</div>
+                    <p class="text-slate-600">รายการที่ความต้องการรวมเกินสต็อก → Checklist จัดซื้อ</p>
+                </div>
+                <div class="rounded-xl p-3" style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.15)">
+                    <i data-lucide="download" class="w-4 h-4 text-indigo-400 mb-1.5"></i>
+                    <div class="font-semibold text-slate-300 mb-1">Export Excel</div>
+                    <p class="text-slate-600">2 แบบ — ตามที่กรองไว้ หรือทั้งรอบ · 2 Sheet: Demand + Returns</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="connector">
+        <div class="conn-line" style="height:36px;background:linear-gradient(180deg,rgba(99,102,241,.3),rgba(168,85,247,.3))"></div>
+        <div class="conn-arrow" style="color:rgba(168,85,247,.6)">▼</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         LOOP CLOSE
+    ═══════════════════════════════════════════ -->
+    <div class="flex flex-col items-center gap-4">
+        <div class="loop-badge">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            <span>เริ่มรอบแผนถัดไป — กลับไป Phase 2</span>
+        </div>
+        <div class="text-center max-w-md">
+            <p class="text-slate-600 text-xs leading-relaxed">
+                Store Center สร้าง Cycle ใหม่ → ระบบเปิด Job ใหม่ให้ทุกไซต์อีกครั้ง<br>
+                ข้อมูลสต็อกที่อัปเดตจากรอบก่อนสะท้อนในรอบถัดไปทันที
+            </p>
+        </div>
+
+        <!-- Full loop summary strip -->
+        <div class="w-full mt-4 rounded-2xl p-4"
+             style="background:rgba(30,41,59,.6);border:1px solid rgba(255,255,255,.07)">
+            <p class="text-center text-xs uppercase tracking-widest text-slate-600 mb-3">สรุป Full Loop</p>
+            <div class="flex items-center justify-between gap-1 text-center text-[10px] flex-wrap">
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(239,68,68,.15)"><i data-lucide="settings-2" class="w-3.5 h-3.5 text-red-400"></i></div>
+                    <span class="text-slate-500">Setup</span>
+                </div>
+                <div class="text-slate-700 text-base">→</div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(168,85,247,.15)"><i data-lucide="calendar-plus" class="w-3.5 h-3.5 text-purple-400"></i></div>
+                    <span class="text-slate-500">Cycle</span>
+                </div>
+                <div class="text-slate-700 text-base">→</div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(59,130,246,.15)"><i data-lucide="table-2" class="w-3.5 h-3.5 text-blue-400"></i></div>
+                    <span class="text-slate-500">Plan</span>
+                </div>
+                <div class="text-slate-700 text-base">→</div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(16,185,129,.15)"><i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-emerald-400"></i></div>
+                    <span class="text-slate-500">Approve</span>
+                </div>
+                <div class="text-slate-700 text-base">→</div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(168,85,247,.15)"><i data-lucide="package-check" class="w-3.5 h-3.5 text-purple-400"></i></div>
+                    <span class="text-slate-500">Allocate</span>
+                </div>
+                <div class="text-slate-700 text-base">→</div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(245,158,11,.12)"><i data-lucide="package-open" class="w-3.5 h-3.5 text-amber-400"></i></div>
+                    <span class="text-slate-500">Returns</span>
+                </div>
+                <div class="text-slate-700 text-base">→</div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(99,102,241,.15)"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5 text-indigo-400"></i></div>
+                    <span class="text-slate-500">Report</span>
+                </div>
+                <div class="text-slate-700 text-base">↩</div>
+                <div class="flex flex-col items-center gap-1">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background:rgba(168,85,247,.15)"><i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-purple-400"></i></div>
+                    <span class="text-slate-500">Next<br>Cycle</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-center text-slate-700 text-xs mt-8">© 2026 Asset Plan System — TTS Construction</p>
+</div>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>

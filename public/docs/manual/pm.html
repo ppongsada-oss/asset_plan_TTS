@@ -21,7 +21,7 @@
 
     <header class="header">
         <h1>คู่มือผู้จัดการโครงการ (Project Manager)</h1>
-        <p>การตรวจสอบ แก้ไข และอนุมัติแผนความต้องการพัสดุจากหน้างาน</p>
+        <p>ตรวจสอบ แก้ไข และตัดสินใจอนุมัติหรือตีกลับแผนความต้องการพัสดุจากหน้างาน</p>
     </header>
 
     <div class="quick-summary">
@@ -35,7 +35,7 @@
         </div>
         <div class="qs-item">
             <span class="qs-label">เริ่มทำงาน</span>
-            <span class="qs-value">หลังไซต์ Submit แผน</span>
+            <span class="qs-value">หลังไซต์ Submit แผนแล้ว</span>
         </div>
     </div>
 
@@ -43,24 +43,29 @@
     <div class="step">
         <div class="step-number">1</div>
         <div class="step-content">
-            <h3>เปิดหน้า PM Approval Hub</h3>
-            <p>ไปที่เมนู <strong>PM Approval</strong> จะเห็น 2 แท็บ:</p>
+            <h3>เปิดหน้า PM Approval — ดูรายการรออนุมัติ</h3>
+            <p>ไปที่เมนู <strong>PM Approval</strong> — หน้านี้รวมใบงานทุกโครงการที่คุณเป็น PM ไว้ในที่เดียว</p>
 
             <table class="table-manual">
                 <thead><tr><th>แท็บ</th><th>เนื้อหา</th></tr></thead>
                 <tbody>
                     <tr>
                         <td><strong>"รออนุมัติ"</strong></td>
-                        <td>ใบงานที่ไซต์ส่งมาและรอการตัดสินใจ (สถานะ <span class="badge badge-amber">SUBMITTED</span>)</td>
+                        <td>ใบงานที่ไซต์ส่งมาและยังไม่ได้ตัดสินใจ (สถานะ <span class="badge badge-amber">SUBMITTED</span>)</td>
                     </tr>
                     <tr>
-                        <td><strong>"ประวัติ"</strong></td>
-                        <td>ใบงานที่ดำเนินการแล้ว (APPROVED / REJECTED / CLOSED) — ดูได้แต่แก้ไขไม่ได้</td>
+                        <td><strong>"ประวัติการอนุมัติ"</strong></td>
+                        <td>ใบงานที่ดำเนินการแล้ว — ดูได้ แต่แก้ไขไม่ได้</td>
                     </tr>
                 </tbody>
             </table>
 
-            <p>คลิกใบงานที่ต้องการ → เข้าหน้าตรวจสอบรายละเอียด</p>
+            <img src="assets/pm_review.png" alt="หน้า PM Approval Hub — รายการรออนุมัติ" class="screenshot">
+
+            <p>แท็บ <strong>"ประวัติการอนุมัติ"</strong> — ดูย้อนหลังได้ทุกใบงานที่ผ่านการพิจารณาแล้ว:</p>
+            <img src="assets/pm_history_tab.png" alt="แท็บประวัติการอนุมัติ" class="screenshot">
+
+            <p>คลิกที่ใบงานที่ต้องการ → เข้าหน้าตรวจสอบรายละเอียด</p>
         </div>
     </div>
 
@@ -68,18 +73,16 @@
     <div class="step">
         <div class="step-number">2</div>
         <div class="step-content">
-            <h3>อ่านแถบสรุปด้านบน</h3>
-            <p>ด้านบนของหน้าตรวจสอบแสดงตัวเลขสรุปทั้งรอบ:</p>
+            <h3>อ่านแถบสรุปก่อนลงรายละเอียด</h3>
+            <p>ด้านบนของหน้าตรวจสอบแสดงตัวเลขรวมทั้งรอบ — อ่านก่อนเพื่อประเมินภาพรวม:</p>
             <ul class="manual-list">
-                <li><strong>ยอดสั่งเพิ่มรวม</strong> — รวมทุก Equipment ที่ต้องการเพิ่มกว่าที่มีอยู่</li>
-                <li><strong>ยอดคืนของรวม</strong> — รวมทุก Equipment ที่จะส่งคืนในรอบนี้</li>
+                <li><strong>ยอดสั่งเพิ่มรวม</strong> — รวมทุกครุภัณฑ์ที่ต้องการเพิ่มกว่าที่ไซต์มีอยู่</li>
+                <li><strong>ยอดคืนของรวม</strong> — รวมทุกครุภัณฑ์ที่ไซต์จะส่งคืนในรอบนี้</li>
             </ul>
 
             <div class="tip-box">
-                💡 ใช้ตัวเลขสรุปนี้ประเมินภาพรวม ก่อนลงรายละเอียดในตาราง
+                💡 ถ้ายอดสั่งเพิ่มสูงผิดปกติ ให้กรอง Mode <strong>DEMAND</strong> ก่อน เพื่อดูว่ารายการไหนขอมากเกินจริง
             </div>
-
-            <img src="assets/pm_review.png" alt="PM Review" class="screenshot">
         </div>
     </div>
 
@@ -87,20 +90,40 @@
     <div class="step">
         <div class="step-number">3</div>
         <div class="step-content">
-            <h3>ตรวจสอบตารางแผน — กรองตาม Mode</h3>
-            <p>กรอง Mode เพื่อดูเฉพาะรายการที่เกี่ยวข้อง:</p>
+            <h3>ใช้ Mode Filter เพื่อตรวจสอบเฉพาะส่วนที่สำคัญ</h3>
+            <p>ตารางแสดงครุภัณฑ์ทุกรายการในใบงาน — Mode Filter ช่วยให้โฟกัสเฉพาะรายการที่ต้องการตรวจจริง แทนที่จะไล่ดูทีละแถว</p>
+
+            <p><strong>วิธีใช้:</strong> กดปุ่ม Mode ที่แถบเหนือตาราง → ตารางกรองทันที</p>
 
             <table class="table-manual">
                 <thead><tr><th>Mode</th><th>แสดงรายการ</th><th>ใช้เมื่อ</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>ALL</strong></td><td>ทุกรายการ</td><td>ดูภาพรวมทั้งหมด</td></tr>
-                    <tr><td><strong>DEMAND</strong></td><td>รายการที่ขอเพิ่มกว่าที่ไซต์มีอยู่</td><td>ตรวจสอบความต้องการใหม่</td></tr>
-                    <tr><td><strong>RETURN</strong></td><td>รายการที่จะส่งคืนเพราะมีเกิน</td><td>ตรวจสอบของที่จะคืน</td></tr>
-                    <tr><td><strong>CHANGED</strong></td><td>รายการที่คุณแก้ไขตัวเลขแล้ว</td><td>ทบทวนการแก้ไขก่อนอนุมัติ</td></tr>
+                    <tr>
+                        <td><strong>แสดงทั้งหมด</strong></td>
+                        <td>ทุกรายการในใบงาน</td>
+                        <td>ดูภาพรวมตอนเริ่มต้น</td>
+                    </tr>
+                    <tr>
+                        <td><strong>เฉพาะรายการที่สั่งเพิ่ม</strong></td>
+                        <td>รายการที่ขอเพิ่มเกินสต็อกที่มีอยู่</td>
+                        <td>ตรวจว่าของที่ขอมีเหตุผลและปริมาณสมเหตุสมผล</td>
+                    </tr>
+                    <tr>
+                        <td><strong>เฉพาะรายการที่มีการคืน</strong></td>
+                        <td>รายการที่ไซต์จะส่งคืนเพราะมีเกิน</td>
+                        <td>ตรวจยอดคืนก่อนอนุมัติเพื่อความถูกต้อง</td>
+                    </tr>
+                    <tr>
+                        <td><strong>เฉพาะรายการที่ถูกแก้ไข</strong></td>
+                        <td>รายการที่คุณแก้ตัวเลขแล้วในรอบนี้</td>
+                        <td>ทบทวนการแก้ไขทั้งหมดก่อนกดอนุมัติ</td>
+                    </tr>
                 </tbody>
             </table>
 
-            <p>Sort ตารางได้โดยคลิก header: ชื่อรายการ, แต่ละคอลัมน์เดือน</p>
+            <div class="info-box">
+                📋 <strong>Sort ตาราง:</strong> คลิก Header คอลัมน์ใดก็ได้เพื่อเรียงลำดับ — ใช้ Sort ตามชื่อรายการเพื่อเปรียบเทียบแต่ละเดือนได้ง่ายขึ้น
+            </div>
         </div>
     </div>
 
@@ -109,16 +132,16 @@
         <div class="step-number">4</div>
         <div class="step-content">
             <h3>แก้ไขตัวเลขก่อนอนุมัติ (ถ้าจำเป็น)</h3>
-            <p>PM สามารถแก้ไขจำนวนในตารางได้โดยตรง เฉพาะเมื่อ Job เป็น <span class="badge badge-amber">SUBMITTED</span></p>
+            <p>PM สามารถปรับตัวเลขในตารางได้โดยตรง ไม่ต้องส่งกลับให้ไซต์แก้ — ทำได้เฉพาะเมื่อ Job เป็น <span class="badge badge-amber">SUBMITTED</span></p>
 
             <ol class="sub-steps">
-                <li>คลิกที่ช่องตัวเลขที่ต้องการแก้ไข</li>
-                <li>พิมพ์จำนวนใหม่</li>
-                <li>กด <strong>"บันทึกการแก้ไข"</strong> → ระบบบันทึก log ทุก cell ที่เปลี่ยน</li>
+                <li>คลิกที่ช่องตัวเลขที่ต้องการแก้ไข → พิมพ์จำนวนใหม่</li>
+                <li>กด <strong>"บันทึกการแก้ไข"</strong> — ระบบบันทึก Log ทุก Cell ที่เปลี่ยน</li>
+                <li>ตรวจสอบสิ่งที่แก้ด้วย Mode <strong>"เฉพาะรายการที่ถูกแก้ไข"</strong></li>
             </ol>
 
-            <div class="info-box">
-                📋 การแก้ไขทุกครั้งถูกบันทึก log ไว้ในระบบ — ดูได้ด้วยการกรอง Mode: <strong>CHANGED</strong>
+            <div class="warning-box">
+                <strong>เมื่อกดอนุมัติ — ตัวเลขที่แก้จะถูกส่งต่อไป Store Center ทันที</strong> ตรวจ Mode CHANGED ให้ครบก่อนทุกครั้ง
             </div>
         </div>
     </div>
@@ -140,18 +163,18 @@
                     <tr>
                         <td><strong>"ตีกลับ"</strong></td>
                         <td>SUBMITTED → <span class="badge badge-blue">OPEN</span></td>
-                        <td>ต้องกรอกเหตุผล → ส่งกลับให้ไซต์แก้ไขใหม่</td>
+                        <td>ต้องกรอกเหตุผล → ไซต์แก้ไขและ Submit ใหม่ได้</td>
                     </tr>
                 </tbody>
             </table>
 
-            <div class="warning-box">
-                <strong>ก่อนกดอนุมัติ:</strong> ตรวจสอบ Mode CHANGED ว่าแก้ไขถูกต้องแล้วหรือไม่ — เมื่ออนุมัติแล้วข้อมูลส่งต่อ Store Center ทันที ไม่สามารถ Undo ได้โดยง่าย
+            <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+                <img src="assets/pm_approve_modal.png" alt="Modal ยืนยันอนุมัติ" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                <img src="assets/pm_reject_modal.png" alt="Modal ตีกลับพร้อมเหตุผล" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
             </div>
 
-            <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
-                <img src="assets/pm_approve_modal.png" alt="Approve Modal" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
-                <img src="assets/pm_reject_modal.png" alt="Reject Modal" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <div class="danger-box" style="margin-top:16px;">
+                ⚠️ <strong>ไม่สามารถ Undo การอนุมัติได้</strong> — ถ้าต้องการแก้ไขหลังอนุมัติ ต้องให้ Store Center Unlock ใบงานก่อน แล้วค่อย Resubmit ใหม่
             </div>
         </div>
     </div>

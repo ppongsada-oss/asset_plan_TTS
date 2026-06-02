@@ -3,350 +3,461 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asset Plan | Role-Based Overview</title>
+    <title>Asset Plan | Enterprise Equipment Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: #020617;
-            color: #f8fafc;
-            overflow: hidden;
-        }
-        .slide {
-            display: none;
-            height: 100vh;
-            width: 100vw;
-            padding: 4rem;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.8s ease-out forwards;
-        }
-        .slide.active {
-            display: flex;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .glass {
-            background: rgba(30, 41, 59, 0.5);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1.5rem;
-        }
-        .accent-gradient {
-            background: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .progress-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            height: 4px;
-            background: #3b82f6;
-            transition: width 0.3s ease;
-        }
-        .nav-btn {
-            background: rgba(255, 255, 255, 0.05);
-            transition: all 0.2s;
-        }
-        .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: scale(1.1);
-        }
-        .role-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .screenshot-container {
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.4);
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-        .screenshot-container img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
+        body { font-family: 'Outfit', 'Sarabun', sans-serif; background: #020617; color: #f8fafc; overflow: hidden; }
+        .slide { display: none; height: 100vh; width: 100vw; padding: 3.5rem 4rem; flex-direction: column; justify-content: center; align-items: center; animation: fadeIn 0.6s ease-out forwards; }
+        .slide.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        .glass { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.25rem; }
+        .glass-bright { background: rgba(51, 65, 85, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); border-radius: 1.25rem; }
+        .accent-gradient { background: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .amber-gradient { background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .progress-bar { position: fixed; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #2dd4bf); transition: width 0.4s ease; }
+        .nav-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; }
+        .nav-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.1); }
+        .role-badge { padding: 0.2rem 0.8rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+        .sc { border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); border-radius: 0.875rem; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0,0,0,0.6); }
+        .sc img { width: 100%; height: auto; display: block; }
+        .slide-counter { position: fixed; bottom: 1.5rem; right: 2rem; font-size: 0.7rem; color: rgba(255,255,255,0.25); letter-spacing: 0.1em; }
+        .flow-arrow { color: #3b82f6; font-size: 1.5rem; }
+        .stat-card { background: rgba(30,41,59,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 1.5rem 2rem; text-align: center; }
+        .pain-icon { width: 3rem; height: 3rem; border-radius: 0.875rem; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; }
     </style>
 </head>
 <body>
 
-    <!-- Navigation -->
-    <div class="fixed top-8 right-8 flex gap-4 z-50">
-        <button onclick="prevSlide()" class="nav-btn p-3 rounded-full border border-white/10">
-            <i data-lucide="chevron-left"></i>
-        </button>
-        <button onclick="nextSlide()" class="nav-btn p-3 rounded-full border border-white/10">
-            <i data-lucide="chevron-right"></i>
-        </button>
+<!-- Navigation -->
+<div class="fixed top-6 right-8 flex gap-3 z-50">
+    <button onclick="prevSlide()" class="nav-btn p-2.5 rounded-full"><i data-lucide="chevron-left" class="w-5 h-5"></i></button>
+    <button onclick="nextSlide()" class="nav-btn p-2.5 rounded-full"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+</div>
+<div id="progress" class="progress-bar" style="width:0%"></div>
+<div id="counter" class="slide-counter">1 / 12</div>
+
+<div id="slides">
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 1: Title -->
+<section class="slide active">
+    <div class="text-center">
+        <div class="mb-5 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-semibold uppercase tracking-widest">
+            <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
+            Construction Equipment Management Platform
+        </div>
+        <h1 class="text-8xl font-extrabold mb-4 tracking-tight">ASSET <span class="accent-gradient">PLAN</span></h1>
+        <p class="text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed mb-10">
+            ระบบบริหารจัดการครุภัณฑ์แบบ Role-Based<br>สำหรับโครงการก่อสร้างหลายไซต์ในองค์กรเดียว
+        </p>
+        <div class="flex justify-center gap-6 text-sm text-slate-500">
+            <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-400"></span>54+ โครงการ</span>
+            <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-teal-400"></span>4 บทบาท</span>
+            <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-purple-400"></span>Real-time Stock</span>
+        </div>
+        <p class="mt-10 text-slate-600 text-xs tracking-widest uppercase">→ Arrow / Space เพื่อเริ่ม</p>
     </div>
+</section>
 
-    <!-- Progress -->
-    <div id="progress" class="progress-bar" style="width: 0%"></div>
-
-    <!-- Slides Container -->
-    <div id="slides">
-        
-        <!-- Slide 1: Title -->
-        <section class="slide active">
-            <div class="text-center">
-                <div class="mb-6 inline-block px-4 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-semibold uppercase tracking-widest">
-                    Enterprise Asset Management
-                </div>
-                <h1 class="text-7xl font-bold mb-4 tracking-tight">ASSET <span class="accent-gradient">PLAN</span></h1>
-                <p class="text-2xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
-                    โครงสร้างบทบาทหน้าที่และการทำงานร่วมกัน <br> สำหรับการบริหารจัดการทรัพยากรระดับองค์กร
-                </p>
-                <div class="mt-12 text-slate-500 text-sm italic">
-                    กดปุ่มลูกศร ขวา หรือ Spacebar เพื่อเริ่มนำเสนอ
-                </div>
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 2: Problem -->
+<section class="slide">
+    <div class="max-w-5xl w-full">
+        <div class="text-center mb-10">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">ก่อนมีระบบ</p>
+            <h2 class="text-5xl font-bold">ปัญหาที่<span class="amber-gradient"> พบบ่อย</span>ในการบริหารครุภัณฑ์</h2>
+        </div>
+        <div class="grid grid-cols-3 gap-6">
+            <div class="glass p-7">
+                <div class="pain-icon bg-red-500/15 text-red-400"><i data-lucide="file-spreadsheet" class="w-6 h-6"></i></div>
+                <h3 class="font-bold text-lg mb-2 text-red-300">ไม่มี Single Source of Truth</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">แต่ละไซต์ทำ Excel แยกกัน → ข้อมูลไม่ตรงกัน → ไม่รู้ว่าคลังกลางมีของจริงเท่าไหร่</p>
             </div>
-        </section>
-
-        <!-- Slide 2: User Roles Overview -->
-        <section class="slide">
-            <div class="max-w-5xl w-full">
-                <h2 class="text-4xl font-semibold mb-12 text-center">4 บทบาทหลัก <span class="text-blue-400">ผู้ขับเคลื่อนระบบ</span></h2>
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="glass p-8 flex items-center gap-6">
-                        <div class="w-14 h-14 bg-red-500/20 rounded-2xl flex items-center justify-center text-red-400 shrink-0">
-                            <i data-lucide="shield-check" class="w-7 h-7"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-lg mb-1">System Administrator</h3>
-                            <p class="text-sm text-slate-400">ผู้ดูแลระบบ ข้อมูลโครงการ และสิทธิ์การใช้งาน</p>
-                        </div>
-                    </div>
-                    <div class="glass p-8 flex items-center gap-6">
-                        <div class="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 shrink-0">
-                            <i data-lucide="construction" class="w-7 h-7"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-lg mb-1">Store Site (หน้างาน)</h3>
-                            <p class="text-sm text-slate-400">ผู้วางแผนความต้องการอุปกรณ์จากไซต์ก่อสร้าง</p>
-                        </div>
-                    </div>
-                    <div class="glass p-8 flex items-center gap-6">
-                        <div class="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400 shrink-0">
-                            <i data-lucide="user-check" class="w-7 h-7"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-lg mb-1">Project Manager (PM)</h3>
-                            <p class="text-sm text-slate-400">ผู้ตรวจสอบและอนุมัติแผนการใช้อุปกรณ์</p>
-                        </div>
-                    </div>
-                    <div class="glass p-8 flex items-center gap-6">
-                        <div class="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center text-purple-400 shrink-0">
-                            <i data-lucide="warehouse" class="w-7 h-7"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-lg mb-1">Store Center (ส่วนกลาง)</h3>
-                            <p class="text-sm text-slate-400">ผู้บริหารทรัพยากรส่วนกลางและแผนการจัดซื้อ</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="glass p-7">
+                <div class="pain-icon bg-amber-500/15 text-amber-400"><i data-lucide="package-x" class="w-6 h-6"></i></div>
+                <h3 class="font-bold text-lg mb-2 text-amber-300">สั่งซื้อซ้ำซ้อน / ขาดของกะทันหัน</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">ไม่มี Visibility ว่าไซต์อื่นมีของเหลือไหม → สั่งใหม่ทั้งที่หมุนเวียนได้ หรือขาดของโดยไม่มีแผนสำรอง</p>
             </div>
-        </section>
-
-        <!-- Slide 3: System Administrator -->
-        <section class="slide">
-            <div class="max-w-6xl w-full grid grid-cols-2 gap-12 items-center">
-                <div>
-                    <span class="role-badge bg-red-500/20 text-red-400 mb-4 inline-block">Role 01</span>
-                    <h2 class="text-5xl font-bold mb-6">System <span class="text-red-500">Administrator</span></h2>
-                    <p class="text-slate-400 text-lg mb-8 font-light leading-relaxed">
-                        ผู้ควบคุมและกำหนดทิศทางข้อมูลพื้นฐาน เพื่อให้ทุกโครงการทำงานบนมาตรฐานเดียวกัน
-                    </p>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="users" class="w-5 h-5 text-red-500"></i>
-                            <span>จัดการผู้ใช้งานและกำหนดสิทธิ์เข้าถึง (User Management)</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="layout-grid" class="w-5 h-5 text-red-500"></i>
-                            <span>บริหารโครงการและคลังสินค้า (Project/Warehouse Management)</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="database" class="w-5 h-5 text-red-500"></i>
-                            <span>จัดการข้อมูลอุปกรณ์กลาง (Global Equipment Master)</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="screenshot-container">
-                    <img src="screenshots/admin.png" alt="Admin Dashboard">
-                </div>
+            <div class="glass p-7">
+                <div class="pain-icon bg-orange-500/15 text-orange-400"><i data-lucide="clock-alert" class="w-6 h-6"></i></div>
+                <h3 class="font-bold text-lg mb-2 text-orange-300">ไม่มี Approval Workflow</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">PM ไม่มีช่องทางตรวจสอบแผนอย่างเป็นระบบ → ผ่านทาง Line / โทรศัพท์ → ไม่มี Audit Trail</p>
             </div>
-        </section>
-
-        <!-- Slide 4: Store Site -->
-        <section class="slide">
-            <div class="max-w-6xl w-full grid grid-cols-2 gap-12 items-center">
-                <div class="screenshot-container">
-                    <img src="screenshots/site_worksheet.png" alt="Planning Worksheet">
-                </div>
-                <div>
-                    <span class="role-badge bg-blue-500/20 text-blue-400 mb-4 inline-block">Role 02</span>
-                    <h2 class="text-5xl font-bold mb-6">Store <span class="text-blue-400">Site</span></h2>
-                    <p class="text-slate-400 text-lg mb-8 font-light leading-relaxed">
-                        ผู้รวบรวมข้อมูลความต้องการจริงจากหน้างาน เพื่อการวางแผนล่วงหน้าที่แม่นยำ
-                    </p>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="file-edit" class="w-5 h-5 text-blue-500"></i>
-                            <span>วางแผนความต้องการอุปกรณ์รายเดือน (Demand Planning)</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="package-2" class="w-5 h-5 text-blue-500"></i>
-                            <span>บริหารจัดการสต็อกและยอดค้างรับหน้างาน</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="send" class="w-5 h-5 text-blue-500"></i>
-                            <span>ส่งข้อมูลเข้าสู่ระบบเพื่อการตรวจสอบโดย Project Manager</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 5: Project Manager -->
-        <section class="slide">
-            <div class="max-w-6xl w-full grid grid-cols-2 gap-12 items-center">
-                <div>
-                    <span class="role-badge bg-emerald-500/20 text-emerald-400 mb-4 inline-block">Role 03</span>
-                    <h2 class="text-5xl font-bold mb-6">Project <span class="text-emerald-500">Manager</span></h2>
-                    <p class="text-slate-400 text-lg mb-8 font-light leading-relaxed">
-                        ผู้ดูแลความถูกต้องและงบประมาณ ตรวจสอบความเหมาะสมของแผนก่อนดำเนินการ
-                    </p>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="eye" class="w-5 h-5 text-emerald-500"></i>
-                            <span>ตรวจสอบแผนงานเปรียบเทียบกับงบประมาณโครงการ</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="edit-3" class="w-5 h-5 text-emerald-500"></i>
-                            <span>ปรับแก้ไขข้อมูลแผนงาน (Planning Adjustments)</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>
-                            <span>พิจารณาอนุมัติ (Approve) เพื่อส่งข้อมูลไปยังสโตร์กลาง</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="screenshot-container">
-                    <img src="screenshots/pm.png" alt="PM Approval">
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 6: Store Center -->
-        <section class="slide">
-            <div class="max-w-6xl w-full grid grid-cols-2 gap-12 items-center">
-                <div class="screenshot-container">
-                    <img src="screenshots/store_center.png" alt="Store Center Hub">
-                </div>
-                <div>
-                    <span class="role-badge bg-purple-500/20 text-purple-400 mb-4 inline-block">Role 04</span>
-                    <h2 class="text-5xl font-bold mb-6">Store <span class="text-purple-500">Center</span></h2>
-                    <p class="text-slate-400 text-lg mb-8 font-light leading-relaxed">
-                        ศูนย์กลางการตัดสินใจและบริหารจัดการทรัพยากรในภาพรวมขององค์กร
-                    </p>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="sigma" class="w-5 h-5 text-purple-500"></i>
-                            <span>วิเคราะห์ยอดความต้องการรวม (Net Demand) จากทุกไซต์งาน</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="refresh-ccw" class="w-5 h-5 text-purple-500"></i>
-                            <span>บริหารแผนการจัดส่งและการหมุนเวียนอุปกรณ์ (Circulation)</span>
-                        </li>
-                        <li class="flex items-center gap-3 text-slate-300">
-                            <i data-lucide="shopping-cart" class="w-5 h-5 text-purple-500"></i>
-                            <span>วางแผนจัดซื้อและเช่าอุปกรณ์เพิ่ม (Procurement Decisions)</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 7: Matrix Reporting -->
-        <section class="slide">
-            <div class="max-w-5xl w-full text-center">
-                <h2 class="text-5xl font-bold mb-8">Matrix <span class="text-indigo-400">Reporting</span></h2>
-                <p class="text-xl text-slate-400 mb-12 max-w-3xl mx-auto">
-                    มุมมองระดับบริหาร (Executive View) ที่รวบรวมข้อมูลจากทุกภาคส่วนเพื่อการตัดสินใจที่รวดเร็ว
-                </p>
-                <div class="screenshot-container border-indigo-500/20">
-                    <img src="screenshots/matrix.png" alt="Matrix Report">
-                </div>
-            </div>
-        </section>
-
-        <!-- Slide 8: Technical Foundation -->
-        <section class="slide">
-            <div class="max-w-4xl w-full">
-                <h2 class="text-3xl font-bold mb-12 text-center opacity-50 uppercase tracking-[0.2em]">Technology Stack</h2>
-                <div class="grid grid-cols-2 gap-8">
-                    <div class="glass p-8 flex items-center gap-6">
-                        <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-blue-400">
-                            <i data-lucide="zap" class="w-8 h-8"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-xl">Next.js 15</h4>
-                            <p class="text-slate-500 text-sm">App Router & Edge Runtime</p>
-                        </div>
-                    </div>
-                    <div class="glass p-8 flex items-center gap-6">
-                        <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-teal-400">
-                            <i data-lucide="database" class="w-8 h-8"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-xl">Cloudflare D1</h4>
-                            <p class="text-slate-500 text-sm">Serverless Global SQL</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-12 text-center text-slate-500 text-sm">
-                    Generated by Antigravity AI
-                </div>
-            </div>
-        </section>
-
+        </div>
+        <div class="mt-6 glass p-5 flex items-center gap-4 border-blue-500/20">
+            <i data-lucide="arrow-right-circle" class="w-6 h-6 text-blue-400 shrink-0"></i>
+            <p class="text-slate-300">Asset Plan แก้ปัญหาทั้ง 3 ข้อนี้ด้วยกระบวนการเดียว เชื่อมทุกบทบาทบน Platform เดียวกัน</p>
+        </div>
     </div>
+</section>
 
-    <script>
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.slide');
-        const progress = document.getElementById('progress');
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 3: Solution Overview -->
+<section class="slide">
+    <div class="max-w-5xl w-full text-center">
+        <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">ทางออก</p>
+        <h2 class="text-5xl font-bold mb-4">ระบบเดียว <span class="accent-gradient">จัดการทุกไซต์</span></h2>
+        <p class="text-slate-400 text-lg mb-10 max-w-2xl mx-auto">บริหารครุภัณฑ์จาก 54+ โครงการ ผ่าน 4 บทบาทที่ทำงานต่อเนื่องกัน — ไม่มีข้อมูลตกหล่น ไม่มีการสั่งซ้ำ</p>
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <div class="glass-bright p-7">
+                <div class="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-4"><i data-lucide="clipboard-list" class="w-6 h-6"></i></div>
+                <h3 class="font-bold text-xl mb-2">PLAN</h3>
+                <p class="text-slate-400 text-sm">ทุกไซต์วางแผนรายเดือน ล่วงหน้า 1–3 เดือน พร้อมกันในรอบแผนเดียวกัน</p>
+            </div>
+            <div class="glass-bright p-7">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4"><i data-lucide="check-circle-2" class="w-6 h-6"></i></div>
+                <h3 class="font-bold text-xl mb-2">APPROVE</h3>
+                <p class="text-slate-400 text-sm">PM ตรวจสอบ แก้ไข และอนุมัติพร้อม Audit Trail — มีระบบ Reject + เหตุผลกลับไซต์</p>
+            </div>
+            <div class="glass-bright p-7">
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center mx-auto mb-4"><i data-lucide="zap" class="w-6 h-6"></i></div>
+                <h3 class="font-bold text-xl mb-2">ALLOCATE</h3>
+                <p class="text-slate-400 text-sm">คลังกลางเลือก 5 วิธีจัดสรร — เบิก หมุนเวียน สลับสเปก จัดซื้อ เช่า</p>
+            </div>
+        </div>
+        <div class="glass p-4 flex justify-center items-center gap-3 text-sm text-slate-400">
+            <i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i>
+            สต็อกอัปเดต Real-time · ประวัติทุก Decision · Export Excel ให้ฝ่ายจัดซื้อได้ทันที
+        </div>
+    </div>
+</section>
 
-        function updateSlide() {
-            slides.forEach((s, i) => {
-                s.classList.toggle('active', i === currentSlide);
-            });
-            const percent = ((currentSlide + 1) / slides.length) * 100;
-            progress.style.width = percent + '%';
-            lucide.createIcons();
-        }
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 4: End-to-End Workflow -->
+<section class="slide">
+    <div class="max-w-5xl w-full">
+        <div class="text-center mb-10">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">กระบวนการ</p>
+            <h2 class="text-4xl font-bold">End-to-End <span class="accent-gradient">Workflow</span></h2>
+        </div>
+        <div class="flex items-stretch gap-3">
+            <div class="glass p-5 flex-1 text-center">
+                <div class="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center mx-auto mb-3"><i data-lucide="settings-2" class="w-5 h-5"></i></div>
+                <div class="text-xs uppercase tracking-widest text-slate-500 mb-1">Admin</div>
+                <p class="font-semibold text-sm">ตั้งค่าระบบ</p>
+                <p class="text-slate-500 text-xs mt-2">Master Data · โครงการ · ผู้ใช้ · สิทธิ์</p>
+            </div>
+            <div class="flex items-center text-slate-600"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+            <div class="glass p-5 flex-1 text-center border-purple-500/30">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mx-auto mb-3"><i data-lucide="calendar-plus" class="w-5 h-5"></i></div>
+                <div class="text-xs uppercase tracking-widest text-slate-500 mb-1">Store Center</div>
+                <p class="font-semibold text-sm">สร้างรอบแผน</p>
+                <p class="text-slate-500 text-xs mt-2">กำหนดเดือน · เลือกไซต์ · ตั้ง Deadline</p>
+            </div>
+            <div class="flex items-center text-slate-600"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+            <div class="glass p-5 flex-1 text-center border-blue-500/30">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-3"><i data-lucide="table-2" class="w-5 h-5"></i></div>
+                <div class="text-xs uppercase tracking-widest text-slate-500 mb-1">Store Site</div>
+                <p class="font-semibold text-sm">กรอก + ส่งแผน</p>
+                <p class="text-slate-500 text-xs mt-2">รายเดือน · Auto-fill · ส่ง 1 คลิก</p>
+            </div>
+            <div class="flex items-center text-slate-600"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+            <div class="glass p-5 flex-1 text-center border-emerald-500/30">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-3"><i data-lucide="clipboard-check" class="w-5 h-5"></i></div>
+                <div class="text-xs uppercase tracking-widest text-slate-500 mb-1">PM</div>
+                <p class="font-semibold text-sm">อนุมัติแผน</p>
+                <p class="text-slate-500 text-xs mt-2">ตรวจ · แก้ตัวเลข · Approve</p>
+            </div>
+            <div class="flex items-center text-slate-600"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+            <div class="glass p-5 flex-1 text-center border-purple-500/30">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mx-auto mb-3"><i data-lucide="package-check" class="w-5 h-5"></i></div>
+                <div class="text-xs uppercase tracking-widest text-slate-500 mb-1">Store Center</div>
+                <p class="font-semibold text-sm">จัดสรร</p>
+                <p class="text-slate-500 text-xs mt-2">5 วิธี · Bulk · ติดตาม</p>
+            </div>
+            <div class="flex items-center text-slate-600"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+            <div class="glass p-5 flex-1 text-center border-indigo-500/30">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-3"><i data-lucide="bar-chart-3" class="w-5 h-5"></i></div>
+                <div class="text-xs uppercase tracking-widest text-slate-500 mb-1">Report</div>
+                <p class="font-semibold text-sm">Matrix Report</p>
+                <p class="text-slate-500 text-xs mt-2">Export · Procurement Plan</p>
+            </div>
+        </div>
+        <p class="text-center text-slate-500 text-sm mt-6">ทุกขั้นตอนมี Status Badge ที่ตามได้ Real-time — ทุก Role รู้ว่าตัวเองต้องทำอะไรต่อ</p>
+    </div>
+</section>
 
-        function nextSlide() { if (currentSlide < slides.length - 1) { currentSlide++; updateSlide(); } }
-        function prevSlide() { if (currentSlide > 0) { currentSlide--; updateSlide(); } }
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 5: Admin -->
+<section class="slide">
+    <div class="max-w-6xl w-full grid grid-cols-2 gap-12 items-center">
+        <div>
+            <span class="role-badge bg-red-500/20 text-red-400 mb-4 inline-block">Role 01 — Admin</span>
+            <h2 class="text-5xl font-bold mb-4">System <span class="text-red-400">Administrator</span></h2>
+            <p class="text-slate-400 text-lg mb-6 font-light leading-relaxed">ตั้งค่าครั้งเดียว — ทั้งระบบพร้อมใช้งาน ควบคุมสิทธิ์ทุกระดับจากที่เดียว</p>
+            <ul class="space-y-4">
+                <li class="flex items-start gap-3 text-slate-300">
+                    <i data-lucide="database" class="w-5 h-5 text-red-400 mt-0.5 shrink-0"></i>
+                    <span><strong>Master Data</strong> — จัดการรายการครุภัณฑ์ทั้งหมด, หมวดหมู่, สต็อกคลังกลาง Import CSV ทีละจำนวนมากได้</span>
+                </li>
+                <li class="flex items-start gap-3 text-slate-300">
+                    <i data-lucide="building-2" class="w-5 h-5 text-red-400 mt-0.5 shrink-0"></i>
+                    <span><strong>54+ โครงการ</strong> — แยก SITE / WAREHOUSE, Archive โครงการเสร็จแล้วโดยไม่สูญเสียข้อมูล</span>
+                </li>
+                <li class="flex items-start gap-3 text-slate-300">
+                    <i data-lucide="key-round" class="w-5 h-5 text-red-400 mt-0.5 shrink-0"></i>
+                    <span><strong>Project Roles</strong> — กำหนด STORE_SITE / PM / VIEWER ต่อโครงการ ผู้ใช้ 1 คนมีได้หลาย Role</span>
+                </li>
+            </ul>
+        </div>
+        <div class="sc"><img src="screenshots/admin.png" alt="Admin Dashboard"></div>
+    </div>
+</section>
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') nextSlide();
-            if (e.key === 'ArrowLeft') prevSlide();
-        });
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 6: Store Site -->
+<section class="slide">
+    <div class="max-w-6xl w-full grid grid-cols-2 gap-12 items-center">
+        <div class="sc"><img src="screenshots/site_worksheet.png" alt="Planning Worksheet"></div>
+        <div>
+            <span class="role-badge bg-blue-500/20 text-blue-400 mb-4 inline-block">Role 02 — Store Site</span>
+            <h2 class="text-5xl font-bold mb-4">Store <span class="text-blue-400">Site</span></h2>
+            <p class="text-slate-400 text-lg mb-6 font-light leading-relaxed">กรอกแผนล่วงหน้า 1–3 เดือน ด้วย UX ที่ออกแบบมาเพื่อทีมหน้างาน ไม่ต้องใช้ Excel</p>
+            <ul class="space-y-4">
+                <li class="flex items-start gap-3 text-slate-300">
+                    <i data-lucide="keyboard" class="w-5 h-5 text-blue-400 mt-0.5 shrink-0"></i>
+                    <span><strong>Auto-fill ด้วย Enter</strong> — กรอกเดือนแรก กด Enter ระบบ copy ไปเดือนที่เหลือทันที + เลื่อนแถวถัดไปอัตโนมัติ</span>
+                </li>
+                <li class="flex items-start gap-3 text-slate-300">
+                    <i data-lucide="eye" class="w-5 h-5 text-blue-400 mt-0.5 shrink-0"></i>
+                    <span><strong>Real-time Stock</strong> — เห็นยอดคลังกลางปัจจุบันทุกแถว ก่อนตัดสินใจขอ</span>
+                </li>
+                <li class="flex items-start gap-3 text-slate-300">
+                    <i data-lucide="send" class="w-5 h-5 text-blue-400 mt-0.5 shrink-0"></i>
+                    <span><strong>Save Draft + Submit</strong> — บันทึกร่างเพื่อกลับมาแก้ หรือส่ง PM ได้ทันที · ติดตาม Status ได้ตลอด</span>
+                </li>
+            </ul>
+            <div class="mt-6 glass p-3 flex items-center gap-3 text-sm text-slate-400 border-blue-500/20">
+                <i data-lucide="badge-alert" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                Badge <span class="text-red-400 font-mono mx-1">คืน X</span> แสดงอัตโนมัติเมื่อจำนวนลดลง — ระบบรู้ว่ามีการคืนของโดยไม่ต้องกรอกแยก
+            </div>
+        </div>
+    </div>
+</section>
 
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 7: PM -->
+<section class="slide">
+    <div class="max-w-6xl w-full grid grid-cols-2 gap-12 items-center">
+        <div>
+            <span class="role-badge bg-emerald-500/20 text-emerald-400 mb-4 inline-block">Role 03 — Project Manager</span>
+            <h2 class="text-5xl font-bold mb-4">Project <span class="text-emerald-400">Manager</span></h2>
+            <p class="text-slate-400 text-lg mb-6 font-light leading-relaxed">ตรวจสอบและตัดสินใจได้เร็วขึ้น ด้วย Mode Filter ที่โฟกัสเฉพาะส่วนที่สำคัญ</p>
+            <ul class="space-y-4">
+                <li class="flex items-start gap-3 text-slate-300">
+                    <i data-lucide="filter" class="w-5 h-5 text-emerald-400 mt-0.5 shrink-0"></i>
+                    <span><strong>Mode Filter</strong> — ดูเฉพาะ DEMAND / RETURN / CHANGED แทนที่จะไล่ทุกแถว ลดเวลาตรวจสอบ</span>
+                </li>
+                <li class="flex items-start gap-3 text-slate-300">
+                    <i data-lucide="pen-line" class="w-5 h-5 text-emerald-400 mt-0.5 shrink-0"></i>
+                    <span><strong>แก้ตัวเลขได้โดยตรง</strong> — ไม่ต้องส่งกลับให้ไซต์แก้ · Log บันทึกทุก Cell ที่เปลี่ยน · ดูได้ใน Mode CHANGED</span>
+                </li>
+                <li class="flex items-start gap-3 text-slate-300">
+                    <i data-lucide="git-branch" class="w-5 h-5 text-emerald-400 mt-0.5 shrink-0"></i>
+                    <span><strong>Approve หรือ Reject</strong> — Reject ต้องใส่เหตุผล · ไซต์แก้ไขและส่งใหม่ได้ทันที · ประวัติทุกรอบดูได้ใน History</span>
+                </li>
+            </ul>
+        </div>
+        <div class="sc"><img src="screenshots/pm.png" alt="PM Approval"></div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 8: Store Center -->
+<section class="slide">
+    <div class="max-w-6xl w-full grid grid-cols-2 gap-12 items-center">
+        <div class="sc"><img src="screenshots/store_center.png" alt="Store Center Dashboard"></div>
+        <div>
+            <span class="role-badge bg-purple-500/20 text-purple-400 mb-4 inline-block">Role 04 — Store Center</span>
+            <h2 class="text-5xl font-bold mb-4">Store <span class="text-purple-400">Center</span></h2>
+            <p class="text-slate-400 text-lg mb-5 font-light leading-relaxed">ศูนย์กลางการจัดสรรที่ฉลาดกว่า — เลือกวิธีที่เหมาะสมที่สุดสำหรับแต่ละรายการ</p>
+            <div class="grid grid-cols-5 gap-2 mb-5 text-center">
+                <div class="glass p-2 rounded-xl text-xs"><div class="text-purple-400 font-bold text-base mb-0.5">⬇</div>เบิกจ่าย<div class="text-slate-600 text-[10px]">สต็อกลด</div></div>
+                <div class="glass p-2 rounded-xl text-xs"><div class="text-blue-400 font-bold text-base mb-0.5">⇄</div>หมุนเวียน<div class="text-slate-600 text-[10px]">ไซต์↔ไซต์</div></div>
+                <div class="glass p-2 rounded-xl text-xs"><div class="text-teal-400 font-bold text-base mb-0.5">⇌</div>สลับสเปก<div class="text-slate-600 text-[10px]">ทดแทน</div></div>
+                <div class="glass p-2 rounded-xl text-xs"><div class="text-amber-400 font-bold text-base mb-0.5">＋</div>จัดซื้อ<div class="text-slate-600 text-[10px]">สั่งใหม่</div></div>
+                <div class="glass p-2 rounded-xl text-xs"><div class="text-orange-400 font-bold text-base mb-0.5">⏱</div>เช่า<div class="text-slate-600 text-[10px]">ชั่วคราว</div></div>
+            </div>
+            <ul class="space-y-3">
+                <li class="flex items-start gap-3 text-slate-300 text-sm">
+                    <i data-lucide="layers" class="w-4 h-4 text-purple-400 mt-0.5 shrink-0"></i>
+                    <span><strong>Bulk Dispatch</strong> — เลือกหลายรายการแล้วเบิกจ่ายทีเดียว กรอง READY ก่อนเพื่อเห็นเฉพาะที่ทำได้</span>
+                </li>
+                <li class="flex items-start gap-3 text-slate-300 text-sm">
+                    <i data-lucide="history" class="w-4 h-4 text-purple-400 mt-0.5 shrink-0"></i>
+                    <span><strong>History Rollback</strong> — ลบ Decision ที่ผิดได้ · ระบบ Reverse สต็อกให้อัตโนมัติ · ไม่ต้องแก้ Master Data</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 9: Matrix Report -->
+<section class="slide">
+    <div class="max-w-5xl w-full">
+        <div class="text-center mb-8">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">Executive View</p>
+            <h2 class="text-5xl font-bold">Matrix <span class="text-indigo-400">Report</span></h2>
+            <p class="text-slate-400 mt-3 text-lg max-w-2xl mx-auto">ภาพรวมความต้องการจากทุกไซต์ในตารางเดียว — สำหรับผู้บริหารและทีมจัดซื้อ</p>
+        </div>
+        <div class="sc mb-6"><img src="screenshots/matrix.png" alt="Matrix Report"></div>
+        <div class="grid grid-cols-3 gap-4 text-sm text-center">
+            <div class="glass p-4 rounded-xl">
+                <i data-lucide="table-2" class="w-5 h-5 text-indigo-400 mx-auto mb-2"></i>
+                <p class="text-slate-300">Pivot Table ทุกไซต์ × ทุกครุภัณฑ์ × ทุกเดือน</p>
+            </div>
+            <div class="glass p-4 rounded-xl">
+                <i data-lucide="download" class="w-5 h-5 text-indigo-400 mx-auto mb-2"></i>
+                <p class="text-slate-300">Export Excel 2 รูปแบบ — ตามที่กรองไว้ หรือทั้งรอบ</p>
+            </div>
+            <div class="glass p-4 rounded-xl">
+                <i data-lucide="mouse-pointer-2" class="w-5 h-5 text-indigo-400 mx-auto mb-2"></i>
+                <p class="text-slate-300">Hover Tooltip ดูรายละเอียดต่อโครงการได้ทันที</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 10: Key Stats -->
+<section class="slide">
+    <div class="max-w-4xl w-full text-center">
+        <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">ตัวเลขที่พูดแทน</p>
+        <h2 class="text-5xl font-bold mb-10">ออกแบบมาเพื่อ<span class="accent-gradient"> Scale</span></h2>
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <div class="stat-card">
+                <div class="text-5xl font-extrabold text-blue-400 mb-2">54<span class="text-2xl text-slate-500">+</span></div>
+                <div class="text-slate-400 text-sm">โครงการในระบบ</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-5xl font-extrabold text-purple-400 mb-2">5</div>
+                <div class="text-slate-400 text-sm">วิธีจัดสรรครุภัณฑ์</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-5xl font-extrabold text-teal-400 mb-2">4</div>
+                <div class="text-slate-400 text-sm">บทบาทเชื่อมต่อกัน</div>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-6">
+            <div class="stat-card">
+                <div class="text-5xl font-extrabold text-emerald-400 mb-2">1<span class="text-2xl text-slate-500">คลิก</span></div>
+                <div class="text-slate-400 text-sm">สร้าง Job ทุกไซต์พร้อมกัน</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-5xl font-extrabold text-amber-400 mb-2">0<span class="text-2xl text-slate-500">ms</span></div>
+                <div class="text-slate-400 text-sm">สต็อกอัปเดต Real-time</div>
+            </div>
+            <div class="stat-card">
+                <div class="text-5xl font-extrabold text-rose-400 mb-2">∞</div>
+                <div class="text-slate-400 text-sm">Audit Trail ไม่มีวันหาย</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 11: Tech Stack -->
+<section class="slide">
+    <div class="max-w-4xl w-full">
+        <div class="text-center mb-10">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500 mb-3">พื้นฐานทางเทคนิค</p>
+            <h2 class="text-4xl font-bold">Built for <span class="accent-gradient">Enterprise</span></h2>
+            <p class="text-slate-400 mt-3">เทคโนโลยีระดับ Production ที่ Scale ได้โดยไม่ต้องดูแล Infrastructure</p>
+        </div>
+        <div class="grid grid-cols-2 gap-6">
+            <div class="glass p-7 flex items-start gap-5">
+                <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-blue-400 shrink-0"><i data-lucide="zap" class="w-7 h-7"></i></div>
+                <div>
+                    <h4 class="font-bold text-xl mb-1">Next.js 16 + React 19</h4>
+                    <p class="text-slate-500 text-sm leading-relaxed">App Router, React Server Components, Streaming SSR — หน้าโหลดเร็วแม้ข้อมูลมาก</p>
+                </div>
+            </div>
+            <div class="glass p-7 flex items-start gap-5">
+                <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-teal-400 shrink-0"><i data-lucide="database" class="w-7 h-7"></i></div>
+                <div>
+                    <h4 class="font-bold text-xl mb-1">Cloudflare D1</h4>
+                    <p class="text-slate-500 text-sm leading-relaxed">Serverless SQL ที่ edge — ไม่มี DB Server ให้ดูแล · Auto-backup · Global availability</p>
+                </div>
+            </div>
+            <div class="glass p-7 flex items-start gap-5">
+                <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-amber-400 shrink-0"><i data-lucide="shield" class="w-7 h-7"></i></div>
+                <div>
+                    <h4 class="font-bold text-xl mb-1">JWT Auth + Role Guards</h4>
+                    <p class="text-slate-500 text-sm leading-relaxed">Cookie-based session · ตรวจ Role ทุก API endpoint · Project-level permission granularity</p>
+                </div>
+            </div>
+            <div class="glass p-7 flex items-start gap-5">
+                <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-emerald-400 shrink-0"><i data-lucide="globe" class="w-7 h-7"></i></div>
+                <div>
+                    <h4 class="font-bold text-xl mb-1">Web-based · ไม่ต้องติดตั้ง</h4>
+                    <p class="text-slate-500 text-sm leading-relaxed">เปิด Browser แล้วใช้งานได้ทันที — ทำงานบน Desktop, Laptop, Tablet ทุกระบบปฏิบัติการ</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SLIDE 12: CTA / Next Steps -->
+<section class="slide">
+    <div class="max-w-3xl w-full text-center">
+        <div class="mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-400 text-xs font-semibold uppercase tracking-widest">
+            <i data-lucide="rocket" class="w-3.5 h-3.5"></i>
+            พร้อมเริ่มใช้งาน
+        </div>
+        <h2 class="text-6xl font-extrabold mb-4">เริ่มได้<span class="accent-gradient"> วันนี้</span></h2>
+        <p class="text-xl text-slate-400 mb-10 font-light">ตั้งค่าระบบครั้งแรก ใช้เวลา &lt; 1 ชั่วโมง ทีมทุกคนพร้อมใช้งานได้ภายในวันเดียวกัน</p>
+        <div class="grid grid-cols-3 gap-4 mb-10 text-sm">
+            <div class="glass p-5 rounded-2xl">
+                <div class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-3 font-bold text-sm">1</div>
+                <p class="font-semibold mb-1">Admin ตั้งค่า</p>
+                <p class="text-slate-500 text-xs">Master Data · โครงการ · ผู้ใช้ · สิทธิ์</p>
+                <p class="text-blue-400 text-xs mt-2">~30 นาที</p>
+            </div>
+            <div class="glass p-5 rounded-2xl">
+                <div class="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center mx-auto mb-3 font-bold text-sm">2</div>
+                <p class="font-semibold mb-1">สร้างรอบแผนแรก</p>
+                <p class="text-slate-500 text-xs">Store Center เปิดรอบ เลือกไซต์ ตั้ง Deadline</p>
+                <p class="text-purple-400 text-xs mt-2">~5 นาที</p>
+            </div>
+            <div class="glass p-5 rounded-2xl">
+                <div class="w-8 h-8 rounded-full bg-teal-500/20 text-teal-400 flex items-center justify-center mx-auto mb-3 font-bold text-sm">3</div>
+                <p class="font-semibold mb-1">ทีมเริ่มใช้งาน</p>
+                <p class="text-slate-500 text-xs">ไซต์กรอกแผน → PM อนุมัติ → Center จัดสรร</p>
+                <p class="text-teal-400 text-xs mt-2">Fully operational</p>
+            </div>
+        </div>
+        <p class="text-slate-500 text-sm">© 2026 Asset Plan System — TTS Construction</p>
+    </div>
+</section>
+
+</div><!-- /slides -->
+
+<script>
+    let cur = 0;
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+
+    function updateSlide() {
+        slides.forEach((s, i) => s.classList.toggle('active', i === cur));
+        document.getElementById('progress').style.width = ((cur + 1) / total * 100) + '%';
+        document.getElementById('counter').textContent = (cur + 1) + ' / ' + total;
         lucide.createIcons();
-    </script>
+    }
+
+    function nextSlide() { if (cur < total - 1) { cur++; updateSlide(); } }
+    function prevSlide() { if (cur > 0) { cur--; updateSlide(); } }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') nextSlide();
+        if (e.key === 'ArrowLeft') prevSlide();
+        e.preventDefault();
+    });
+
+    lucide.createIcons();
+</script>
 </body>
 </html>

@@ -21,7 +21,7 @@
 
     <header class="header">
         <h1>คู่มือเจ้าหน้าที่พัสดุส่วนกลาง (Store Center)</h1>
-        <p>การบริหารจัดการรอบแผน ความต้องการสุทธิ และการจัดสรรครุภัณฑ์</p>
+        <p>บริหารรอบแผน ติดตามความต้องการสุทธิ จัดสรรครุภัณฑ์ และบริหารของคืน</p>
     </header>
 
     <div class="quick-summary">
@@ -37,39 +37,44 @@
             <span class="qs-label">2 แท็บหลัก</span>
             <span class="qs-value">จัดการใบงาน / ความต้องการสุทธิ</span>
         </div>
+        <div class="qs-item">
+            <span class="qs-label">ลำดับงาน</span>
+            <span class="qs-value">สร้างรอบ → รอไซต์ Submit → จัดสรร</span>
+        </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <div class="section-header">📋 แท็บ 1 — จัดการใบงาน (Job Management)</div>
 
     <!-- Step 1 -->
     <div class="step">
         <div class="step-number">1</div>
         <div class="step-content">
-            <h3>สร้างรอบแผนใหม่ (Planning Cycle)</h3>
-            <p>รอบแผนคือกรอบเวลาที่กำหนดให้ทุกไซต์กรอกแผนความต้องการพร้อมกัน</p>
+            <h3>ภาพรวมแท็บจัดการใบงาน</h3>
+            <p>แท็บนี้แสดง <strong>Cycle Card</strong> ทุกรอบแผนที่สร้างไว้ แต่ละ Card แสดงรายการใบงานของทุกโครงการในรอบนั้น</p>
 
-            <ol class="sub-steps">
-                <li>กด <strong>"+ สร้างรอบแผนใหม่"</strong></li>
-                <li>กรอก <strong>วันเริ่มต้น</strong> และ <strong>วันสิ้นสุด (Deadline)</strong> ที่ไซต์ต้องส่งแผน</li>
-                <li>เลือก <strong>เดือนเป้าหมาย</strong> — คลิก Toggle แต่ละเดือน เปลี่ยนปีได้ด้านบน (เลือกได้หลายเดือน)</li>
-                <li>ค้นหาและเลือก <strong>โครงการที่เข้าร่วม</strong>
-                    <ul>
-                        <li>มีปุ่ม "เลือกทั้งหมด" / "ยกเลิกทั้งหมด" สำหรับรายการที่กรองอยู่</li>
-                        <li>กรองโครงการตามประเภท (SITE / ทั้งหมด) หรือพิมพ์ค้นหาชื่อ</li>
-                    </ul>
-                </li>
-                <li>กด <strong>"สร้าง"</strong> → ระบบสร้าง Job ให้ทุกโครงการที่เลือกอัตโนมัติ</li>
-            </ol>
+            <img src="assets/store_center_jobs.png" alt="แท็บจัดการใบงาน (Job Management)" class="screenshot">
 
-            <div class="warning-box">
-                <strong>ข้อจำกัดหลังสร้าง:</strong> วันที่และเดือนเป้าหมาย <strong>แก้ไขไม่ได้อีก</strong> — หากต้องการแก้ โครงการสามารถเพิ่ม/ยกเลิกได้เท่านั้น
-            </div>
-            <div class="danger-box">
-                <strong>Validation ก่อนสร้าง:</strong> ถ้าไม่เลือกเดือน → ระบบแจ้ง <em>"กรุณาเลือกเดือนอย่างน้อย 1 เดือน"</em> | ไม่เลือกโครงการ → <em>"กรุณาเลือกโครงการอย่างน้อย 1 โครงการ"</em>
-            </div>
+            <p><strong>สีขอบ Cycle Card บอกสถานะ Deadline:</strong></p>
+            <table class="table-manual">
+                <thead><tr><th>สีขอบ</th><th>ความหมาย</th><th>สิ่งที่ควรทำ</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge-red">แดง</span></td><td>เลยกำหนดส่งแล้ว</td><td>ติดต่อไซต์ที่ยังไม่ Submit ด่วน</td></tr>
+                    <tr><td><span class="badge badge-amber">เหลือง</span></td><td>เหลือ ≤ 3 วัน</td><td>แจ้งเตือนไซต์ล่วงหน้า</td></tr>
+                    <tr><td><span class="badge badge-indigo">น้ำเงิน</span></td><td>ยังมีเวลาพอ</td><td>ติดตามปกติ</td></tr>
+                </tbody>
+            </table>
 
-            <img src="assets/admin_cycle_modal.png" alt="Create Cycle Modal" class="screenshot">
+            <p><strong>Badge สถานะบน Job Card แต่ละใบ:</strong></p>
+            <table class="table-manual">
+                <thead><tr><th>Badge</th><th>ความหมาย</th><th>ปุ่มที่ปรากฏ</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge-blue">OPEN</span></td><td>รอบแผนเปิด ไซต์กรอกได้</td><td>— (รอไซต์)</td></tr>
+                    <tr><td><span class="badge badge-amber">SUBMITTED</span></td><td>ไซต์ส่งแล้ว รอ PM</td><td>— (รอ PM)</td></tr>
+                    <tr><td><span class="badge badge-green">APPROVED</span></td><td>PM อนุมัติ พร้อมจัดสรร</td><td>Unlock</td></tr>
+                    <tr><td><span class="badge badge-gray">CLOSED</span></td><td>รอบปิดแล้ว</td><td>ดูประวัติ</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -77,18 +82,31 @@
     <div class="step">
         <div class="step-number">2</div>
         <div class="step-content">
-            <h3>อ่าน Cycle Card และสถานะรอบแผน</h3>
-            <p>แต่ละ Cycle Card แสดง: หมายเลขรอบ, จำนวนเดือนเป้าหมาย, Deadline, และรายการใบงาน</p>
+            <h3>สร้างรอบแผนใหม่ (Planning Cycle)</h3>
+            <p>รอบแผนคือกรอบเวลาที่กำหนดให้ทุกไซต์ที่เลือกกรอกแผนความต้องการพร้อมกัน เมื่อสร้างแล้วระบบสร้าง Job ให้ทุกโครงการอัตโนมัติ</p>
 
-            <p><strong>สีขอบ Cycle Card:</strong></p>
-            <table class="table-manual">
-                <thead><tr><th>สีขอบ</th><th>ความหมาย</th></tr></thead>
-                <tbody>
-                    <tr><td><span class="badge badge-red">สีแดง</span></td><td>เลยกำหนดส่งแล้ว</td></tr>
-                    <tr><td><span class="badge badge-amber">สีเหลือง</span></td><td>ใกล้ Deadline — เหลือ ≤ 3 วัน</td></tr>
-                    <tr><td><span class="badge badge-indigo">สีน้ำเงิน</span></td><td>ปกติ ยังมีเวลา</td></tr>
-                </tbody>
-            </table>
+            <ol class="sub-steps">
+                <li>กด <strong>"+ สร้างรอบแผนใหม่"</strong></li>
+                <li>กรอก <strong>วันเริ่มต้น</strong> และ <strong>วันสิ้นสุด (Deadline)</strong> — Deadline คือวันสุดท้ายที่ไซต์ต้องส่งแผน</li>
+                <li>เลือก <strong>เดือนเป้าหมาย</strong> — คลิก Toggle แต่ละเดือน เปลี่ยนปีได้ที่ด้านบน (เลือกได้หลายเดือนพร้อมกัน)</li>
+                <li>ค้นหาและเลือก <strong>โครงการที่เข้าร่วม</strong>:
+                    <ul>
+                        <li>กรองประเภท <strong>SITE / ทั้งหมด</strong> หรือพิมพ์ค้นหาชื่อโครงการ</li>
+                        <li>กด <strong>"เลือกทั้งหมด"</strong> เพื่อเลือกทุกโครงการในผลค้นหาปัจจุบัน</li>
+                        <li>Tick แต่ละโครงการเพื่อเลือกเฉพาะที่ต้องการ</li>
+                    </ul>
+                </li>
+                <li>กด <strong>"สร้าง"</strong> → ระบบสร้าง Job สถานะ OPEN ให้ทุกโครงการที่เลือกทันที</li>
+            </ol>
+
+            <img src="assets/admin_cycle_modal.png" alt="Modal สร้างรอบแผนใหม่" class="screenshot">
+
+            <div class="warning-box">
+                <strong>ข้อจำกัดหลังสร้าง:</strong> วันที่และเดือนเป้าหมาย <strong>แก้ไขไม่ได้</strong> — เพิ่มหรือยกเลิกโครงการได้เท่านั้น (ดู Step 3)
+            </div>
+            <div class="danger-box">
+                <strong>Validation:</strong> ถ้าไม่เลือกเดือน → <em>"กรุณาเลือกเดือนอย่างน้อย 1 เดือน"</em> | ไม่เลือกโครงการ → <em>"กรุณาเลือกโครงการอย่างน้อย 1 โครงการ"</em>
+            </div>
         </div>
     </div>
 
@@ -96,19 +114,30 @@
     <div class="step">
         <div class="step-number">3</div>
         <div class="step-content">
-            <h3>แก้ไขรอบ — เพิ่ม/ยกเลิกโครงการ</h3>
-            <p>คลิก <strong>Edit</strong> ที่ Cycle Card ที่ต้องการแก้ไข</p>
+            <h3>แก้ไขรอบ — เพิ่มหรือยกเลิกโครงการ</h3>
+            <p>กดไอคอน ✏️ ที่ Cycle Card → Modal แก้ไขเปิดขึ้น แสดงโครงการที่เลือกอยู่ในปัจจุบัน</p>
 
-            <p><strong>เพิ่มโครงการ:</strong> เลือกโครงการใหม่จากรายการ → บันทึก → ระบบสร้าง Job ใหม่ให้</p>
+            <img src="assets/admin_edit_cycle_modal.png" alt="Modal แก้ไขโครงการในรอบแผน" class="screenshot">
 
-            <p><strong>ยกเลิกโครงการ:</strong> Deselect โครงการที่ต้องการยกเลิก</p>
+            <p><strong>เพิ่มโครงการ:</strong></p>
+            <ol class="sub-steps">
+                <li>ค้นหาและ Tick โครงการที่ต้องการเพิ่ม</li>
+                <li>กด <strong>"บันทึก"</strong> → ระบบสร้าง Job ใหม่สถานะ OPEN ให้โครงการที่เพิ่มทันที</li>
+            </ol>
+
+            <p><strong>ยกเลิกโครงการ:</strong></p>
+            <ol class="sub-steps">
+                <li>Deselect โครงการที่ต้องการยกเลิก (ปุ่มจะ Disable อัตโนมัติถ้า Job นั้น APPROVED แล้ว)</li>
+                <li>กด <strong>"บันทึก"</strong></li>
+            </ol>
+
             <div class="warning-box">
-                <strong>⛔ ไม่สามารถยกเลิกได้</strong> ถ้า Job ของโครงการนั้นเป็น <span class="badge badge-green">APPROVED</span> แล้ว — ปุ่ม Deselect จะถูก Disable อัตโนมัติ
+                ⚠️ <strong>ยกเลิกโครงการไม่ได้</strong> ถ้า Job ของโครงการนั้นเป็น <span class="badge badge-green">APPROVED</span> แล้ว — ต้องทำผ่านช่องทางอื่น
             </div>
 
-            <p><strong>ลบรอบทั้งหมด:</strong></p>
+            <p><strong>ลบรอบทั้งหมด:</strong> กดไอคอน 🗑️ ที่ Cycle Card — ลบได้เฉพาะรอบที่ยังไม่มี Job ที่ APPROVED</p>
             <div class="danger-box">
-                ⛔ ลบไม่ได้ถ้ามี Job ใดในรอบที่ <span class="badge badge-green">APPROVED</span> แล้ว — ระบบแจ้ง: <em>"ไม่สามารถลบงวดงานนี้ได้ เนื่องจากมีบางโครงการได้รับการอนุมัติแล้ว"</em>
+                ⚠️ ถ้ามี Job ใดที่ <span class="badge badge-green">APPROVED</span> แล้ว ระบบจะแจ้ง: <em>"ไม่สามารถลบงวดงานนี้ได้ เนื่องจากมีบางโครงการได้รับการอนุมัติแล้ว"</em>
             </div>
         </div>
     </div>
@@ -118,66 +147,72 @@
         <div class="step-number">4</div>
         <div class="step-content">
             <h3>Lock / Unlock ใบงาน</h3>
-            <p>ปุ่ม Lock/Unlock ปรากฏบน Job Card เมื่อ: Job เป็น <span class="badge badge-green">APPROVED</span> หรือเลยกำหนด</p>
+            <p>Store Center สามารถ Unlock ใบงานเพื่อให้ไซต์หรือ PM แก้ไขได้แม้ผ่าน Deadline หรือ APPROVED ไปแล้ว</p>
 
             <table class="table-manual">
-                <thead><tr><th>การกระทำ</th><th>ผลที่เกิดขึ้น</th><th>ใช้เมื่อ</th></tr></thead>
+                <thead><tr><th>การกระทำ</th><th>ใช้เมื่อ</th><th>ผลที่เกิดขึ้น</th></tr></thead>
                 <tbody>
                     <tr>
                         <td><strong>Unlock</strong></td>
-                        <td>ไซต์กลับมาแก้ไขและส่งแผนใหม่ได้</td>
-                        <td>ไซต์ขอแก้ไขหลัง Submit หรือ Approve</td>
+                        <td>ไซต์ขอแก้ไขหลัง Submit / PM ขอแก้หลัง Approve</td>
+                        <td>ไซต์กลับมาแก้ไขและส่งแผนใหม่ได้ / PM แก้ตัวเลขได้อีกครั้ง</td>
                     </tr>
                     <tr>
                         <td><strong>Lock คืน</strong></td>
-                        <td>ปิดการแก้ไขอีกครั้ง</td>
-                        <td>เมื่อไม่ต้องการให้ไซต์แก้ไขแล้ว</td>
+                        <td>Unlock ไว้แล้วแต่ต้องการปิดอีกครั้ง</td>
+                        <td>ป้องกันไม่ให้แก้ไขเพิ่มเติม</td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="tip-box">
-                💡 ระบบแสดง Confirm ก่อนทุกครั้ง: <em>"คุณต้องการปลดล็อค/ล็อคคืนการ์ดงานนี้ใช่หรือไม่?"</em>
+                💡 ระบบแสดงกล่อง Confirm ก่อนทุกครั้ง: <em>"คุณต้องการปลดล็อค/ล็อคคืนการ์ดงานนี้ใช่หรือไม่?"</em> — กด OK เพื่อยืนยัน
+            </div>
+            <div class="info-box">
+                📌 <strong>Flow แก้ไขหลัง Approve:</strong> Store Center กด Unlock → ไซต์แก้ไข → ไซต์ Submit → PM Approve ใหม่ → กลับมาที่ Center จัดสรร
             </div>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <hr class="divider">
-    <div class="section-header">📦 แท็บ 2 — ความต้องการสุทธิ (Center Dashboard)</div>
+    <div class="section-header">📦 แท็บ 2 — ความต้องการสุทธิ (Net Demand)</div>
 
     <!-- Step 5 -->
     <div class="step">
         <div class="step-number">5</div>
         <div class="step-content">
-            <h3>ทำความเข้าใจหน้าความต้องการสุทธิ</h3>
-            <p>หน้านี้แบ่งเป็น 2 แท็บ: <strong>ใบขอเบิก/จัดหา (DEMAND)</strong> และ <strong>รายการส่งคืน (RETURN)</strong></p>
+            <h3>ภาพรวมหน้าความต้องการสุทธิ</h3>
+            <p>หน้านี้รวมความต้องการจากทุกไซต์ที่ PM อนุมัติแล้วไว้ในที่เดียว แบ่งเป็น 2 แท็บ: <strong>ใบขอเบิก/จัดหา</strong> และ <strong>รายการส่งคืน</strong></p>
 
-            <p><strong>ตัวกรอง (Filter Bar) ด้านบน:</strong></p>
+            <img src="assets/center_net_demand.png" alt="หน้าความต้องการสุทธิ" class="screenshot">
+
+            <p><strong>แถบกรอง (Filter Bar) ด้านบน:</strong></p>
             <table class="table-manual">
                 <thead><tr><th>ตัวกรอง</th><th>คำอธิบาย</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>รอบแผน</strong></td><td>เลือกรอบที่ต้องการจัดการ</td></tr>
-                    <tr><td><strong>เดือน</strong></td><td>Toggle แต่ละเดือน — เฉพาะเดือนในรอบนั้น (เลือกพร้อมกันหลายเดือนได้)</td></tr>
-                    <tr><td><strong>สถานะ</strong></td><td>ALL / READY / PENDING / COMPLETED</td></tr>
-                    <tr><td><strong>ค้นหา</strong></td><td>ชื่อหรือรหัสครุภัณฑ์, ชื่อโครงการ (มีหน่วงเวลา 500ms)</td></tr>
+                    <tr><td><strong>รอบแผน</strong></td><td>เลือกรอบที่ต้องการดูและจัดการ</td></tr>
+                    <tr><td><strong>เดือน</strong></td><td>Toggle เลือกดูทีละเดือน หรือหลายเดือนพร้อมกัน (เฉพาะเดือนในรอบนั้น)</td></tr>
+                    <tr><td><strong>สถานะ</strong></td><td>กรองตาม Status ของแต่ละรายการ (ดูตารางด้านล่าง)</td></tr>
+                    <tr><td><strong>ค้นหา</strong></td><td>พิมพ์ชื่อครุภัณฑ์, รหัส, หรือชื่อโครงการ (ผลปรากฏหลัง 500ms)</td></tr>
                 </tbody>
             </table>
 
-            <p><strong>Status Filter:</strong></p>
+            <p><strong>3 Status ของรายการ:</strong></p>
             <table class="table-manual">
-                <thead><tr><th>Status</th><th>เงื่อนไข</th><th>ใช้เมื่อ</th></tr></thead>
+                <thead><tr><th>Status</th><th>เงื่อนไข</th><th>ใช้กรองเมื่อ</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>READY</strong></td><td>สต็อกพอ และยังไม่ Completed</td><td>ต้องการทำรายการที่ทำได้ทันที</td></tr>
-                    <tr><td><strong>PENDING</strong></td><td>จัดสรรไม่ครบ</td><td>ดูรายการที่ยังค้างอยู่</td></tr>
-                    <tr><td><strong>COMPLETED</strong></td><td>จัดสรรครบแล้ว</td><td>ตรวจสอบประวัติ</td></tr>
+                    <tr><td><span class="badge badge-green">READY</span></td><td>สต็อกคลังพอ + ยังไม่จัดสรรครบ</td><td>ต้องการทำรายการที่ทำได้ทันทีก่อน</td></tr>
+                    <tr><td><span class="badge badge-amber">PENDING</span></td><td>จัดสรรได้บางส่วน หรือสต็อกไม่พอ</td><td>ดูว่ายังค้างอยู่ที่ไหนบ้าง</td></tr>
+                    <tr><td><span class="badge badge-gray">COMPLETED</span></td><td>จัดสรรครบ 100% แล้ว</td><td>ตรวจสอบสิ่งที่ทำไปแล้ว</td></tr>
                 </tbody>
             </table>
+
+            <img src="assets/center_status_filter.png" alt="ปุ่มกรองสถานะ" class="screenshot">
 
             <div class="tip-box">
-                💡 <strong>Sort:</strong> คลิก header คอลัมน์ใดก็ได้ (โครงการ, รายการ, เดือน, จำนวน, สต็อก) เพื่อเรียงลำดับ — Default: รายการที่ยัง Pending ลอยขึ้นก่อน
+                💡 <strong>Sort:</strong> คลิก Header คอลัมน์ใดก็ได้ (โครงการ, รายการ, เดือน, จำนวน, สต็อก) — Default แสดง Pending ขึ้นก่อน
             </div>
-            <img src="assets/center_net_demand.png" alt="Center Net Demand" class="screenshot">
         </div>
     </div>
 
@@ -185,49 +220,50 @@
     <div class="step">
         <div class="step-number">6</div>
         <div class="step-content">
-            <h3>จัดสรรครุภัณฑ์ — แท็บ DEMAND</h3>
-            <p>แท็บนี้แสดงรายการที่ไซต์ <strong>ต้องการเพิ่มเติม</strong> จากที่มีอยู่ เลือก 1 ใน 5 วิธีจัดสรร:</p>
+            <h3>จัดสรรครุภัณฑ์ — แท็บ "ใบขอเบิก/จัดหา"</h3>
+            <p>แท็บนี้แสดงรายการที่ไซต์ <strong>ต้องการเพิ่มเติม</strong> จากที่มีอยู่ เลือก 1 ใน 5 วิธีสำหรับแต่ละรายการ:</p>
 
             <div class="action-grid">
                 <div class="action-card">
                     <div class="action-name">DISPATCH — เบิกจ่าย</div>
-                    <div class="action-desc">ส่งออกจากสต็อกคลังกลางโดยตรง</div>
-                    <div class="action-stock stock-down">⬇ สต็อกลด</div>
+                    <div class="action-desc">ส่งออกจากสต็อกคลังกลางโดยตรง — วิธีหลักที่ใช้บ่อยที่สุด</div>
+                    <div class="action-stock stock-down">⬇ สต็อกลดทันที</div>
                 </div>
                 <div class="action-card">
                     <div class="action-name">CIRCULATE — หมุนเวียน</div>
-                    <div class="action-desc">ย้ายจากไซต์อื่นที่มีของเกิน ต้องกรอก Notes</div>
-                    <div class="action-stock stock-none">— สต็อกไม่เปลี่ยน</div>
+                    <div class="action-desc">ย้ายจากไซต์อื่นที่มีของเกิน ต้องกรอก Notes ระบุต้นทาง</div>
+                    <div class="action-stock stock-none">— สต็อกคลังไม่เปลี่ยน</div>
                 </div>
                 <div class="action-card">
                     <div class="action-name">SUBSTITUTE — สลับสเปก</div>
-                    <div class="action-desc">ใช้ครุภัณฑ์สเปคทดแทน ต้องกรอก Notes</div>
-                    <div class="action-stock stock-none">— สต็อกไม่เปลี่ยน</div>
+                    <div class="action-desc">ใช้ครุภัณฑ์สเปคทดแทน ต้องกรอก Notes ระบุสเปคที่ใช้แทน</div>
+                    <div class="action-stock stock-none">— สต็อกคลังไม่เปลี่ยน</div>
                 </div>
                 <div class="action-card">
                     <div class="action-name">BUY — จัดซื้อ</div>
-                    <div class="action-desc">สั่งซื้อครุภัณฑ์ใหม่</div>
-                    <div class="action-stock stock-none">— สต็อกไม่เปลี่ยน</div>
+                    <div class="action-desc">สั่งซื้อครุภัณฑ์ใหม่ จากผู้จำหน่าย</div>
+                    <div class="action-stock stock-none">— สต็อกคลังไม่เปลี่ยน</div>
                 </div>
                 <div class="action-card">
                     <div class="action-name">RENT — เช่า</div>
-                    <div class="action-desc">เช่าครุภัณฑ์มาใช้งาน</div>
-                    <div class="action-stock stock-none">— สต็อกไม่เปลี่ยน</div>
+                    <div class="action-desc">เช่าครุภัณฑ์มาใช้งานชั่วคราว</div>
+                    <div class="action-stock stock-none">— สต็อกคลังไม่เปลี่ยน</div>
                 </div>
             </div>
 
-            <p><strong>วิธีใช้ปุ่ม DISPATCH:</strong></p>
+            <p><strong>ขั้นตอนการจัดสรร (ทีละรายการ):</strong></p>
             <ol class="sub-steps">
-                <li>กด <strong>"เบิกจ่าย"</strong> ที่ใบขอที่ต้องการ</li>
-                <li>ระบบกรอกจำนวนที่เหลือ (<em>qty − fulfilled_qty</em>) ให้อัตโนมัติ — แก้ไขได้</li>
-                <li>กด <strong>"ยืนยัน"</strong> → สต็อกลดทันที</li>
+                <li>กดปุ่มวิธีที่ต้องการที่ปลายแถว (เบิกจ่าย / หมุนเวียน / สลับสเปก / จัดหา)</li>
+                <li>ระบบกรอกจำนวนที่ยังค้าง (<em>qty − fulfilled_qty</em>) ให้อัตโนมัติ — แก้ไขได้ถ้าต้องการจัดสรรบางส่วน</li>
+                <li>กรอก Notes (บังคับสำหรับ CIRCULATE และ SUBSTITUTE)</li>
+                <li>กด <strong>"ยืนยัน"</strong></li>
             </ol>
 
-            <div class="danger-box">
-                ⚠️ ปุ่ม <strong>DISPATCH จะ Disabled</strong> อัตโนมัติถ้าสต็อกคลังกลางไม่เพียงพอ — ต้องใช้วิธีอื่น (BUY / RENT / CIRCULATE)
-            </div>
+            <img src="assets/center_decision_modal.png" alt="Modal จัดสรรครุภัณฑ์" class="screenshot">
 
-            <img src="assets/center_decision_modal.png" alt="Decision Modal" class="screenshot">
+            <div class="danger-box">
+                ⚠️ ปุ่ม <strong>DISPATCH จะ Disable อัตโนมัติ</strong> ถ้าสต็อกคลังกลางไม่เพียงพอ — ให้ใช้ BUY, RENT หรือ CIRCULATE แทน
+            </div>
         </div>
     </div>
 
@@ -236,17 +272,18 @@
         <div class="step-number">7</div>
         <div class="step-content">
             <h3>Bulk Dispatch — เบิกจ่ายหลายรายการพร้อมกัน</h3>
-            <p>เมื่อต้องการ DISPATCH หลายรายการในครั้งเดียว:</p>
+            <p>ใช้เมื่อต้องการ DISPATCH หลายรายการในครั้งเดียวเพื่อประหยัดเวลา</p>
 
             <ol class="sub-steps">
-                <li>เลือกรายการด้วย <strong>Checkbox</strong> ด้านซ้ายของแต่ละแถว</li>
-                <li>กด <strong>"เบิกจ่ายรวม"</strong> ที่ด้านบน</li>
-                <li>ระบบแสดง Confirm พร้อมจำนวนรายการ <em>ที่จะประมวลผลได้จริง</em></li>
-                <li>กด Confirm → ระบบประมวลผลทีละรายการ</li>
+                <li>กรองสถานะเป็น <span class="badge badge-green">READY</span> ก่อน — เพื่อให้มองเห็นเฉพาะรายการที่ทำได้ทันที</li>
+                <li>เลือกรายการด้วย <strong>Checkbox</strong> ด้านซ้ายของแต่ละแถว (หรือ Checkbox บน Header เพื่อเลือกทั้งหมด)</li>
+                <li>กด <strong>"เบิกจ่ายรวม"</strong> ที่ปรากฏด้านบนหลังเลือกแล้ว</li>
+                <li>ระบบแสดง Confirm พร้อมจำนวนรายการที่จะประมวลผลได้จริง</li>
+                <li>กด <strong>"ยืนยัน"</strong> → ระบบประมวลผลทีละรายการตามลำดับ</li>
             </ol>
 
             <div class="warning-box">
-                ⚠️ <strong>สำคัญ:</strong> Bulk Dispatch <strong>ข้ามรายการที่สต็อกไม่พอโดยไม่แจ้งเตือน</strong> — จำนวนที่แสดงใน Confirm อาจน้อยกว่ารายการที่เลือก ตรวจสอบ <strong>fulfilled_qty</strong> ของแต่ละรายการหลังทำเสร็จ
+                ⚠️ <strong>Bulk Dispatch ข้ามรายการที่สต็อกไม่พอโดยอัตโนมัติ</strong> — จำนวนใน Confirm อาจน้อยกว่าที่เลือก ตรวจ <strong>fulfilled_qty</strong> ของแต่ละรายการหลังทำเสร็จ
             </div>
         </div>
     </div>
@@ -255,24 +292,36 @@
     <div class="step">
         <div class="step-number">8</div>
         <div class="step-content">
-            <h3>รับของคืน — แท็บ RETURN</h3>
-            <p>แท็บนี้แสดงรายการที่ไซต์มีของ <strong>เกินกว่าที่วางแผน</strong> → ต้องส่งคืนคลังกลาง</p>
+            <h3>รับของคืน — แท็บ "รายการส่งคืน"</h3>
+            <p>แท็บนี้แสดงรายการที่ไซต์มีของ <strong>เกินกว่าที่วางแผน</strong> ระบบคำนวณให้อัตโนมัติจากแผนที่ PM อนุมัติ</p>
 
+            <img src="assets/center_net_demand_return.png" alt="แท็บรายการส่งคืน" class="screenshot">
+
+            <p><strong>2 การกระทำสำหรับแต่ละรายการ:</strong></p>
             <table class="table-manual">
-                <thead><tr><th>ปุ่ม</th><th>ความหมาย</th><th>ผลต่อสต็อก</th></tr></thead>
+                <thead><tr><th>ปุ่ม</th><th>ความหมาย</th><th>ผลต่อสต็อกคลังกลาง</th></tr></thead>
                 <tbody>
                     <tr>
-                        <td><strong>รับคืน (RECEIVE)</strong></td>
-                        <td>รับของกลับเข้าคลังกลาง</td>
+                        <td><strong>รับคืน</strong></td>
+                        <td>ยืนยันรับของกลับเข้าคลัง</td>
                         <td><span style="color:#10b981;font-weight:700;">⬆ สต็อกเพิ่ม</span></td>
                     </tr>
                     <tr>
-                        <td><strong>ปฏิเสธ (REJECT_RETURN)</strong></td>
-                        <td>ไม่รับของคืน — ให้ไซต์เก็บไว้ใช้ต่อ</td>
+                        <td><strong>ปฏิเสธ</strong></td>
+                        <td>ไม่รับคืน ให้ไซต์เก็บไว้ใช้ต่อ</td>
                         <td>— สต็อกไม่เปลี่ยน</td>
                     </tr>
                 </tbody>
             </table>
+
+            <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+                <img src="assets/center_receive_modal.png" alt="Modal ยืนยันรับของคืน" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                <img src="assets/center_reject_return_modal.png" alt="Modal ปฏิเสธการส่งคืน" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            </div>
+
+            <div class="tip-box" style="margin-top:16px;">
+                💡 <strong>"รับคืน"</strong> ใช้เมื่อของจริงมาถึงคลังแล้ว | <strong>"ปฏิเสธ"</strong> ใช้เมื่อประเมินแล้วว่าไซต์ควรเก็บของไว้ใช้ต่อเพราะจะมีงานต่อเนื่อง
+            </div>
         </div>
     </div>
 
@@ -280,18 +329,32 @@
     <div class="step">
         <div class="step-number">9</div>
         <div class="step-content">
-            <h3>ดูและแก้ไขประวัติการตัดสินใจ</h3>
-            <p>คลิก <strong>"แก้ไข"</strong> บนใบขอที่ Completed → Modal ประวัติแสดงทุก Decision</p>
+            <h3>ดูและแก้ไขประวัติการตัดสินใจ (History Modal)</h3>
+            <p>ทุก Decision ที่เคยทำไว้ถูกบันทึก — คลิกไอคอน 🕐 ที่แถวนั้น หรือกด <strong>"แก้ไข"</strong> บนรายการ Completed</p>
 
+            <img src="assets/center_history_modal.png" alt="Modal ประวัติการตัดสินใจ" class="screenshot">
+
+            <p><strong>สิ่งที่เห็นใน History Modal:</strong></p>
             <ul class="manual-list">
-                <li>เห็นทุก Action (เบิก/หมุน/ซื้อ/ฯลฯ) พร้อมวันที่และหมายเหตุ</li>
-                <li><strong>ลบ Decision:</strong> กดลบ → ยืนยัน → <strong>ระบบ Reverse สต็อกอัตโนมัติ</strong></li>
-                <li>ถ้า Decision นั้นเคย DISPATCH → สต็อก <strong>เพิ่มคืน</strong></li>
-                <li>ถ้า Decision นั้นเคย RECEIVE → สต็อก <strong>ลด</strong></li>
+                <li>รายการ Decision ทั้งหมด — วิธี (DISPATCH/BUY/RENT/ฯลฯ), จำนวน, วันที่, ผู้ทำรายการ, Notes</li>
+                <li>ยอดรวมที่จัดสรรไปแล้ว (<em>fulfilled_qty</em>) เทียบกับที่ต้องการ</li>
             </ul>
 
+            <p><strong>ลบ Decision (กรณีทำผิด):</strong></p>
+            <ol class="sub-steps">
+                <li>กดไอคอนลบ 🗑️ ที่ Decision นั้น</li>
+                <li>ยืนยันการลบ</li>
+                <li>ระบบ <strong>Reverse สต็อกอัตโนมัติ</strong>:
+                    <ul>
+                        <li>เคย DISPATCH → สต็อกคลังกลาง <strong>เพิ่มคืน</strong></li>
+                        <li>เคย RECEIVE → สต็อกคลังกลาง <strong>ลด</strong></li>
+                    </ul>
+                </li>
+                <li>สถานะรายการกลับเป็น PENDING/READY — สามารถทำ Decision ใหม่ได้ทันที</li>
+            </ol>
+
             <div class="tip-box">
-                💡 ใช้ฟีเจอร์นี้เมื่อเบิกผิดหรือต้องการแก้ไข — ไม่ต้องสร้าง Decision ใหม่ แค่ลบอันเดิมแล้วทำใหม่
+                💡 ใช้ฟีเจอร์นี้เมื่อ <strong>เบิกผิดจำนวนหรือผิดวิธี</strong> — ลบ Decision เดิมแล้วทำใหม่ถูกต้อง ไม่ต้องยุ่งกับ Master Data
             </div>
         </div>
     </div>
@@ -300,38 +363,40 @@
     <div class="step">
         <div class="step-number">10</div>
         <div class="step-content">
-            <h3>Alert สต็อกไม่พอ และการ Export</h3>
+            <h3>Alert สต็อกไม่พอ และการ Export รายงาน</h3>
 
-            <p><strong>Alert สีแดงด้านบน:</strong> ปรากฏเมื่อความต้องการรวมเกินสต็อก</p>
+            <p><strong>Alert แถบสีแดงด้านบนตาราง</strong> — ปรากฏเมื่อความต้องการรวมเกินสต็อกที่มี:</p>
             <div class="info-box">
-                ตัวอย่าง: <em>"รหัส ชื่อ: ต้องการทั้งหมด X ชิ้น แต่คลังมี Y ชิ้น (ต้องจัดหาเพิ่มอีก Z ชิ้น)"</em> — ใช้เป็น Checklist สำหรับวางแผนจัดซื้อ/เช่า
+                ตัวอย่าง: <em>"[รหัส] ชื่อรายการ: ต้องการทั้งหมด X ชิ้น แต่คลังมี Y ชิ้น (ต้องจัดหาเพิ่มอีก Z ชิ้น)"</em>
+                <br>ใช้รายการ Alert นี้เป็น Checklist วางแผนจัดซื้อ / เช่า / CIRCULATE
             </div>
 
-            <p><strong>Export Excel — มี 2 ตัวเลือก:</strong></p>
+            <p><strong>Export Excel — มี 2 โหมด:</strong></p>
             <table class="table-manual">
                 <thead><tr><th>ปุ่ม</th><th>ขอบเขตข้อมูล</th><th>ใช้เมื่อ</th></tr></thead>
                 <tbody>
                     <tr>
                         <td><strong>"ส่งออกตามที่กรองไว้"</strong></td>
                         <td>ใช้ Search + Status + Month filter ปัจจุบัน</td>
-                        <td>ต้องการส่งออกเฉพาะที่กำลังดูอยู่</td>
+                        <td>ต้องการเฉพาะส่วนที่กำลังดูอยู่ เช่น เฉพาะ PENDING เดือนนี้</td>
                     </tr>
                     <tr>
                         <td><strong>"ส่งออกทั้งหมด"</strong></td>
-                        <td>ทั้งรอบแผน — ไม่สนใจ Search/Status/Month</td>
-                        <td>ต้องการข้อมูลครบทุกรายการในรอบ</td>
+                        <td>ทั้งรอบ — ไม่สนใจ Search/Status/Month</td>
+                        <td>ต้องการข้อมูลครบทุกรายการส่งให้ฝ่ายจัดซื้อ</td>
                     </tr>
                 </tbody>
             </table>
-            <p>ไฟล์ Excel มี <strong>2 Sheet</strong>: New Demand + Expected Returns | คอลัมน์ครบ: โครงการ, รหัสอุปกรณ์, เดือน, จำนวน, ดำเนินการแล้ว, สต็อก, ความสำคัญ, หมายเหตุล่าสุด</p>
 
-            <img src="assets/center_export.png" alt="Export" class="screenshot">
+            <p>ไฟล์ Excel มี <strong>2 Sheet</strong>: New Demand + Expected Returns | คอลัมน์: โครงการ, รหัส, เดือน, จำนวน, ดำเนินการแล้ว, สต็อก, ความสำคัญ, Notes ล่าสุด</p>
+
+            <img src="assets/center_export.png" alt="ปุ่ม Export และ Dropdown ตัวเลือก" class="screenshot">
         </div>
     </div>
 
     <div class="page-footer">
-        <a href="site.html" class="btn btn-outline" style="margin-right: 10px;">← Store Site</a>
-        <a href="reports.html" class="btn">รายงาน Matrix →</a>
+        <a href="pm.html" class="btn btn-outline" style="margin-right: 10px;">← Project Manager</a>
+        <a href="reports.html" class="btn">Matrix Report →</a>
         <p style="margin-top: 16px;">&copy; 2026 Asset Plan System | TTS Construction</p>
     </div>
 

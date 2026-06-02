@@ -102,7 +102,7 @@
             <div class="tip-box">
                 💡 <strong>ตัวเลขจาง ๆ</strong> ในช่องเดือนแรก คือจำนวนที่กรอกในรอบแผนที่แล้ว — ใช้เป็น reference เท่านั้น ไม่ใช่ค่าที่บันทึกไว้แล้ว
             </div>
-            <img src="assets/site_worksheet.png" alt="Site Worksheet" class="screenshot">
+            <img src="assets/site_worksheet.png" alt="Site Worksheet — ใบงาน OPEN พร้อมกรอก" class="screenshot">
         </div>
     </div>
 
@@ -114,21 +114,52 @@
             <p>กรอกจำนวนครุภัณฑ์ที่ต้องการใช้ <strong>ในแต่ละเดือน</strong> ไม่ต้องกรอกทุกรายการ — กรอกเฉพาะที่ต้องการ</p>
 
             <ol class="sub-steps">
-                <li>พิมพ์ตัวเลขในช่องเดือนแรกที่ต้องการ</li>
-                <li>กด <strong>Enter</strong> หรือคลิกออกจากช่อง</li>
-                <li>ระบบ <strong>คัดลอกค่าไปยังเดือนถัดไปอัตโนมัติ</strong> (เฉพาะช่องที่ว่างอยู่)</li>
-                <li>แก้ไขค่าแต่ละเดือนได้อิสระ</li>
+                <li>ค้นหาครุภัณฑ์ที่ต้องการจากช่องค้นหา หรือเลื่อนหาในตาราง</li>
+                <li>คลิกที่ช่อง <strong>เดือนแรก</strong> ของแถวนั้น → พิมพ์ตัวเลข</li>
+                <li>กด <strong>Enter</strong> → ระบบ copy ค่าไปเดือนถัดไปอัตโนมัติ และเลื่อนไปแถวถัดไป</li>
+                <li>แก้ไขค่าแต่ละเดือนได้อิสระโดยคลิกเลือกช่องนั้นโดยตรง</li>
             </ol>
 
-            <p><strong>ระบบแสดงสัญลักษณ์ช่วย:</strong></p>
+            <!-- Keyboard shortcuts -->
+            <p><strong>แป้นพิมพ์และการนำทาง:</strong></p>
+            <table class="table-manual">
+                <thead><tr><th style="width:30%">Key / Action</th><th>พฤติกรรม</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><kbd style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:2px 7px;font-family:monospace;font-size:0.85em;">Enter</kbd></td>
+                        <td>Copy ค่าปัจจุบันไปยังเดือนที่ว่างทั้งหมดในแถว → เลื่อน cursor ไปแถวถัดไป (ช่องเดือนแรก)</td>
+                    </tr>
+                    <tr>
+                        <td><kbd style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:2px 7px;font-family:monospace;font-size:0.85em;">Enter</kbd> บนช่องว่าง</td>
+                        <td>ถ้าช่องเดือนแรกว่างอยู่ — ดึงยอดรอบแผนที่แล้วมาเติมทุกเดือนอัตโนมัติ (ดูจาก placeholder จาง ๆ)</td>
+                    </tr>
+                    <tr>
+                        <td><kbd style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:2px 7px;font-family:monospace;font-size:0.85em;">Tab</kbd> / คลิกออก</td>
+                        <td>Trigger auto-fill เดือนที่เหลือในแถวเดิม (ไม่ข้ามแถว)</td>
+                    </tr>
+                    <tr>
+                        <td>คลิก <strong>Header คอลัมน์</strong></td>
+                        <td>Sort — ชื่อรายการ: A→Z→ปิด | คอลัมน์ตัวเลข: มาก→น้อย→ปิด | คลิกซ้ำเพื่อเปลี่ยน</td>
+                    </tr>
+                    <tr>
+                        <td>ช่อง <strong>ค้นหา</strong></td>
+                        <td>กรองแถวแบบ Real-time ตามรหัสหรือชื่อครุภัณฑ์</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>สัญลักษณ์ที่ต้องรู้:</strong></p>
             <ul class="manual-list">
-                <li><span class="badge badge-red">คืน X</span> — Badge เล็ก ๆ ใต้ช่องเดือน หมายความว่าเดือนนั้นจำนวนน้อยกว่าเดือนก่อน ระบบคำนวณว่าจะมีการคืนของ</li>
-                <li>ค่าจำนวนที่กรอกสูงกว่า "ยอดมีอยู่" → ระบบรู้ว่าต้องการ <em>เพิ่ม</em></li>
-                <li>ค่าจำนวนที่กรอกต่ำกว่า "ยอดมีอยู่" → ระบบรู้ว่าจะมีการ <em>คืนของ</em></li>
+                <li><strong>ตัวเลขจาง ๆ ในช่องเดือนแรก</strong> — ยอดที่กรอกไว้ในรอบแผนที่แล้ว ใช้เป็น hint เท่านั้น กด Enter บนช่องว่างเพื่อนำมาใช้</li>
+                <li><span class="badge badge-red">คืน X</span> — Badge ใต้ช่องเดือน หมายถึงเดือนนั้นจะมีการคืนของ (จำนวนน้อยกว่าเดือนก่อน)</li>
+                <li>จำนวน <strong>สูงกว่า "ยอดมีอยู่"</strong> → ระบบคำนวณว่าต้องการเพิ่มเติมจากคลังกลาง</li>
+                <li>จำนวน <strong>ต่ำกว่า "ยอดมีอยู่"</strong> → ระบบคำนวณว่าจะมีการส่งคืน</li>
             </ul>
 
+            <img src="assets/site_worksheet_filling.png" alt="ตัวอย่างกรอกตัวเลข — auto-fill และ badge คืน" class="screenshot">
+
             <div class="tip-box">
-                💡 <strong>ค้นหาครุภัณฑ์:</strong> พิมพ์รหัสหรือชื่อในช่องค้นหาด้านบน | <strong>Sort:</strong> คลิก header คอลัมน์เพื่อเรียงลำดับ
+                💡 <strong>วิธีเร็วที่สุด:</strong> ค้นหาครุภัณฑ์ → คลิกช่องเดือนแรก → พิมพ์ตัวเลข → กด <kbd style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:1px 6px;font-family:monospace;font-size:0.85em;">Enter</kbd> ซ้ำไปเรื่อย ๆ ระบบจะ fill เดือนที่เหลือและเลื่อนแถวให้อัตโนมัติ
             </div>
         </div>
     </div>
@@ -154,7 +185,10 @@
                     </tr>
                 </tbody>
             </table>
-            <img src="assets/site_submit_modal.png" alt="Submit Modal" class="screenshot">
+            <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+                <img src="assets/site_save_draft_modal.png" alt="Modal ยืนยันบันทึกฉบับร่าง" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                <img src="assets/site_submit_modal.png" alt="Modal ยืนยันส่งแผน" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            </div>
 
             <div class="danger-box">
                 ⚠️ <strong>หลังกด "ส่งแผน"</strong> ตารางจะ <strong>ถูกล็อกทันที</strong> — แก้ไขไม่ได้จนกว่า PM จะตีกลับ หรือ Store Center จะ Unlock
