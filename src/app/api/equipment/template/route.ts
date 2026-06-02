@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "edge";
 
 export async function GET() {
   // Define the CSV header matching the database schema

@@ -3,54 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Manual - คู่มือผู้ดูแลระบบ</title>
+    <title>คู่มือ Admin — Asset Plan</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <nav class="nav">
-            <a href="index.html">หน้าแรก</a>
-            <a href="admin.html" class="active">Admin</a>
-            <a href="site.html">Store Site</a>
-            <a href="pm.html">PM</a>
-            <a href="center.html">Center</a>
-            <a href="reports.html">Reports</a>
-        </nav>
+<div class="container">
 
-        <header class="header">
-            <h1>คู่มือผู้ดูแลระบบ (Admin)</h1>
-            <p>การจัดการข้อมูลพื้นฐานและตั้งค่าระบบ</p>
-        </header>
+    <nav class="nav">
+        <a href="index.html">🏠 หน้าแรก</a>
+        <a href="admin.html" class="active">Admin</a>
+        <a href="site.html">Store Site</a>
+        <a href="pm.html">Project Manager</a>
+        <a href="center.html">Store Center</a>
+        <a href="reports.html">Reports</a>
+    </nav>
 
-        <section class="step">
-            <div class="step-number">1</div>
-            <div class="step-content">
-                <h3>จัดการข้อมูลอุปกรณ์ (Master Data)</h3>
-                <p>เมนู Master Data ใช้สำหรับเพิ่ม/แก้ไขรายการอุปกรณ์ ราคาซื้อ/เช่า และการอัปโหลดข้อมูลสต็อกคงเหลือรวมของบริษัทผ่าน CSV</p>
-            </div>
-        </section>
+    <header class="header">
+        <h1>คู่มือผู้ดูแลระบบ (Admin)</h1>
+        <p>การตั้งค่าระบบ จัดการผู้ใช้ โครงการ และข้อมูลครุภัณฑ์</p>
+    </header>
 
-        <section class="step">
-            <div class="step-number">2</div>
-            <div class="step-content">
-                <h3>จัดการงวดงาน (Planning Cycle)</h3>
-                <p>Admin หรือ Center สามารถสร้างงวดงานใหม่เพื่อกำหนดช่วงเวลาที่ต้องการให้ไซต์งานทำการวางแผน</p>
-                <img src="assets/admin_cycle_modal.png" alt="Admin Cycle Modal" class="screenshot">
-            </div>
-        </section>
-
-        <section class="step">
-            <div class="step-number">3</div>
-            <div class="step-content">
-                <h3>จัดการผู้ใช้งานและสิทธิ์ (User & Roles)</h3>
-                <p>เมนู Admin -> Users และ Admin -> Project Roles ใช้สำหรับสร้างบัญชีผู้ใช้และกำหนดว่าใครมีสิทธิ์เข้าถึงโครงการใดในบทบาทอะไร</p>
-            </div>
-        </section>
-
-        <footer style="text-align: center; margin-top: 60px; color: var(--text-muted);">
-            <a href="index.html" class="btn">กลับหน้าหลัก</a>
-        </footer>
+    <div class="quick-summary">
+        <div class="qs-item">
+            <span class="qs-label">สิทธิ์ที่ใช้</span>
+            <span class="qs-value">ADMIN</span>
+        </div>
+        <div class="qs-item">
+            <span class="qs-label">เส้นทางหลัก</span>
+            <span class="qs-value">/admin, /master-data</span>
+        </div>
+        <div class="qs-item">
+            <span class="qs-label">ทำก่อนเริ่มใช้งาน</span>
+            <span class="qs-value">ตั้งค่า User + Project + Role</span>
+        </div>
     </div>
+
+    <div class="info-box">
+        📌 <strong>ลำดับการตั้งค่าครั้งแรก:</strong> Master Data → โครงการ → ผู้ใช้ → Project Roles → สร้างรอบแผน
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+            <h3>จัดการข้อมูลครุภัณฑ์ (Master Data) — /master-data</h3>
+            <p>ข้อมูลครุภัณฑ์เป็นฐานของทุกอย่างในระบบ ต้องตั้งค่าก่อนเริ่มใช้งาน</p>
+
+            <p><strong>วิธีเพิ่มครุภัณฑ์ทีละรายการ:</strong></p>
+            <ol class="sub-steps">
+                <li>ไปที่เมนู <strong>Master Data</strong></li>
+                <li>กดปุ่มเพิ่มรายการ → กรอกรหัส, ชื่อ, หน่วย, ราคาซื้อ, ราคาเช่า, สต็อกคงเหลือ</li>
+                <li>บันทึก</li>
+            </ol>
+
+            <p><strong>วิธี Import หลายรายการด้วย CSV:</strong></p>
+            <ol class="sub-steps">
+                <li>กด <strong>"โหลด Template CSV"</strong> เพื่อดาวน์โหลด Template</li>
+                <li>เปิดใน Excel หรือ Numbers แล้วกรอกข้อมูล</li>
+                <li>บันทึกเป็น CSV (UTF-8)</li>
+                <li>กด <strong>"อัปโหลดข้อมูล (Bulk)"</strong> → เลือกไฟล์ CSV</li>
+                <li>ตารางจะ Refresh อัตโนมัติ</li>
+            </ol>
+
+            <div class="warning-box">
+                ⚠️ <strong>remaining_stock</strong> ใน Master Data คือสต็อกคลังกลางที่ทุกหน้าในระบบแสดง — แก้ไขค่านี้จะกระทบ Center Dashboard ทันที
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+            <h3>จัดการโครงการ — /admin/projects</h3>
+
+            <p><strong>สร้างโครงการใหม่:</strong></p>
+            <ol class="sub-steps">
+                <li>กด "สร้างโครงการ"</li>
+                <li>กรอกชื่อโครงการ และเลือกประเภท:
+                    <ul>
+                        <li><strong>SITE</strong> — ไซต์งาน (กรอกแผนและรับของ)</li>
+                        <li><strong>WAREHOUSE</strong> — คลังกลาง (เก็บสต็อก)</li>
+                    </ul>
+                </li>
+                <li>บันทึก</li>
+            </ol>
+
+            <p><strong>Archive โครงการ:</strong> โครงการที่เสร็จแล้วหรือไม่ใช้งาน — Archive เพื่อซ่อนออกจากรายการปกติ (ข้อมูลยังคงอยู่)</p>
+
+            <div class="tip-box">
+                💡 Matrix Report มีตัวเลือก "แสดงโครงการ Archive" เพื่อดูข้อมูลเก่าได้
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+            <h3>จัดการผู้ใช้งาน — /admin/users</h3>
+
+            <p><strong>สร้างผู้ใช้ใหม่:</strong></p>
+            <ol class="sub-steps">
+                <li>กด "เพิ่มผู้ใช้"</li>
+                <li>กรอก Email (บังคับ) และ Password (บังคับสำหรับสร้างใหม่)</li>
+                <li>เลือก <strong>Global Role</strong>:
+                    <ul>
+                        <li><span class="badge badge-gray">USER</span> — ผู้ใช้ทั่วไป (ต้องกำหนด Project Role เพิ่ม)</li>
+                        <li><span class="badge badge-amber">STORE_CENTER</span> — ทีมคลังกลาง เข้า Store Center ได้</li>
+                        <li><span class="badge badge-red">ADMIN</span> — ผู้ดูแลระบบ เข้าได้ทุกหน้า</li>
+                    </ul>
+                </li>
+                <li>บันทึก</li>
+            </ol>
+
+            <p><strong>แก้ไขผู้ใช้:</strong> แก้ Email หรือ Password ได้ (Password ปล่อยว่างถ้าไม่ต้องการเปลี่ยน)</p>
+
+            <div class="danger-box">
+                ⚠️ <strong>ลบผู้ใช้:</strong> เป็นการลบถาวร (Hard Delete) — ไม่มีฟีเจอร์ปิดการใช้งานชั่วคราว ระบบแสดง Confirm ก่อนลบทุกครั้ง
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+            <h3>กำหนดสิทธิ์ต่อโครงการ — /admin/project-roles</h3>
+            <p>กำหนดว่าใครมีสิทธิ์อะไรในโครงการไหน ผู้ใช้ 1 คนมีได้หลาย Role ในหลายโครงการ</p>
+
+            <p><strong>ขั้นตอนกำหนด Role:</strong></p>
+            <ol class="sub-steps">
+                <li>เลือก <strong>ผู้ใช้</strong> จากรายการ</li>
+                <li>ค้นหาและ <strong>เลือกโครงการ</strong> (Checkbox — เลือกได้หลายโครงการพร้อมกัน)
+                    <ul>
+                        <li>มีปุ่ม "เลือกทั้งหมด" / "ล้าง" สำหรับผลการค้นหาปัจจุบัน</li>
+                    </ul>
+                </li>
+                <li>เลือก <strong>Role</strong> ที่ต้องการกำหนด</li>
+                <li>กด <strong>"Confirm Assignment"</strong></li>
+            </ol>
+
+            <p><strong>3 Project Roles ที่ใช้ได้:</strong></p>
+            <table class="table-manual">
+                <thead><tr><th>Role</th><th>สิทธิ์ในโครงการนั้น</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>STORE_SITE</strong> — ผู้กรอกแผน</td><td>กรอก แก้ไข และส่งแผนได้</td></tr>
+                    <tr><td><strong>PROJECT_MANAGER</strong> — ผู้อนุมัติ</td><td>ตรวจสอบ อนุมัติ หรือตีกลับแผน</td></tr>
+                    <tr><td><strong>VIEWER</strong> — ผู้ดูอย่างเดียว</td><td>ดูข้อมูลได้ แต่ปุ่มแก้ไขทั้งหมดซ่อน</td></tr>
+                </tbody>
+            </table>
+
+            <p><strong>การอ่านตาราง Assignment ที่มีอยู่:</strong></p>
+            <ul class="manual-list">
+                <li>จัดกลุ่มตาม ผู้ใช้ + Role — แสดง 3 โครงการแรก + "+N more"</li>
+                <li>Hover ที่ "+N more" เพื่อดูรายชื่อทั้งหมด</li>
+                <li>กด Delete → ลบ <strong>ทุกโครงการ</strong> ของ User+Role Group นั้นพร้อมกัน</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <a href="index.html" class="btn btn-outline" style="margin-right: 10px;">← หน้าแรก</a>
+        <a href="center.html" class="btn">Store Center →</a>
+        <p style="margin-top: 16px;">&copy; 2026 Asset Plan System | TTS Construction</p>
+    </div>
+
+</div>
 </body>
 </html>

@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { planning_cycles, planning_jobs } from "@/db/schema";
 import { desc } from "drizzle-orm";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 
-export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     
     const cycles = await db.select().from(planning_cycles).orderBy(desc(planning_cycles.created_at));
@@ -29,7 +28,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;

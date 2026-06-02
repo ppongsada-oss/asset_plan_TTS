@@ -5,9 +5,8 @@ import { projects, project_inventory, equipment_items } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-export const runtime = "edge";
 
 async function getAuth(req: Request) {
   const cookieStore = await cookies();
@@ -23,7 +22,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const data = await db.select({
       id: projects.id,
@@ -57,9 +56,9 @@ export async function PATCH(req: Request) {
   }
 
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
-    const { id, status, name, type } = await req.json();
+    const { id, status, name, type } = await req.json() as any;
     if (!id) return NextResponse.json({ error: "ID is required" }, { status: 400 });
 
     const updateData: any = {};

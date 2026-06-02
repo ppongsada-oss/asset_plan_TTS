@@ -1,68 +1,160 @@
-# REPO_MAP.md — Repository Structure & Dependency Direction
+# REPO_MAP.md — Repository Structure
 
-> Read before editing. Arrows show dependency direction (what depends on what).
-> Violating dependency direction = silent runtime breakage.
+> Reference map for all agents. Full-Read permitted (see Never-Full-Load rule).
+> Update when adding/removing top-level directories or harness files.
 
 ---
 
-## Layer Diagram
+## Root Files
+
+| File | Purpose |
+|---|---|
+| `CLAUDE.md` | Hard constraints + boot sequence + R1–R16 rules (never re-read at runtime) |
+| `AGENTS.md` | Agent orientation, boot sequence detail, loop architecture, sub-agent rules |
+| `INVARIANTS.md` | Destructive gates + DB hard stop + invariants I1–I8 (load on-demand at R14/R15) |
+| `REPO_MAP.md` | This file — repo layout reference |
+| `CODING_FAILURE_PATTERNS.md` | CFP-005–CFP-021 known agent failure modes (grep only · Read ≤30L per entry) |
+| `CLAUDE.th.md` | Thai-language version of CLAUDE.md (reference only) |
+| `README.md` | Project overview for humans |
+| `Implement.md` | Short pointer to Implement/ directory |
+
+---
+
+## Directories
+
+### `.agents/`
+Agent configuration and skill library.
 
 ```
-src/app/          (Next.js pages + API routes)
-    └─ depends on ──→  src/lib/          (business logic, utilities)
-    └─ depends on ──→  src/components/   (UI components)
-    └─ depends on ──→  src/hooks/        (React hooks)
-                            │
-                            ▼
-                       src/db/           ← PROTECTED ZONE (see INVARIANTS.md I2)
-                       ├── index.ts      ← DB connection + query exports
-                       └── schema.ts     ← Drizzle schema (single source of truth for DB shape)
-                            │
-                            ▼
-                       knowledge/        ← READ-ONLY at runtime (indexes, not app code)
-                       ├── index_files.json      ← file backlinks
-                       ├── index_variables.json  ← symbols + line numbers
-                       └── error_index.md        ← ERR-XXX error log
+.agents/
+  platform/
+    detected.md          ← platform auto-detection (spawn_tool, explore_type, etc.)
+    session_protocol.md  ← context window + session boundary rules per provider
+  router.md              ← skill routing reference (keyword → skill decision tree)
+  tools/
+    tool-manifest.json   ← registered tool scripts (choose_tools.py lookup table)
+  skill-patches/
+    _template.md         ← patch template
+    applied/             ← patches already merged into SKILL.md files
+    pending/             ← patches queued for next harness_editor task
+  skills/
+    skill-manifest.json  ← keyword→skill routing table (grep only at B2)
+    registry.md          ← skill list + descriptions (one row per skill)
+    agent/               ← SKILL.md + SKILL_detail.md: orchestrator / parallel fan-out
+    ascii_flow/          ← SKILL.md + SKILL_detail.md: diagram generation
+    coder/               ← SKILL.md: TypeScript/Next.js code writing
+    editor/              ← SKILL.md + SKILL_detail.md: file editing
+    file_manager/        ← SKILL.md: file create/move/delete
+    harness_doctor/      ← SKILL.md + SKILL_detail.md: structural CFP fix agent
+    harness_editor/      ← SKILL.md: harness config file editor (CLAUDE.md/AGENTS.md/SKILL.md)
+    identity/            ← SKILL.md: project identity / orientation (persona — no behavioral contract)
+    mece/                ← SKILL.md + SKILL_detail.md: MECE plan template + phase-checklist format
+    self_improve/        ← SKILL.md + SKILL_detail.md: R16 complaint handler + CFP logging
+    session_manager/     ← SKILL.md + SKILL_detail.md: session open/close + compact_state write
+    skeptical_reviewer/  ← SKILL.md: M4.5 plan scrutiny gate (haiku · read-only)
+    token_auditor/       ← SKILL.md: token budget audit
+    token_tracker/       ← SKILL.md: session/chat token tracking
+    variable_manager/    ← SKILL.md: symbol create/rename/delete
 ```
 
----
+> **SKILL_detail.md pattern:** Skills with >80L detail move overflow to `SKILL_detail.md` in the same dir.
+> SKILL.md stays ≤200L and ends with `@.agents/skills/<name>/SKILL_detail.md` reference.
+> 7 skills currently use this pattern: agent · ascii_flow · editor · harness_doctor · mece · self_improve · session_manager
 
-## Directory Reference
+### `.sessions/`
+Runtime session state. All files English-only.
 
-| Path | Purpose | Edit Rules |
-|---|---|---|
-| `src/app/` | Next.js app router pages + API routes | Free to edit; check roadmap first |
-| `src/app/api/` | Server-side API endpoints | Gate if changing response shape (other agents may depend) |
-| `src/components/` | Shared UI components | Free to edit |
-| `src/lib/` | Business logic, helpers, auth | Gate if renaming exported functions (check index_files backlinks) |
-| `src/hooks/` | React hooks | Free to edit |
-| `src/db/schema.ts` | **Drizzle schema — DB source of truth** | I2 Hard Stop always |
-| `src/db/index.ts` | DB connection + query helpers | I2 Hard Stop always |
-| `knowledge/` | Symbol + file indexes (read-only) | Never edit manually — regenerate via scripts |
-| `docs/` | Roadmap, specs, design docs | Free to edit |
-| `scripts/` | Build/indexing scripts | I1 gate if changing indexer logic |
-| `db_migrations/` | SQL migration files | I2 Hard Stop always |
+```
+.sessions/
+  active_thread.md      ← task / phase / next (B1 reads at boot)
+  mece_plan.md          ← Phase 0–3 checklist + section plan (written at M5)
+  session_handoff.md    ← cross-session resume context (skill + sections + resume_at)
+  compact_state.md      ← boot cache (dt/sk/sk_h/mece_h/p3) written before /compact
+  gather_complete.md    ← date + task written at [✓ gather] (PreToolUse hook checks)
+  self_improve_log.md   ← SI-N entries written by R16 self-improve events (C0 complaint handler)
+  session_tokens.md     ← SESSION_TOTAL / CHAT_TOTAL / CACHE_READ / CACHE_WRITE counters
+  chat_tokens.md        ← CHAT_TOTAL (resets only at /compact or new chat)
+  session_context_cache.md ← compact context snapshot written by Stop hook (write_context_cache.sh)
+  token_log.jsonl       ← per-turn telemetry log: 1 JSON line per Stop event (T-053)
+  cycle_N_<id>.json     ← sub-agent result files (written by each spawned agent)
+```
 
----
+### `knowledge/`
+Index files + error log + harness reference docs. Protected zone (I1 gate required for overwrite).
 
-## Key Dependency Rules
+```
+knowledge/
+  index_files.json           ← file path → exports + backlinks (grep only · never full-read)
+  index_variables.json       ← symbol → file + line + type + used_in (grep only)
+  index_sessions.json        ← session history + keywords (populated by session_indexer.py)
+  index_cfp_fix.json         ← CFP fix tracking keyed by CFP-XXX ID
+  topic_registry.json        ← closed tag list for topics[] in index_files.json (R8 index sync)
+  skill-index.md             ← skill descriptions index (one entry per skill)
+  error_index.md             ← ERR-XXX entries (grep → Read ≤40L only)
+  cfp_archive.md             ← archived CFP-001–CFP-004
+  harness-file-role-map.md   ← role map for all harness config files
+  harness_flow_20260525.md   ← ASCII flow diagram snapshot 2026-05-25
+  harness_flow_20260526.md   ← ASCII flow diagram snapshot 2026-05-26 (current)
+  cfp-proposals/
+    applied/                 ← CFP proposals already merged
+    pending/                 ← CFP proposals queued for review
+  recipes/
+    g0-interview-pattern.md  ← G0 task clarity interview pattern recipe
+    reviewer-spawn.md        ← Skeptical Reviewer spawn pattern recipe
+  research/                  ← dated research reference docs (read-only · not indexed)
+    9arm-skills-*.md         ← skill pattern research
+    agent-harness-skill-*.md ← harness skill spec research
+    claude-code-*.md         ← Claude Code behavior research
+    context-compression-*.md ← context compression strategy research
+```
 
-1. **Nothing outside `src/db/` may define DB schema.** Only `src/db/schema.ts` is authoritative.
-2. **`knowledge/` is generated, not authored.** Edit via `python scripts/symbol_indexer.py`.
-3. **API route response shape changes ripple to frontend.** Check `knowledge/index_files.json` backlinks before changing.
-4. **Drizzle types = DB columns.** Renaming a TypeScript interface field in `schema.ts` renames the DB column.
+### `docs/`
 
----
+```
+docs/
+  master_roadmap.md     ← T-N task ledger (grep -n or tail -30 · never full-read)
+  session_templates/    ← canonical templates for bootstrap_sessions.py
+    active_thread.md         ← template
+    chat_tokens.md           ← template
+    compact_state.md         ← template
+    gather_complete.md       ← template
+    mece_plan_schema.md      ← template (named _schema to avoid PreToolUse hook trigger)
+    self_improve_log.md      ← template
+    session_handoff.md       ← template
+    session_tokens.md        ← template
+```
 
-## Quick Lookup Commands
+### `scripts/`
+Python automation. Run after symbol/session changes (R8 index sync).
 
-```bash
-# What files use symbol X?
-grep -A 8 '"SymbolName"' knowledge/index_variables.json
+```
+scripts/
+  lookup.py               ← T0 index-first lookup (R5): python scripts/lookup.py "<keyword>" --json
+  symbol_indexer.py       ← regenerates index_variables.json + index_files.json
+  session_indexer.py      ← appends to index_sessions.json at session close
+  backlink_analyzer.py    ← refreshes related[] 3-tier links in index_files.json (run after R8)
+  bootstrap_sessions.py   ← initializes .sessions/ from docs/session_templates/ (--dry-run/--force)
+  session_compactor.py    ← pre-commit health gate: validates 8 .sessions/ files + required fields
+  token_estimator.py      ← estimates SESSION_TOTAL + CHAT_TOTAL for harness agents
+  choose_tools.py         ← keyword search across skill-manifest + tool-manifest
+```
 
-# What imports file F?
-grep -A 5 '"src/lib/foo.ts"' knowledge/index_files.json
+### `src/`
+Application source code. Currently empty — Next.js app will live here.
+Protected: I1 gate for delete/overwrite · I2 hard stop for src/db/ edits.
 
-# Current roadmap tasks
-grep -E "^\[.\]" docs/master_roadmap.md | tail -20
+### `Implement/`
+Human-readable implementation guides for bootstrapping the harness on a new project.
+
+```
+Implement/
+  00_index.md       ← guide index + reading order
+  01_overview.md    ← architecture overview
+  02_setup.md       ← step-by-step setup checklist
+  03_config.md      ← CLAUDE.md + AGENTS.md full config reference
+  04_skills.md      ← all SKILL.md specs
+  05_scripts.md     ← scripts spec
+  06_orchestrator.md ← orchestrator + MECE plan protocol
+  07_platform.md    ← platform adapter + session routing
+  08_checklist.md   ← verification checklist for implemented harness
 ```

@@ -5,7 +5,7 @@ export interface Env {
 }
 
 // Custom D1Database mock to direct local development queries to live Cloudflare D1 HTTP REST API
-class RemoteD1PreparedStatement implements D1PreparedStatement {
+class RemoteD1PreparedStatement {
   constructor(
     private client: RemoteD1Client,
     private sql: string,
@@ -13,7 +13,7 @@ class RemoteD1PreparedStatement implements D1PreparedStatement {
   ) {}
 
   bind(...params: any[]): D1PreparedStatement {
-    return new RemoteD1PreparedStatement(this.client, this.sql, params);
+    return new RemoteD1PreparedStatement(this.client, this.sql, params) as unknown as D1PreparedStatement;
   }
 
   async first<T = unknown>(colName?: string): Promise<T | null> {
@@ -24,7 +24,7 @@ class RemoteD1PreparedStatement implements D1PreparedStatement {
   }
 
   async run<T = unknown>(): Promise<D1Response> {
-    return this.client.executeMeta(this.sql, this.params);
+    return this.client.executeMeta(this.sql, this.params) as Promise<D1Response>;
   }
 
   async all<T = unknown>(): Promise<D1Result<T>> {
@@ -37,12 +37,12 @@ class RemoteD1PreparedStatement implements D1PreparedStatement {
         rows_read: 0,
         rows_written: 0,
         size_after: 0
-      }
+      } as any
     };
   }
 
   async raw<T = any[]>(): Promise<T[]> {
-    return this.client.executeQuery(this.sql, this.params, 'raw') as Promise<T[]>;
+    return this.client.executeQuery(this.sql, this.params, 'raw') as unknown as T[];
   }
 }
 
@@ -133,7 +133,7 @@ class RemoteD1Client {
   }
 }
 
-class RemoteD1Database implements D1Database {
+class RemoteD1Database {
   private client: RemoteD1Client;
 
   constructor(accountId: string, databaseId: string, apiToken: string) {
@@ -141,7 +141,7 @@ class RemoteD1Database implements D1Database {
   }
 
   prepare(query: string): D1PreparedStatement {
-    return new RemoteD1PreparedStatement(this.client, query);
+    return new RemoteD1PreparedStatement(this.client, query) as unknown as D1PreparedStatement;
   }
 
   async dump(): Promise<ArrayBuffer> {
@@ -167,8 +167,8 @@ class RemoteD1Database implements D1Database {
         rows_read: 0,
         rows_written: 0,
         size_after: 0
-      }
-    };
+      } as any
+    } as D1Result<T>;
   }
 }
 
@@ -180,7 +180,7 @@ export function getDb(env: Env) {
 
     if (accountId && databaseId && apiToken) {
       console.log('Using RemoteD1Database proxy connecting to D1 remote...');
-      return drizzle(new RemoteD1Database(accountId, databaseId, apiToken));
+      return drizzle(new RemoteD1Database(accountId, databaseId, apiToken) as unknown as D1Database);
     }
   }
 

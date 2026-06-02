@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = (url: string): Promise<any> => fetch(url).then(res => res.json());
 
 type PendingJob = {
   id: number;
@@ -21,7 +21,7 @@ export default function PMApprovalDashboard() {
   const [loading, setLoading] = useState(true);
   const [viewTab, setViewTab] = useState<"PENDING" | "HISTORY">("PENDING");
 
-  const { data: jobsResponse } = useSWR("/api/site/jobs", fetcher);
+  const { data: jobsResponse } = useSWR<{ success: boolean; data: PendingJob[] }>("/api/site/jobs", fetcher);
 
   useEffect(() => {
     if (jobsResponse?.success) {

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getUserPayload } from "@/lib/auth-check";
 import { hashPassword } from "@/lib/password";
 import { eq } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -22,7 +21,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Password must be at least 6 characters" }, { status: 400 });
     }
 
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
     const password_hash = await hashPassword(newPassword);

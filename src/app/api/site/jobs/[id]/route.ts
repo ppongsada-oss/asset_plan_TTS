@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { planning_jobs, planning_cycles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const jobId = parseInt(id);
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     
     const job = await db.select({
@@ -42,7 +41,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const jobId = parseInt(id);
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     
     const body = (await req.json()) as any;

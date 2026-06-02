@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getUserPayload } from "@/lib/auth-check";
 import { hashPassword } from "@/lib/password";
 import { eq } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -21,7 +20,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "Invalid user ID" }, { status: 400 });
     }
 
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const body = await request.json() as any;
 
@@ -68,7 +67,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ success: false, error: "Cannot delete your own account" }, { status: 400 });
     }
 
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
     await db.delete(users).where(eq(users.id, userId));

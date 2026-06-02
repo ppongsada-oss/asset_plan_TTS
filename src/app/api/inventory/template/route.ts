@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { utils, write } from "xlsx";
 
-export const runtime = "edge";
 
 export async function GET() {
   // Define columns matching the inventory upload logic

@@ -3,58 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Site Manual - คู่มือเจ้าหน้าที่ไซต์</title>
+    <title>คู่มือ Store Site — Asset Plan</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <nav class="nav">
-            <a href="index.html">หน้าแรก</a>
-            <a href="admin.html">Admin</a>
-            <a href="site.html" class="active">Store Site</a>
-            <a href="pm.html">PM</a>
-            <a href="center.html">Center</a>
-            <a href="reports.html">Reports</a>
-        </nav>
+<div class="container">
 
-        <header class="header">
-            <h1>คู่มือเจ้าหน้าที่พัสดุไซต์งาน (Store Site)</h1>
-            <p>ขั้นตอนการวางแผนและส่งแผนความต้องการพัสดุรายงวด</p>
-        </header>
+    <nav class="nav">
+        <a href="index.html">🏠 หน้าแรก</a>
+        <a href="admin.html">Admin</a>
+        <a href="site.html" class="active">Store Site</a>
+        <a href="pm.html">Project Manager</a>
+        <a href="center.html">Store Center</a>
+        <a href="reports.html">Reports</a>
+    </nav>
 
-        <section class="step">
-            <div class="step-number">1</div>
-            <div class="step-content">
-                <h3>เข้าสู่ใบงานแผนพัสดุ</h3>
-                <p>หลังจาก Login ด้วยสิทธิ์ Store Site ให้เลือกโครงการที่คุณรับผิดชอบ ระบบจะแสดงรายการ "งวดงาน (Cycle)" ที่กำลังเปิดให้วางแผน ให้คลิกเข้าสู่ใบงาน</p>
-                <img src="assets/site_dashboard.png" alt="Site Dashboard" class="screenshot">
-            </div>
-        </section>
+    <header class="header">
+        <h1>คู่มือเจ้าหน้าที่พัสดุไซต์งาน (Store Site)</h1>
+        <p>ขั้นตอนการวางแผนและส่งแผนความต้องการพัสดุรายงวด</p>
+    </header>
 
-        <section class="step">
-            <div class="step-number">2</div>
-            <div class="step-content">
-                <h3>บันทึกความต้องการและของคงเหลือ</h3>
-                <p>ในหน้าใบงาน (Worksheet) ให้ระบุจำนวนอุปกรณ์ที่ต้องการใช้ในแต่ละเดือน (Required Qty) และจำนวนของที่มีอยู่หน้างานจริง (Site Stock) เพื่อให้ระบบคำนวณความต้องการสุทธิ</p>
-                <img src="assets/site_worksheet.png" alt="Site Worksheet" class="screenshot">
-                <p class="text-muted"><i>หมายเหตุ: ระบบจะคำนวณยอดส่วนต่างอัตโนมัติว่าต้องขอเพิ่ม (+) หรือคืนของ (-)</i></p>
-            </div>
-        </section>
-
-        <section class="step">
-            <div class="step-number">3</div>
-            <div class="step-content">
-                <h3>ส่งแผนให้ผู้จัดการโครงการ (PM)</h3>
-                <p>เมื่อกรอกข้อมูลครบถ้วนแล้ว ให้กดปุ่ม "Submit to PM" เพื่อส่งแผนงานให้ PM ทำการตรวจสอบและอนุมัติ</p>
-                <img src="assets/site_submit_modal.png" alt="Submit Modal" class="screenshot">
-                <p class="text-muted"><i>คำเตือน: หลังจากส่งแผนแล้ว คุณจะไม่สามารถแก้ไขข้อมูลได้จนกว่า PM จะตีกลับ (Reject)</i></p>
-            </div>
-        </section>
-
-        <footer style="text-align: center; margin-top: 60px; color: var(--text-muted);">
-            <a href="index.html" class="btn">กลับหน้าหลัก</a>
-        </footer>
+    <div class="quick-summary">
+        <div class="qs-item">
+            <span class="qs-label">สิทธิ์ที่ใช้</span>
+            <span class="qs-value">STORE_SITE</span>
+        </div>
+        <div class="qs-item">
+            <span class="qs-label">เส้นทาง</span>
+            <span class="qs-value">เมนู → Site Plan</span>
+        </div>
+        <div class="qs-item">
+            <span class="qs-label">ขั้นตอนทั้งหมด</span>
+            <span class="qs-value">5 ขั้นตอน</span>
+        </div>
+        <div class="qs-item">
+            <span class="qs-label">ทำซ้ำ</span>
+            <span class="qs-value">ทุกรอบแผน</span>
+        </div>
     </div>
+
+    <!-- Step 1 -->
+    <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+            <h3>เข้าสู่หน้าใบงาน และเลือกโครงการ</h3>
+            <p>หลัง Login ไปที่เมนู <strong>Site Plan</strong> ระบบจะแสดงใบงานของทุกโครงการที่คุณมีสิทธิ์</p>
+
+            <p><strong>กรองตามโครงการ:</strong> กดปุ่มชื่อโครงการด้านบน หรือ "โครงการทั้งหมด" เพื่อดูทุกโครงการ</p>
+
+            <p><strong>อ่านสถานะใบงาน:</strong></p>
+            <table class="table-manual">
+                <thead><tr><th>Badge</th><th>ความหมาย</th><th>ทำอะไรได้</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge-blue">OPEN</span></td><td>รอบแผนเปิดอยู่</td><td>กรอกและส่งแผนได้</td></tr>
+                    <tr><td><span class="badge badge-amber">SUBMITTED</span></td><td>ส่งแผนให้ PM แล้ว</td><td>รอผล — แก้ไขไม่ได้</td></tr>
+                    <tr><td><span class="badge badge-green">APPROVED</span></td><td>PM อนุมัติแล้ว</td><td>ดูข้อมูลได้เท่านั้น</td></tr>
+                    <tr><td><span class="badge badge-gray">CLOSED</span></td><td>ปิดรอบแล้ว</td><td>ดูประวัติเท่านั้น</td></tr>
+                </tbody>
+            </table>
+
+            <p><strong>สัญลักษณ์นับถอยหลัง:</strong></p>
+            <table class="table-manual">
+                <thead><tr><th>สัญลักษณ์</th><th>ความหมาย</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="badge badge-red">เกินกำหนด X วัน</span></td><td>เลยกำหนดส่งแล้ว — ติดต่อ Store Center ขอ Unlock</td></tr>
+                    <tr><td><span class="badge badge-amber">ปิดรับวันนี้! ⚡</span></td><td>วันสุดท้าย — รีบส่งแผนทันที</td></tr>
+                    <tr><td><span class="badge badge-amber">เหลือ 1–3 วัน</span></td><td>ใกล้ครบกำหนด</td></tr>
+                    <tr><td><span class="badge badge-gray">เหลือ X วัน</span></td><td>ยังมีเวลา</td></tr>
+                </tbody>
+            </table>
+
+            <div class="warning-box">
+                <strong>🔒 ใบงานถูกล็อก</strong> หากเห็นไอคอนกุญแจ แสดงว่าแก้ไขไม่ได้ (Job APPROVED หรือเลยกำหนด) ปุ่มจะเปลี่ยนเป็น "ดูรายละเอียด" เท่านั้น — ต้องให้ Store Center กด Unlock ก่อน
+            </div>
+            <img src="assets/site_dashboard.png" alt="Site Dashboard" class="screenshot">
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+            <h3>เปิดใบงานและทำความเข้าใจตาราง</h3>
+            <p>คลิก <strong>"เริ่มวางแผน"</strong> ที่ใบงาน OPEN เพื่อเข้าหน้า Worksheet</p>
+
+            <p><strong>คอลัมน์ในตาราง:</strong></p>
+            <table class="table-manual">
+                <thead><tr><th>คอลัมน์</th><th>ความหมาย</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>รหัส / ชื่อรายการ</strong></td><td>รหัสและชื่อครุภัณฑ์ในระบบ</td></tr>
+                    <tr><td><strong>ยอดคลังกลาง</strong></td><td>สต็อกที่ Store Center มีอยู่ปัจจุบัน (ข้อมูลแบบ Real-time)</td></tr>
+                    <tr><td><strong>ยอดมีอยู่</strong></td><td>ของที่ <em>ไซต์นี้</em> มีอยู่แล้ว ณ ต้นรอบ</td></tr>
+                    <tr><td><strong>เดือน 1, 2, 3 ...</strong></td><td>ช่องกรอกจำนวนที่ต้องการในแต่ละเดือน</td></tr>
+                </tbody>
+            </table>
+
+            <div class="tip-box">
+                💡 <strong>ตัวเลขจาง ๆ</strong> ในช่องเดือนแรก คือจำนวนที่กรอกในรอบแผนที่แล้ว — ใช้เป็น reference เท่านั้น ไม่ใช่ค่าที่บันทึกไว้แล้ว
+            </div>
+            <img src="assets/site_worksheet.png" alt="Site Worksheet" class="screenshot">
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+            <h3>กรอกจำนวนที่ต้องการในแต่ละเดือน</h3>
+            <p>กรอกจำนวนครุภัณฑ์ที่ต้องการใช้ <strong>ในแต่ละเดือน</strong> ไม่ต้องกรอกทุกรายการ — กรอกเฉพาะที่ต้องการ</p>
+
+            <ol class="sub-steps">
+                <li>พิมพ์ตัวเลขในช่องเดือนแรกที่ต้องการ</li>
+                <li>กด <strong>Enter</strong> หรือคลิกออกจากช่อง</li>
+                <li>ระบบ <strong>คัดลอกค่าไปยังเดือนถัดไปอัตโนมัติ</strong> (เฉพาะช่องที่ว่างอยู่)</li>
+                <li>แก้ไขค่าแต่ละเดือนได้อิสระ</li>
+            </ol>
+
+            <p><strong>ระบบแสดงสัญลักษณ์ช่วย:</strong></p>
+            <ul class="manual-list">
+                <li><span class="badge badge-red">คืน X</span> — Badge เล็ก ๆ ใต้ช่องเดือน หมายความว่าเดือนนั้นจำนวนน้อยกว่าเดือนก่อน ระบบคำนวณว่าจะมีการคืนของ</li>
+                <li>ค่าจำนวนที่กรอกสูงกว่า "ยอดมีอยู่" → ระบบรู้ว่าต้องการ <em>เพิ่ม</em></li>
+                <li>ค่าจำนวนที่กรอกต่ำกว่า "ยอดมีอยู่" → ระบบรู้ว่าจะมีการ <em>คืนของ</em></li>
+            </ul>
+
+            <div class="tip-box">
+                💡 <strong>ค้นหาครุภัณฑ์:</strong> พิมพ์รหัสหรือชื่อในช่องค้นหาด้านบน | <strong>Sort:</strong> คลิก header คอลัมน์เพื่อเรียงลำดับ
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+            <h3>บันทึกหรือส่งแผน</h3>
+            <p>มี 2 ตัวเลือก:</p>
+            <table class="table-manual">
+                <thead><tr><th>ปุ่ม</th><th>สถานะที่เปลี่ยน</th><th>ผลที่เกิดขึ้น</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>"บันทึกฉบับร่าง"</strong></td>
+                        <td>ยังคง OPEN</td>
+                        <td>บันทึกโดยไม่ส่ง — กลับมาแก้ไขได้ภายหลัง</td>
+                    </tr>
+                    <tr>
+                        <td><strong>"ส่งแผน"</strong></td>
+                        <td>OPEN → <span class="badge badge-amber">SUBMITTED</span></td>
+                        <td>บันทึก + ส่งให้ PM ตรวจสอบทันที</td>
+                    </tr>
+                </tbody>
+            </table>
+            <img src="assets/site_submit_modal.png" alt="Submit Modal" class="screenshot">
+
+            <div class="danger-box">
+                ⚠️ <strong>หลังกด "ส่งแผน"</strong> ตารางจะ <strong>ถูกล็อกทันที</strong> — แก้ไขไม่ได้จนกว่า PM จะตีกลับ หรือ Store Center จะ Unlock
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+        <div class="step-number">5</div>
+        <div class="step-content">
+            <h3>ติดตามสถานะหลังส่งแผน</h3>
+            <p>กลับมาดูหน้า Site Plan เพื่อติดตามผล:</p>
+
+            <table class="table-manual">
+                <thead><tr><th>สถานะ</th><th>ความหมาย</th><th>สิ่งที่ต้องทำ</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge-amber">SUBMITTED</span></td>
+                        <td>PM กำลังตรวจสอบ</td>
+                        <td>รอผล — ไม่ต้องทำอะไร</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-blue">OPEN</span> (หลัง Submit)</td>
+                        <td>PM ตีกลับ มีเหตุผลใหม่</td>
+                        <td>อ่านเหตุผลที่ PM ส่งมา → แก้ไข → ส่งใหม่</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-green">APPROVED</span></td>
+                        <td>PM อนุมัติแล้ว ส่งให้คลังกลาง</td>
+                        <td>ไม่ต้องทำอะไร งานส่งต่อให้ Store Center แล้ว</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                📌 <strong>ต้องการแก้ไขหลัง Submit?</strong> ติดต่อ PM ขอให้ตีกลับ หรือติดต่อ Store Center ขอ Unlock — จะได้แก้ไขและส่งใหม่ได้
+            </div>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <a href="index.html" class="btn btn-outline" style="margin-right: 10px;">← หน้าแรก</a>
+        <a href="pm.html" class="btn">ขั้นตอน PM →</a>
+        <p style="margin-top: 16px;">&copy; 2026 Asset Plan System | TTS Construction</p>
+    </div>
+
+</div>
 </body>
 </html>

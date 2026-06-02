@@ -4,7 +4,7 @@ import { Plus, Search, Download, UploadCloud, Loader2, Layers, ChevronDown, Chev
 import { useState, useEffect, useRef } from "react";
 import useSWR, { mutate } from "swr";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string): Promise<any> => fetch(url).then((res) => res.json());
 import EquipmentListTable from "./EquipmentListTable";
 import * as XLSX from "xlsx";
 
@@ -276,7 +276,7 @@ export default function EquipmentTable() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "category", code: previewCatCode, name: previewCatName }),
       });
-      const json = await res.json();
+      const json = await res.json() as any;
       if (json.success) {
         setShowAddCatModal(false);
         setPreviewCatName("");
@@ -308,7 +308,7 @@ export default function EquipmentTable() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "sub_category", code: previewSubCatCode, name: previewSubCatName, category_code: previewSubCatParent }),
       });
-      const json = await res.json();
+      const json = await res.json() as any;
       if (json.success) {
         setShowAddSubCatModal(false);
         setPreviewSubCatName("");

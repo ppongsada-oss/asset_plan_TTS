@@ -26,7 +26,7 @@ export function Navbar() {
           if (!res.ok) throw new Error("Unauthorized");
           return res.json();
         })
-        .then((data) => {
+        .then((data: any) => {
           if (data.success && data.user) {
             setUser(data.user);
           }
@@ -43,8 +43,8 @@ export function Navbar() {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node | null)) {
         setDropdownOpen(false);
       }
     };

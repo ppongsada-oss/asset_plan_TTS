@@ -5,7 +5,7 @@ import { UserPlus, Shield, Trash2, ArrowLeft, Search, Check, X } from "lucide-re
 import Link from "next/link";
 import useSWR, { mutate } from "swr";
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = (url: string): Promise<any> => fetch(url).then(res => res.json());
 
 type User = { id: number; email: string; global_role: string };
 type ProjectRole = { id: number; project_id: string; role: string; user_id: number; email: string };
@@ -20,9 +20,9 @@ export default function ProjectRolesPage() {
   const [projectSearch, setProjectSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: usersRes } = useSWR("/api/users", fetcher);
-  const { data: rolesRes } = useSWR("/api/projects/roles", fetcher);
-  const { data: projectsRes } = useSWR("/api/projects", fetcher);
+  const { data: usersRes } = useSWR<{ success: boolean; data: User[] }>("/api/users", fetcher);
+  const { data: rolesRes } = useSWR<{ success: boolean; data: ProjectRole[] }>("/api/projects/roles", fetcher);
+  const { data: projectsRes } = useSWR<{ success: boolean; data: any[] }>("/api/projects", fetcher);
 
   useEffect(() => {
     if (usersRes?.success) setUsers(usersRes.data);

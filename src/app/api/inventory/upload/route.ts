@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { equipment_items, projects, project_inventory } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { read, utils } from "xlsx";
 import { eq, inArray } from "drizzle-orm";
 import { invalidateCache } from "@/lib/cache";
 
-export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
     const { searchParams } = new URL(request.url);

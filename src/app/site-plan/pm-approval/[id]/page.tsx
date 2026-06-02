@@ -2,18 +2,17 @@ import PMReviewTable from "@/components/site-plan/PMReviewTable";
 import { UserCheck, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getDb } from "@/db";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { planning_jobs, planning_cycles, projects } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
-export const runtime = "edge";
 
 export default async function PMReviewDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const jobId = parseInt(id);
 
-  const env = getRequestContext().env;
+  const env = getCloudflareContext().env;
   const db = getDb(env as any);
   
   const jobRows = await db.select({

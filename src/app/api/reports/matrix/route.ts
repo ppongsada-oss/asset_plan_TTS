@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { equipment_items, project_inventory, project_plans, projects, planning_cycles, planning_jobs, center_decisions } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq, and, inArray, desc } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const kv = (env as any).CACHE_KV;
 
@@ -93,12 +92,14 @@ export async function GET(request: NextRequest) {
       : [];
 
     // Get list of projects that are APPROVED for this cycle
-    const approvedJobs = await db.select({ project_id: planning_jobs.project_id })
-      .from(planning_jobs)
-      .where(and(
-        eq(planning_jobs.cycle_id, activeCycleId),
-        inArray(planning_jobs.status, ["APPROVED", "CLOSED"])
-      ));
+    const approvedJobs = activeCycleId
+      ? await db.select({ project_id: planning_jobs.project_id })
+          .from(planning_jobs)
+          .where(and(
+            eq(planning_jobs.cycle_id, activeCycleId),
+            inArray(planning_jobs.status, ["APPROVED", "CLOSED"])
+          ))
+      : [];
     const approvedProjectIds = new Set(approvedJobs.map(j => j.project_id));
 
     const matrixMap: Record<number, any> = {};
@@ -200,15 +201,25 @@ export async function GET(request: NextRequest) {
 
       // Only count towards summary metrics if approved
       if (approvedProjectIds.has(projId)) {
-        row.totalDemand += peakPlan;
-        if (peakPlan > 0) {
+        const netDemand = Math.max(0, peakPlan - currentInv);
+        const excess = currentInv > peakPlan ? currentInv - peakPlan : 0;
+        
+        row.totalDemand += netDemand;
+        
+        if (peakPlan > 0 || currentInv > 0) {
           const breakdown: Record<string, number> = {};
           pPlans.forEach(p => breakdown[p.month] = p.required_qty);
-          row.details.demands.push({ project: projId, qty: peakPlan, breakdown });
+          row.details.demands.push({ 
+            project: projId, 
+            qty: netDemand, 
+            grossRequired: peakPlan,
+            expectedReturn: excess,
+            initialInventory: currentInv,
+            breakdown 
+          });
         }
 
         if (currentInv > peakPlan) {
-          const excess = currentInv - peakPlan;
           row.totalReturns += excess;
           row.details.returns.push({ project: projId, qty: excess });
         }

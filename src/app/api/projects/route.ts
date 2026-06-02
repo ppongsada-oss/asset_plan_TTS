@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { projects } from "@/db/schema";
 
-export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     
     const allProjects = await db.select().from(projects);

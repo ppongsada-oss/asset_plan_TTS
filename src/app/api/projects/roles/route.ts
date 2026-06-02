@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { project_roles, users } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getUserPayload } from "@/lib/auth-check";
 import { eq, and } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +13,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
     }
 
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
     // Fetch all project roles with user info
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
     }
 
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const { user_id, project_id, role } = await request.json() as any;
 
@@ -83,7 +82,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
     }
 
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const url = new URL(request.url);
     const idStr = url.searchParams.get("id");

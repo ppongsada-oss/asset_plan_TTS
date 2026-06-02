@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20260430.1",
+    "@opennextjs/cloudflare": "^1.19.11",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",

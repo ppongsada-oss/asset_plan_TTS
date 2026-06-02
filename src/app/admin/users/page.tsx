@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, X, AlertCircle } from "lucide-react";
 import useSWR, { mutate } from "swr";
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = (url: string): Promise<any> => fetch(url).then(res => res.json());
 
 type User = {
   id: number;
@@ -23,7 +23,7 @@ export default function UsersManagementPage() {
   const [formData, setFormData] = useState({ email: "", password: "", global_role: "USER" });
   const [saving, setSaving] = useState(false);
 
-  const { data: usersResponse } = useSWR("/api/users", fetcher);
+  const { data: usersResponse } = useSWR<{ success: boolean; data: User[]; error?: string }>("/api/users", fetcher);
 
   useEffect(() => {
     if (usersResponse?.success) {
@@ -77,7 +77,7 @@ export default function UsersManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      const data = await res.json();
+      const data = await res.json() as any;
 
       if (data.success) {
         handleCloseModal();
@@ -97,7 +97,7 @@ export default function UsersManagementPage() {
 
     try {
       const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
-      const data = await res.json();
+      const data = await res.json() as any;
       if (data.success) {
         fetchUsers();
       } else {

@@ -59,8 +59,8 @@ export default function JobManagement() {
         fetch("/api/center/cycles"),
         fetch("/api/projects")
       ]);
-      const cycleJson = await cycleRes.json();
-      const projJson = await projRes.json();
+      const cycleJson = await cycleRes.json() as any;
+      const projJson = await projRes.json() as any;
       if (cycleJson.success) setCycles(cycleJson.data);
       if (projJson.success) setProjects(projJson.data);
     } catch (e) {
@@ -127,7 +127,7 @@ export default function JobManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      const json = await res.json();
+      const json = await res.json() as any;
       
       if (json.success) {
         setIsModalOpen(false);
@@ -181,7 +181,7 @@ export default function JobManagement() {
       const res = await fetch(`/api/center/cycles/${cycleId}`, {
         method: "DELETE",
       });
-      const json = await res.json();
+      const json = await res.json() as any;
       if (json.success) {
         fetchData();
       } else {
@@ -204,7 +204,7 @@ export default function JobManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_unlocked: newState }),
       });
-      const json = await res.json();
+      const json = await res.json() as any;
       if (json.success) {
         fetchData();
       } else {

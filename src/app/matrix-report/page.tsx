@@ -5,7 +5,7 @@ import { Filter, Loader2, Table, ChevronDown, CheckCircle2, Info, ArrowUpDown, C
 import * as XLSX from "xlsx";
 import useSWR from "swr";
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = (url: string): Promise<any> => fetch(url).then(res => res.json());
 
 export default function MatrixReport() {
   const [data, setData] = useState<any[]>([]);
@@ -33,7 +33,15 @@ export default function MatrixReport() {
     return url;
   };
 
-  const { data: matrixResponse } = useSWR(getMatrixUrl(), fetcher);
+  const { data: matrixResponse } = useSWR<{
+    success: boolean;
+    matrix: any[];
+    projects: { sites: string[]; warehouses: string[] };
+    projectMapping: any[];
+    cycles: any[];
+    activeCycleId?: number;
+    activeMonths?: string[];
+  }>(getMatrixUrl(), fetcher);
 
   useEffect(() => {
     if (matrixResponse?.success) {
@@ -153,6 +161,7 @@ export default function MatrixReport() {
         'ซื้อ': row.actions.buy,
         'เช่า': row.actions.rent,
         'ค้างส่ง (D)': row.pendingDemand,
+        'ส่งคืนได้ (S)': row.totalReturns,
         'รับคืนแล้ว': row.actions.receive,
         'ปฏิเสธการคืน': row.actions.reject,
         'ค้างรับ (R)': row.pendingReceipt,
@@ -249,6 +258,11 @@ export default function MatrixReport() {
                     <span className={`font-semibold ${isHandled ? 'text-slate-500' : 'text-slate-100'}`}>
                       {projectMap[item.project] || item.project}
                     </span>
+                    {item.grossRequired !== undefined && item.expectedReturn !== undefined && (
+                      <div className={`text-[9px] mt-1 font-medium bg-white/5 px-2 py-0.5 rounded border border-white/5 ${isHandled ? 'text-slate-400 border-white/5' : 'text-indigo-300'}`}>
+                        ความต้องการ: {item.grossRequired} | ยอดต้องคืน: {item.expectedReturn} | สุทธิ: {item.qty}
+                      </div>
+                    )}
                     {item.breakdown && Object.keys(item.breakdown).length > 0 && (
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5 text-[9px]">
                         {Object.entries(item.breakdown).map(([m, q]: [string, any]) => {
@@ -278,7 +292,7 @@ export default function MatrixReport() {
     );
   };
 
-  const totalCols = (projects.sites.length || 0) + (projects.warehouses.length || 0) + 12;
+  const totalCols = (projects.sites.length || 0) + (projects.warehouses.length || 0) + 13;
 
   return (
     <div className="py-6 px-[5%] w-full h-[100vh] flex flex-col overflow-hidden bg-slate-50/30">
@@ -452,7 +466,7 @@ export default function MatrixReport() {
                     <div className="flex items-center">{getSortIcon('pending')} <span className="text-[9px] font-medium opacity-70">(Pending)</span></div>
                   </div>
                 </th>
-                <th colSpan={2} className="px-4 py-3 h-[40px] font-black text-center border-r border-slate-200 bg-emerald-50/50 text-[10px] uppercase tracking-[0.2em] text-emerald-700 border-t-4 border-emerald-600 sticky top-0 z-[50]">
+                <th colSpan={3} className="px-4 py-3 h-[40px] font-black text-center border-r border-slate-200 bg-emerald-50/50 text-[10px] uppercase tracking-[0.2em] text-emerald-700 border-t-4 border-emerald-600 sticky top-0 z-[50]">
                   การรับคืน (Return)
                 </th>
                 <th rowSpan={2} 
@@ -509,14 +523,17 @@ export default function MatrixReport() {
                 </th>
 
 
-                <th onClick={() => requestSort('rent')} className="px-2 py-3 font-bold text-center border-r border-slate-200 text-amber-600 text-[10px] cursor-pointer hover:bg-amber-100/50 min-w-[80px]">
+                <th onClick={() => requestSort('rent')} className="px-2 py-3 font-bold text-center border-r border-b border-slate-200 text-amber-600 text-[10px] cursor-pointer hover:bg-amber-100/50 min-w-[80px] sticky top-[40px] z-[40] bg-slate-50">
                   <div className="flex items-center justify-center">เช่า {getSortIcon('rent')}</div>
                 </th>
                 
-                <th onClick={() => requestSort('receive')} className="px-2 py-3 font-bold text-center border-r border-b border-slate-200 text-emerald-700 bg-emerald-50/50 text-[10px] cursor-pointer hover:bg-emerald-100 min-w-[80px]">
+                <th onClick={() => requestSort('returns')} className="px-2 py-3 font-bold text-center border-r border-b border-slate-200 text-indigo-700 bg-indigo-50/50 text-[10px] cursor-pointer hover:bg-indigo-100 min-w-[80px] sticky top-[40px] z-[40] bg-indigo-50/50">
+                  <div className="flex items-center justify-center">ส่งคืนได้ (S) {getSortIcon('returns')}</div>
+                </th>
+                <th onClick={() => requestSort('receive')} className="px-2 py-3 font-bold text-center border-r border-b border-slate-200 text-emerald-700 bg-emerald-50/50 text-[10px] cursor-pointer hover:bg-emerald-100 min-w-[80px] sticky top-[40px] z-[40] bg-emerald-50/50">
                   <div className="flex items-center justify-center">ยอดคืน {getSortIcon('receive')}</div>
                 </th>
-                <th onClick={() => requestSort('reject')} className="px-2 py-3 font-bold text-center border-r border-b border-slate-200 text-rose-700 bg-rose-50/50 text-[10px] cursor-pointer hover:bg-rose-100 min-w-[80px]">
+                <th onClick={() => requestSort('reject')} className="px-2 py-3 font-bold text-center border-r border-b border-slate-200 text-rose-700 bg-rose-50/50 text-[10px] cursor-pointer hover:bg-rose-100 min-w-[80px] sticky top-[40px] z-[40] bg-rose-50/50">
                   <div className="flex items-center justify-center">ปฏิเสธ {getSortIcon('reject')}</div>
                 </th>
               </tr>
@@ -588,6 +605,12 @@ export default function MatrixReport() {
                   <td className={`px-2 py-3 text-center border-r border-slate-100 font-bold text-[12px] ${row.pendingDemand > 0 ? 'text-rose-600 bg-rose-50/30' : (row.totalDemand > 0 ? 'text-emerald-600' : 'text-slate-200')} relative group/cell hover:z-50`}>
                     {row.pendingDemand > 0 ? `+${row.pendingDemand}` : (row.totalDemand > 0 ? '0' : '-')}
                     <BreakdownTooltip items={row.details.pendingDemands} title="รายละเอียดค้างส่ง (Site Demand)" />
+                  </td>
+
+                  {/* ส่งคืนได้ (S) */}
+                  <td className={`px-2 py-3 text-center border-r border-slate-100 font-bold text-[12px] ${row.totalReturns > 0 ? 'text-indigo-600 bg-indigo-50/30' : 'text-slate-200'} relative group/cell hover:z-50`}>
+                    {row.totalReturns > 0 ? row.totalReturns : '-'}
+                    <BreakdownTooltip items={row.details.returns} title="รายละเอียดส่งคืนได้ (Site Supply)" side="left" />
                   </td>
 
                   {/* Return Actions */}

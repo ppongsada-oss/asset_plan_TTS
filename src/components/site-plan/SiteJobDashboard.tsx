@@ -37,7 +37,7 @@ export default function SiteJobDashboard({ initialProjectId, accessibleProjects 
       let data;
       const contentType = res.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
+        data = await res.json() as any;
       } else {
         const text = await res.text();
         console.error("API non-JSON response:", text.substring(0, 500));

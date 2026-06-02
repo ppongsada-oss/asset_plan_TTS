@@ -7,7 +7,7 @@ import ConfirmModal from "@/components/ui/ConfirmModal";
 import useSWR from "swr";
 import * as XLSX from "xlsx";
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
+const fetcher = (url: string): Promise<any> => fetch(url).then(res => res.json());
 
 type RequestItem = {
   id: number | string;
@@ -315,8 +315,8 @@ export default function CenterDashboard() {
         fetch(`/api/center/requests?${commonParams.toString()}&type=RETURN`)
       ]);
 
-      const dataDemand = await resDemand.json();
-      const dataReturn = await resReturn.json();
+      const dataDemand = await resDemand.json() as any;
+      const dataReturn = await resReturn.json() as any;
 
       if (!dataDemand.success || !dataReturn.success) {
         alert("Failed to fetch data for export");
@@ -411,7 +411,7 @@ export default function CenterDashboard() {
           <div>
             <h3 className="font-bold text-rose-800 mb-2">แจ้งเตือน: สต็อกคลังกลางไม่เพียงพอต่อ Demand</h3>
             <ul className="space-y-1.5">
-              {alerts.map(a => (
+              {alerts.map((a: any) => (
                 <li key={a.id} className="text-sm text-rose-700 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
                   <strong>{a.code} {a.name}</strong>: ต้องการทั้งหมด {a.demand} ชิ้น แต่คลังมี {a.stock} ชิ้น 
@@ -658,6 +658,14 @@ export default function CenterDashboard() {
                 <td className={`px-2 py-4 text-center font-bold ${req.fulfilled_qty >= req.qty ? 'text-slate-300' : req.type === 'DEMAND' ? 'text-rose-600' : 'text-emerald-600'}`}>
                   <div className="flex flex-col items-center">
                     <span className="text-base">+{req.qty}</span>
+                    {req.required_qty !== undefined && req.current_inventory !== undefined && (
+                      <span className="text-[10px] text-slate-400 font-normal mt-0.5 whitespace-nowrap">
+                        {req.type === 'DEMAND' 
+                          ? `(ต้องการ: ${req.required_qty} | สต็อกเดิม: ${req.current_inventory})`
+                          : `(สต็อกเดิม: ${req.current_inventory} | ต้องการ: ${req.required_qty})`
+                        }
+                      </span>
+                    )}
                     {req.fulfilled_qty > 0 && (
                       <div className="mt-1 w-full max-w-[60px]">
                         <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
@@ -721,7 +729,7 @@ export default function CenterDashboard() {
                   <div className="flex flex-col gap-1 items-center">
                     {req.fulfilled_qty > 0 ? (
                       <>
-                        {req.decisions?.map((d, idx) => {
+                        {req.decisions?.map((d: any, idx: number) => {
                           const info = getActionInfo(d.action_type);
                           return (
                             <div 

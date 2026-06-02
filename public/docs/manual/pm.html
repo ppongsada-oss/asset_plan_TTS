@@ -3,57 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PM Manual - คู่มือผู้จัดการโครงการ</title>
+    <title>คู่มือ Project Manager — Asset Plan</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <nav class="nav">
-            <a href="index.html">หน้าแรก</a>
-            <a href="admin.html">Admin</a>
-            <a href="site.html">Store Site</a>
-            <a href="pm.html" class="active">PM</a>
-            <a href="center.html">Center</a>
-            <a href="reports.html">Reports</a>
-        </nav>
+<div class="container">
 
-        <header class="header">
-            <h1>คู่มือผู้จัดการโครงการ (Project Manager)</h1>
-            <p>ขั้นตอนการตรวจสอบ แก้ไข และอนุมัติแผนงานจากหน้างาน</p>
-        </header>
+    <nav class="nav">
+        <a href="index.html">🏠 หน้าแรก</a>
+        <a href="admin.html">Admin</a>
+        <a href="site.html">Store Site</a>
+        <a href="pm.html" class="active">Project Manager</a>
+        <a href="center.html">Store Center</a>
+        <a href="reports.html">Reports</a>
+    </nav>
 
-        <section class="step">
-            <div class="step-number">1</div>
-            <div class="step-content">
-                <h3>ตรวจสอบแผนงานที่ส่งมา (Review)</h3>
-                <p>ในหน้า PM Approval คุณจะเห็นรายการโครงการที่ Store Site ส่งมาให้ตรวจสอบ ให้คลิกปุ่ม Review เพื่อดูรายละเอียดพัสดุรายตัว</p>
-                <img src="assets/pm_review.png" alt="PM Review" class="screenshot">
-                <p class="text-muted"><i>PM สามารถแก้ไขตัวเลขได้โดยตรงในหน้านี้ หากเห็นว่าจำนวนที่ขอมาไม่เหมาะสม</i></p>
-            </div>
-        </section>
+    <header class="header">
+        <h1>คู่มือผู้จัดการโครงการ (Project Manager)</h1>
+        <p>การตรวจสอบ แก้ไข และอนุมัติแผนความต้องการพัสดุจากหน้างาน</p>
+    </header>
 
-        <section class="step">
-            <div class="step-number">2</div>
-            <div class="step-content">
-                <h3>อนุมัติแผนงาน (Approve)</h3>
-                <p>หากตรวจสอบข้อมูลแล้วถูกต้อง ให้กดปุ่ม "Approve" เพื่อยืนยันแผนงาน แผนจะถูกส่งต่อไปยังศูนย์พัสดุกลาง (Store Center) ทันที</p>
-                <img src="assets/pm_approve_modal.png" alt="Approve Modal" class="screenshot">
-            </div>
-        </section>
-
-        <section class="step">
-            <div class="step-number">3</div>
-            <div class="step-content">
-                <h3>การตีกลับแผน (Reject)</h3>
-                <p>หากต้องการให้หน้างานแก้ไขแผนงานใหม่ ให้กดปุ่ม "Reject" พร้อมระบุเหตุผล เพื่อให้ Store Site นำไปปรับปรุงและส่งกลับมาใหม่</p>
-                <img src="assets/pm_reject_modal.png" alt="Reject Modal" class="screenshot">
-            </div>
-        </section>
-
-        <footer style="text-align: center; margin-top: 60px; color: var(--text-muted);">
-            <a href="index.html" class="btn">กลับหน้าหลัก</a>
-        </footer>
+    <div class="quick-summary">
+        <div class="qs-item">
+            <span class="qs-label">สิทธิ์ที่ใช้</span>
+            <span class="qs-value">PROJECT_MANAGER</span>
+        </div>
+        <div class="qs-item">
+            <span class="qs-label">เส้นทาง</span>
+            <span class="qs-value">เมนู → PM Approval</span>
+        </div>
+        <div class="qs-item">
+            <span class="qs-label">เริ่มทำงาน</span>
+            <span class="qs-value">หลังไซต์ Submit แผน</span>
+        </div>
     </div>
+
+    <!-- Step 1 -->
+    <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+            <h3>เปิดหน้า PM Approval Hub</h3>
+            <p>ไปที่เมนู <strong>PM Approval</strong> จะเห็น 2 แท็บ:</p>
+
+            <table class="table-manual">
+                <thead><tr><th>แท็บ</th><th>เนื้อหา</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>"รออนุมัติ"</strong></td>
+                        <td>ใบงานที่ไซต์ส่งมาและรอการตัดสินใจ (สถานะ <span class="badge badge-amber">SUBMITTED</span>)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>"ประวัติ"</strong></td>
+                        <td>ใบงานที่ดำเนินการแล้ว (APPROVED / REJECTED / CLOSED) — ดูได้แต่แก้ไขไม่ได้</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>คลิกใบงานที่ต้องการ → เข้าหน้าตรวจสอบรายละเอียด</p>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+            <h3>อ่านแถบสรุปด้านบน</h3>
+            <p>ด้านบนของหน้าตรวจสอบแสดงตัวเลขสรุปทั้งรอบ:</p>
+            <ul class="manual-list">
+                <li><strong>ยอดสั่งเพิ่มรวม</strong> — รวมทุก Equipment ที่ต้องการเพิ่มกว่าที่มีอยู่</li>
+                <li><strong>ยอดคืนของรวม</strong> — รวมทุก Equipment ที่จะส่งคืนในรอบนี้</li>
+            </ul>
+
+            <div class="tip-box">
+                💡 ใช้ตัวเลขสรุปนี้ประเมินภาพรวม ก่อนลงรายละเอียดในตาราง
+            </div>
+
+            <img src="assets/pm_review.png" alt="PM Review" class="screenshot">
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+            <h3>ตรวจสอบตารางแผน — กรองตาม Mode</h3>
+            <p>กรอง Mode เพื่อดูเฉพาะรายการที่เกี่ยวข้อง:</p>
+
+            <table class="table-manual">
+                <thead><tr><th>Mode</th><th>แสดงรายการ</th><th>ใช้เมื่อ</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>ALL</strong></td><td>ทุกรายการ</td><td>ดูภาพรวมทั้งหมด</td></tr>
+                    <tr><td><strong>DEMAND</strong></td><td>รายการที่ขอเพิ่มกว่าที่ไซต์มีอยู่</td><td>ตรวจสอบความต้องการใหม่</td></tr>
+                    <tr><td><strong>RETURN</strong></td><td>รายการที่จะส่งคืนเพราะมีเกิน</td><td>ตรวจสอบของที่จะคืน</td></tr>
+                    <tr><td><strong>CHANGED</strong></td><td>รายการที่คุณแก้ไขตัวเลขแล้ว</td><td>ทบทวนการแก้ไขก่อนอนุมัติ</td></tr>
+                </tbody>
+            </table>
+
+            <p>Sort ตารางได้โดยคลิก header: ชื่อรายการ, แต่ละคอลัมน์เดือน</p>
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+            <h3>แก้ไขตัวเลขก่อนอนุมัติ (ถ้าจำเป็น)</h3>
+            <p>PM สามารถแก้ไขจำนวนในตารางได้โดยตรง เฉพาะเมื่อ Job เป็น <span class="badge badge-amber">SUBMITTED</span></p>
+
+            <ol class="sub-steps">
+                <li>คลิกที่ช่องตัวเลขที่ต้องการแก้ไข</li>
+                <li>พิมพ์จำนวนใหม่</li>
+                <li>กด <strong>"บันทึกการแก้ไข"</strong> → ระบบบันทึก log ทุก cell ที่เปลี่ยน</li>
+            </ol>
+
+            <div class="info-box">
+                📋 การแก้ไขทุกครั้งถูกบันทึก log ไว้ในระบบ — ดูได้ด้วยการกรอง Mode: <strong>CHANGED</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+        <div class="step-number">5</div>
+        <div class="step-content">
+            <h3>ตัดสินใจ — อนุมัติ หรือ ตีกลับ</h3>
+
+            <table class="table-manual">
+                <thead><tr><th>ปุ่ม</th><th>สถานะที่เปลี่ยน</th><th>ผลที่เกิดขึ้น</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>"อนุมัติ"</strong></td>
+                        <td>SUBMITTED → <span class="badge badge-green">APPROVED</span></td>
+                        <td>บันทึกการแก้ไขอัตโนมัติ → ส่งข้อมูลให้ Store Center ทันที</td>
+                    </tr>
+                    <tr>
+                        <td><strong>"ตีกลับ"</strong></td>
+                        <td>SUBMITTED → <span class="badge badge-blue">OPEN</span></td>
+                        <td>ต้องกรอกเหตุผล → ส่งกลับให้ไซต์แก้ไขใหม่</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="warning-box">
+                <strong>ก่อนกดอนุมัติ:</strong> ตรวจสอบ Mode CHANGED ว่าแก้ไขถูกต้องแล้วหรือไม่ — เมื่ออนุมัติแล้วข้อมูลส่งต่อ Store Center ทันที ไม่สามารถ Undo ได้โดยง่าย
+            </div>
+
+            <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+                <img src="assets/pm_approve_modal.png" alt="Approve Modal" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                <img src="assets/pm_reject_modal.png" alt="Reject Modal" style="width:48%;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            </div>
+        </div>
+    </div>
+
+    <div class="page-footer">
+        <a href="site.html" class="btn btn-outline" style="margin-right: 10px;">← Store Site</a>
+        <a href="center.html" class="btn">Store Center →</a>
+        <p style="margin-top: 16px;">&copy; 2026 Asset Plan System | TTS Construction</p>
+    </div>
+
+</div>
 </body>
 </html>

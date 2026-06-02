@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { planning_jobs, planning_cycles, projects } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { getUserPayload } from "@/lib/auth-check";
 
-export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   try {
-    const context = getRequestContext();
+    const context = getCloudflareContext();
     if (!context || !context.env) {
       console.error("API Error: Cloudflare environment not found");
       return NextResponse.json({ success: false, error: "Environment configuration error" }, { status: 500 });

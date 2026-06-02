@@ -26,7 +26,7 @@ export default function LoginForm() {
       let data;
       const contentType = res.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
+        data = await res.json() as any;
       } else {
         throw new Error("ระบบตอบกลับผิดพลาด (Non-JSON)");
       }

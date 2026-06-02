@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { center_decisions, project_plans, equipment_items, planning_jobs } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import { invalidateCache } from "@/lib/cache";
 
-export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const body = (await request.json()) as any;
     
@@ -62,6 +61,7 @@ export async function POST(request: NextRequest) {
           const newJob = await db.insert(planning_jobs).values({
             project_id: projId,
             cycle_id: cycleId,
+            job_number: `PJ-${projId}-${cycleId}`,
             status: "APPROVED"
           }).returning({ id: planning_jobs.id });
           if (newJob.length > 0) {
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

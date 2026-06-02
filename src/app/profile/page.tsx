@@ -16,7 +16,7 @@ export default function ProfilePage() {
   useEffect(() => {
     fetch("/api/auth/me")
       .then(res => res.json())
-      .then(data => {
+      .then((data: any) => {
         if (data.success && data.user) {
           setEmail(data.user.email);
           setRole(data.user.role);
@@ -45,7 +45,7 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newPassword: password })
       });
-      const data = await res.json();
+      const data = await res.json() as any;
       
       if (data.success) {
         setSuccess(true);

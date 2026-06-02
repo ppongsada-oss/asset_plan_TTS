@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { planning_jobs, planning_cycles, project_plans, planning_logs, center_decisions } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 
-export const runtime = "edge";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const cycleId = parseInt(id);
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     
     const cookieStore = await cookies();
@@ -75,7 +74,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const { id } = await params;
     const cycleId = parseInt(id);
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
     // 1. Auth check

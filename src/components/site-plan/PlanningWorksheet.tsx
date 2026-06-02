@@ -41,7 +41,7 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
       fetch("/api/equipment").then(res => res.json()),
       fetch(`/api/site/plans?job_id=${jobId}`).then(res => res.json()),
       fetch(`/api/site/inventory?project_id=${projectId}`).then(res => res.json())
-    ]).then(([eqRes, plansRes, invRes]) => {
+    ]).then(([eqRes, plansRes, invRes]: any[]) => {
       if (eqRes.success) setEquipments(eqRes.data);
       
       const planMap: Record<number, Record<string, number>> = {};

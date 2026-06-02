@@ -52,6 +52,7 @@ next-env.d.ts
 # Cloudflare
 .wrangler/
 .dev.vars
+.open-next/
 
 # macOS
 ._*
@@ -101,3 +102,6 @@ next-env.d.ts
 
 # Excel datasets / miscellaneous files
 /*.xlsx
+
+# ─── Claude Code local settings ─────────────────────────────────────────────
+.claude/settings.local.json

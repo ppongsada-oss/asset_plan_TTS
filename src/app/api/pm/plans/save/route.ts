@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { project_plans, planning_logs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 
-export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;

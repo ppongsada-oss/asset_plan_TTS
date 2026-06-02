@@ -3,52 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asset Plan User Manual - คู่มือการใช้งานระบบ</title>
+    <title>คู่มือการใช้งาน Asset Plan</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1>คู่มือการใช้งานระบบ Asset Plan</h1>
-            <p>เลือกบทบาทของคุณเพื่อดูขั้นตอนการใช้งานที่ละเอียดและเป็นลำดับขั้นตอน</p>
-        </header>
+<div class="container">
 
-        <div class="role-grid">
-            <a href="admin.html" class="role-card">
-                <h3>Admin</h3>
-                <p>สำหรับผู้ดูแลระบบกลาง จัดการข้อมูลพื้นฐาน ผู้ใช้งาน โครงการ และการเปิดงวดงานใหม่</p>
-                <span class="btn">เข้าดูคู่มือ Admin</span>
-            </a>
-
-            <a href="site.html" class="role-card">
-                <h3>Store Site</h3>
-                <p>สำหรับเจ้าหน้าที่พัสดุไซต์งาน วางแผนการใช้อุปกรณ์ บันทึกยอดคงเหลือ และส่งแผนขออนุมัติ</p>
-                <span class="btn">เข้าดูคู่มือ Site</span>
-            </a>
-
-            <a href="pm.html" class="role-card">
-                <h3>Project Manager</h3>
-                <p>สำหรับผู้จัดการโครงการ ตรวจสอบความถูกต้องของแผนงาน อนุมัติหรือตีกลับแผนจากหน้างาน</p>
-                <span class="btn">เข้าดูคู่มือ PM</span>
-            </a>
-
-            <a href="center.html" class="role-card">
-                <h3>Store Center</h3>
-                <p>สำหรับเจ้าหน้าที่พัสดุส่วนกลาง บริหารจัดการความต้องการรวม หมุนเวียนอุปกรณ์ และตัดสินใจจัดซื้อ/เช่า</p>
-                <span class="btn">เข้าดูคู่มือ Center</span>
-            </a>
+    <header class="header" style="margin-top: 20px;">
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:#e0e7ff;border-radius:16px;margin-bottom:16px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </div>
+        <h1>คู่มือการใช้งานระบบ Asset Plan</h1>
+        <p>เลือกบทบาทของคุณเพื่อดูขั้นตอนการใช้งานแบบละเอียด ลงมือทำได้ทันที</p>
+    </header>
 
-        <div class="role-card" style="margin-bottom: 40px;">
-            <h3>รายงานและวิเคราะห์ข้อมูล</h3>
-            <p>การใช้งาน Matrix Report ภาพรวมทั้งบริษัท และการส่งออกข้อมูลเพื่อการจัดซื้อ (Procurement Export)</p>
-            <a href="reports.html" class="btn">ดูวิธีใช้งานรายงาน</a>
+    <!-- Flow diagram -->
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin-bottom:40px;box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+        <p style="margin:0 0 12px;font-size:0.8em;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;font-weight:700;">ขั้นตอนการทำงานทั้งระบบ</p>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:0.88rem;">
+            <span style="background:#e0e7ff;color:#3730a3;padding:6px 14px;border-radius:8px;font-weight:600;">Admin<br><small style="font-weight:400;color:#6366f1;">ตั้งค่าระบบ</small></span>
+            <span style="color:#94a3b8;font-size:1.2em;">→</span>
+            <span style="background:#e0e7ff;color:#3730a3;padding:6px 14px;border-radius:8px;font-weight:600;">Store Center<br><small style="font-weight:400;color:#6366f1;">สร้างรอบแผน</small></span>
+            <span style="color:#94a3b8;font-size:1.2em;">→</span>
+            <span style="background:#dbeafe;color:#1d4ed8;padding:6px 14px;border-radius:8px;font-weight:600;">Store Site<br><small style="font-weight:400;color:#3b82f6;">กรอก + ส่งแผน</small></span>
+            <span style="color:#94a3b8;font-size:1.2em;">→</span>
+            <span style="background:#fef3c7;color:#b45309;padding:6px 14px;border-radius:8px;font-weight:600;">PM<br><small style="font-weight:400;color:#d97706;">อนุมัติ</small></span>
+            <span style="color:#94a3b8;font-size:1.2em;">→</span>
+            <span style="background:#d1fae5;color:#065f46;padding:6px 14px;border-radius:8px;font-weight:600;">Store Center<br><small style="font-weight:400;color:#10b981;">จัดสรรของ</small></span>
         </div>
-
-        <footer style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-            &copy; 2026 Asset Plan System | TTS Construction
-        </footer>
     </div>
+
+    <!-- Role cards -->
+    <div class="role-grid">
+
+        <a href="admin.html" class="role-card">
+            <span class="role-badge">ADMIN</span>
+            <h3>Admin</h3>
+            <p>ตั้งค่าระบบ จัดการข้อมูลครุภัณฑ์ สร้างโครงการ กำหนดผู้ใช้และสิทธิ์</p>
+            <span class="steps-count">4 ขั้นตอน — ทำก่อนเริ่มใช้งาน</span>
+            <span class="btn">เข้าดูคู่มือ Admin →</span>
+        </a>
+
+        <a href="site.html" class="role-card">
+            <span class="role-badge">STORE_SITE</span>
+            <h3>Store Site</h3>
+            <p>กรอกแผนความต้องการพัสดุรายเดือน บันทึกยอดคงเหลือหน้างาน และส่งแผนให้ PM</p>
+            <span class="steps-count">5 ขั้นตอน — ทำทุกรอบแผน</span>
+            <span class="btn">เข้าดูคู่มือ Site →</span>
+        </a>
+
+        <a href="pm.html" class="role-card">
+            <span class="role-badge">PROJECT_MANAGER</span>
+            <h3>Project Manager</h3>
+            <p>ตรวจสอบความถูกต้องของแผน แก้ไขตัวเลข อนุมัติหรือตีกลับแผนให้ไซต์</p>
+            <span class="steps-count">5 ขั้นตอน — หลังไซต์ Submit</span>
+            <span class="btn">เข้าดูคู่มือ PM →</span>
+        </a>
+
+        <a href="center.html" class="role-card">
+            <span class="role-badge">STORE_CENTER</span>
+            <h3>Store Center</h3>
+            <p>สร้างรอบแผน Lock/Unlock ใบงาน จัดสรรครุภัณฑ์ด้วย 5 วิธี และบริหารของคืน</p>
+            <span class="steps-count">10 ขั้นตอน — หลัก PM อนุมัติ</span>
+            <span class="btn">เข้าดูคู่มือ Center →</span>
+        </a>
+
+    </div>
+
+    <!-- Reports card -->
+    <a href="reports.html" class="role-card" style="margin-bottom: 48px; display:block;">
+        <span class="role-badge" style="background:#dcfce7;color:#15803d;">STORE_CENTER / ADMIN</span>
+        <h3>Matrix Report — รายงานภาพรวม</h3>
+        <p>ดูความต้องการทุกไซต์ใน Pivot Table, Hover Tooltip รายโครงการ, Export Procurement Plan ให้ฝ่ายจัดซื้อ</p>
+        <span class="steps-count">5 ขั้นตอน</span>
+        <span class="btn" style="margin-top:8px;">ดูวิธีใช้งาน Reports →</span>
+    </a>
+
+    <div class="page-footer">
+        &copy; 2026 Asset Plan System | TTS Construction
+    </div>
+
+</div>
 </body>
 </html>

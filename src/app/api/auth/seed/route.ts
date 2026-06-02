@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { users } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { hashPassword } from "@/lib/password";
 import { eq } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
     const email = "admin@tts-construction.com";

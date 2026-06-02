@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { project_plans, project_inventory, equipment_items, center_decisions, projects, planning_jobs, planning_cycles } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq, or, inArray, and, sql } from "drizzle-orm";
 
-export const runtime = "edge";
 
 // Helper to handle SQLite's parameter limits (usually 999)
 async function fetchInChunks(db: any, table: any, column: any, values: any[], selectedColumns?: any, additionalFilter?: any, chunkSize = 800) {
@@ -26,7 +25,7 @@ async function fetchInChunks(db: any, table: any, column: any, values: any[], se
 
 export async function GET(request: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
     const { searchParams: sp } = new URL(request.url);
@@ -207,7 +206,9 @@ export async function GET(request: NextRequest) {
           remaining_stock: item?.remaining_stock || 0,
           urgency: "Normal",
           decisions: [],
-          type: "RETURN"
+          type: "RETURN",
+          required_qty: 0,
+          current_inventory: currentMax
         });
         continue;
       }
@@ -220,8 +221,8 @@ export async function GET(request: NextRequest) {
         const sumReject = decisions.filter(d => d.action_type === "REJECT_RETURN").reduce((sum, d) => sum + (d.qty || 0), 0);
         const sumOther = decisions.filter(d => !["RECEIVE", "REJECT_RETURN"].includes(d.action_type)).reduce((sum, d) => sum + (d.qty || 0), 0);
 
-        // A Return existed if currentMax > (required_qty - sumReject)
-        const originalReturnQty = currentMax - (plan.required_qty - sumReject);
+        // A Return existed if currentMax > required_qty
+        const originalReturnQty = currentMax - plan.required_qty;
 
         if (originalReturnQty > 0) {
           // It's a RETURN
@@ -236,12 +237,14 @@ export async function GET(request: NextRequest) {
             unit: plan.unit,
             month: plan.month,
             qty: originalReturnQty,
-            fulfilled_qty: sumReceive + sumReject, 
+            fulfilled_qty: sumReceive, 
             status: plan.status,
             remaining_stock: plan.remaining_stock,
             urgency: "Normal",
             decisions: decisions,
-            type: "RETURN"
+            type: "RETURN",
+            required_qty: plan.required_qty,
+            current_inventory: currentMax
           });
           // Update currentMax for next month (moving forward)
           currentMax = plan.required_qty;
@@ -264,7 +267,9 @@ export async function GET(request: NextRequest) {
             remaining_stock: plan.remaining_stock,
             urgency: delta > 2 ? "High" : "Normal",
             decisions: decisions,
-            type: "DEMAND"
+            type: "DEMAND",
+            required_qty: plan.required_qty,
+            current_inventory: currentMax
           });
           currentMax = plan.required_qty;
         } else {
@@ -312,7 +317,7 @@ export async function GET(request: NextRequest) {
       
       let matchesFilter = true;
       if (status === "READY") {
-        matchesFilter = req.remaining_stock >= (req.qty - req.fulfilled_qty) && req.fulfilled_qty < req.qty;
+        matchesFilter = (req.remaining_stock ?? 0) >= (req.qty - req.fulfilled_qty) && req.fulfilled_qty < req.qty;
       } else if (status === "PENDING") {
         matchesFilter = req.fulfilled_qty < req.qty;
       } else if (status === "COMPLETED") {

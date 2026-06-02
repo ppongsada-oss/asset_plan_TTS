@@ -1,14 +1,13 @@
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb } from "@/db";
 import { categories, sub_categories } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { invalidateCache } from "@/lib/cache";
 
-export const runtime = "edge";
 
 export async function GET(request: Request) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
     const cats = await db.select().from(categories);
@@ -22,7 +21,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const body = (await request.json()) as any;
 
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const body = (await request.json()) as any;
 
@@ -70,7 +69,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const body = (await request.json()) as any;
 

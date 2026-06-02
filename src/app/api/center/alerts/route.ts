@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { equipment_items, project_inventory, project_plans } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const kv = (env as any).CACHE_KV;
 

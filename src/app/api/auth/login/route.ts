@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { users, project_roles } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { comparePassword } from "@/lib/password";
 import { signToken } from "@/lib/jwt";
 import { eq } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const { email, password } = await request.json() as any;
 

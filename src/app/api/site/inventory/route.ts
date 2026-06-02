@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { project_inventory } from "@/db/schema";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq, and } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get("project_id") || "P1";
 
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
     const inventory = await db.select().from(project_inventory).where(eq(project_inventory.project_id, projectId));
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const body = await request.json() as { project_id: string, inventory: { equipment_id: number, qty: number }[] };
 

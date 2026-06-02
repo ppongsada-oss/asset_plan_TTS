@@ -4,11 +4,10 @@ import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { projects as projectsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export const runtime = "edge";
 
 export default async function SitePlanPage({ searchParams }: { searchParams: Promise<{ project_id?: string }> }) {
   const resolvedSearchParams = await searchParams;
@@ -25,7 +24,7 @@ export default async function SitePlanPage({ searchParams }: { searchParams: Pro
   let accessibleProjects: string[] = [];
 
   if (globalRole === "ADMIN" || globalRole === "STORE_CENTER") {
-    const env = getRequestContext().env;
+    const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const allActive = await db.select({ id: projectsTable.id }).from(projectsTable).where(eq(projectsTable.status, "ACTIVE"));
     accessibleProjects = allActive.map(p => p.id);

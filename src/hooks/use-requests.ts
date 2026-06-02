@@ -1,7 +1,7 @@
 import useSWR from 'swr';
 import useSWRInfinite from 'swr/infinite';
 
-const fetcher = (url: string) => fetch(url).then((res) => {
+const fetcher = (url: string): Promise<any> => fetch(url).then((res) => {
   if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
   return res.json();
 });
@@ -25,7 +25,7 @@ export function useCenterRequests(filters: { limit?: number, search?: string, st
 
   const { data, error, size, setSize, isLoading, isValidating, mutate } = useSWRInfinite(getKey, fetcher, {
     revalidateOnFocus: false,
-    dedupingInterval: 5000,
+    dedupingInterval: 0,
   });
 
   const requests = data ? data.flatMap((page) => page?.data || []).filter(Boolean) : [];
@@ -49,7 +49,7 @@ export function useCenterRequests(filters: { limit?: number, search?: string, st
 export function useCenterAlerts() {
   const { data, error, isLoading, mutate } = useSWR('/api/center/alerts', fetcher, {
     revalidateOnFocus: false,
-    dedupingInterval: 10000, 
+    dedupingInterval: 0, 
   });
 
   return {

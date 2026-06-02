@@ -23,6 +23,7 @@ type Job = {
   job_number: string;
   status: string;
   target_months: string; // JSON string
+  cycle_id?: number;
 };
 
 type Props = {
@@ -60,11 +61,11 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
       let jobToReview = null;
       
       if (propJobId) {
-        const res = await fetch(`/api/site/jobs/${propJobId}`).then(res => res.json());
+        const res = await fetch(`/api/site/jobs/${propJobId}`).then(res => res.json()) as any;
         if (res.success) jobToReview = res.data;
       } else {
         // Fallback for backward compatibility/quick link: find any SUBMITTED job the user can see
-        const jobsRes = await fetch("/api/site/jobs").then(res => res.json());
+        const jobsRes = await fetch("/api/site/jobs").then(res => res.json()) as any;
         if (jobsRes.success) {
           jobToReview = jobsRes.data.find((j: any) => j.status === "SUBMITTED");
         }
@@ -78,7 +79,7 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
       setJob(jobToReview);
 
       // 2. Fetch Equipments and Plans
-      const [eqRes, plansRes] = await Promise.all([
+      const [eqRes, plansRes]: any[] = await Promise.all([
         fetch("/api/equipment").then(res => res.json()),
         fetch(`/api/site/plans?job_id=${jobToReview.id}`).then(res => res.json())
       ]);

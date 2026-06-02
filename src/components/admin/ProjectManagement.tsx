@@ -26,7 +26,7 @@ export default function ProjectManagement() {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/projects");
-      const json = await res.json();
+      const json = await res.json() as any;
       if (json.success) {
         setProjects(json.data.map((p: any) => ({ 
           ...p, 
@@ -52,7 +52,7 @@ export default function ProjectManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus }),
       });
-      const json = await res.json();
+      const json = await res.json() as any;
       if (json.success) {
         setProjects(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
       }
