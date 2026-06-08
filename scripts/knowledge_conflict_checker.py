@@ -180,6 +180,8 @@ def run_check(path_changed, min_overlap, dry_run):
     for path_b, entry_b in idx.items():
         if path_b == path_changed:
             continue
+        if not isinstance(entry_b, dict):
+            continue
         topics_b = set(entry_b.get("topics", []))
         if not topics_a or not topics_b:
             continue

@@ -32,7 +32,6 @@ SESSIONS_DIR  = Path(".sessions")
 TEMPLATE_MAP = {
     "active_thread.md":    "active_thread.md",
     "session_tokens.md":   "session_tokens.md",
-    "chat_tokens.md":      "chat_tokens.md",
     "compact_state.md":    "compact_state.md",
     "gather_complete.md":  "gather_complete.md",
     "session_handoff.md":  "session_handoff.md",
@@ -43,8 +42,8 @@ TEMPLATE_MAP = {
 # Minimal content for files that should start blank (not with template schema comments)
 CLEAN_INIT = {
     "active_thread.md":  "task: init\nphase: done\nnext: none\n",
-    "session_tokens.md": "SESSION_TOTAL: 0\nCHAT_TOTAL: 0\nCACHE_READ: 0\nCACHE_WRITE: 0\n",
-    "chat_tokens.md":    "CHAT_TOTAL: 0\n",
+    # 6 fields to match B1 boot format · LOOP_WEIGHT present from clone so PostToolUse hook + B1 normalization work (BUG-2/BUG-3)
+    "session_tokens.md": "SESSION_TOTAL: 0\nCHAT_TOTAL: 0\nCACHE_READ: 0\nCACHE_WRITE: 0\nTURN_COUNT: 0\nLOOP_WEIGHT: 0\n",
     "self_improve_log.md": "# Self-Improve Log\n# Created by bootstrap_sessions.py\n",
     "token_log.jsonl":   "",  # empty — Stop hook appends JSON lines
     "session_memory.md": "# Auto-history cap summary\ndate: \nturns_summarized: 0\ncontent:\n",

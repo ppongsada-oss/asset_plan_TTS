@@ -72,8 +72,7 @@ Runtime session state. All files English-only.
   compact_state.md      ← boot cache (dt/sk/sk_h/mece_h/p3) written before /compact
   gather_complete.md    ← date + task written at [✓ gather] (PreToolUse hook checks)
   self_improve_log.md   ← SI-N entries written by R16 self-improve events (C0 complaint handler)
-  session_tokens.md     ← SESSION_TOTAL / CHAT_TOTAL / CACHE_READ / CACHE_WRITE counters
-  chat_tokens.md        ← CHAT_TOTAL (resets only at /compact or new chat)
+  session_tokens.md     ← all 6 counters: SESSION_TOTAL / CHAT_TOTAL / CACHE_READ / CACHE_WRITE / TURN_COUNT / LOOP_WEIGHT (CHAT_TOTAL & LOOP_WEIGHT reset at /compact or fresh boot)
   session_context_cache.md ← compact context snapshot written by Stop hook (write_context_cache.sh)
   token_log.jsonl       ← per-turn telemetry log: 1 JSON line per Stop event (T-053)
   cycle_N_<id>.json     ← sub-agent result files (written by each spawned agent)
@@ -115,7 +114,6 @@ docs/
   master_roadmap.md     ← T-N task ledger (grep -n or tail -30 · never full-read)
   session_templates/    ← canonical templates for bootstrap_sessions.py
     active_thread.md         ← template
-    chat_tokens.md           ← template
     compact_state.md         ← template
     gather_complete.md       ← template
     mece_plan_schema.md      ← template (named _schema to avoid PreToolUse hook trigger)
