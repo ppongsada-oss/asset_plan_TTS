@@ -1,8 +1,11 @@
 "use client";
 
-import { Save, Send, AlertCircle, Loader2, Search, ArrowUpDown, ChevronUp, ChevronDown, RefreshCw } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { Save, Send, AlertCircle, Loader2, Search, ArrowUpDown, ChevronUp, ChevronDown, RefreshCw, Download, Upload } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import useSWR, { mutate as mutateCache } from "swr";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import * as XLSX from "xlsx";
+import { useToast } from '@/hooks/useToast';
 
 type PlanningWorksheetProps = {
   jobId: number;
@@ -21,12 +24,22 @@ type Equipment = {
   remaining_stock: number;
 };
 
+type SitePlansResponse = {
+  success: boolean;
+  data: Array<{ equipment_id: number; month: string; required_qty: number }>;
+  previous_month_plans?: Array<{ equipment_id: number; required_qty: number }>;
+  inventory?: Array<{ equipment_id: number; qty: number }>;
+};
+
+type WorksheetRow = Record<string, string | number>;
+type ImportedWorksheetRow = Record<string, string | number | undefined>;
+type PlanPayload = { equipment_id: number; month: string; required_qty: number };
+
 export default function PlanningWorksheet({ jobId, projectId, targetMonths, isClosed, jobStatus, isUnlocked = false }: PlanningWorksheetProps) {
-  const [equipments, setEquipments] = useState<Equipment[]>([]);
+  const { toast } = useToast();
+  const isLocked = isClosed || jobStatus === "SUBMITTED" || jobStatus === "APPROVED";
+
   const [plans, setPlans] = useState<Record<number, Record<string, number>>>({}); // equipment_id -> { month: qty }
-  const [prevPlans, setPrevPlans] = useState<Record<number, number>>({}); // equipment_id -> prev_month_qty
-  const [inventory, setInventory] = useState<Record<number, number>>({});
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: "", direction: null });
@@ -35,81 +48,189 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
-  useEffect(() => {
-    // Fetch master equipments, current plans, and inventory
-    Promise.all([
-      fetch("/api/equipment").then(res => res.json()),
-      fetch(`/api/site/plans?job_id=${jobId}`).then(res => res.json()),
-      fetch(`/api/site/inventory?project_id=${projectId}`).then(res => res.json())
-    ]).then(([eqRes, plansRes, invRes]: any[]) => {
-      if (eqRes.success) setEquipments(eqRes.data);
-      
-      const planMap: Record<number, Record<string, number>> = {};
-      if (plansRes.success) {
-        plansRes.data.forEach((p: any) => {
-          if (!planMap[p.equipment_id]) planMap[p.equipment_id] = {};
-          planMap[p.equipment_id][p.month] = p.required_qty;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const swrOptions = {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+    keepPreviousData: true,
+  };
+  const { data: equipmentResponse, isLoading: equipmentLoading } = useSWR<{ success: boolean; data: Equipment[] }>(
+    "/api/equipment",
+    (url: string) => fetch(url).then(res => res.json() as Promise<{ success: boolean; data: Equipment[] }>),
+    swrOptions
+  );
+  const { data: plansResponse, isLoading: plansLoading, mutate: mutatePlans } = useSWR<SitePlansResponse>(
+    `/api/site/plans?job_id=${jobId}`,
+    (url: string) => fetch(url).then(res => res.json() as Promise<SitePlansResponse>),
+    swrOptions
+  );
+  const equipments = equipmentResponse?.data || [];
+  const inventory = useMemo(() => {
+    const invMap: Record<number, number> = {};
+    (plansResponse?.inventory || []).forEach((row) => {
+      invMap[row.equipment_id] = row.qty;
+    });
+    return invMap;
+  }, [plansResponse?.inventory]);
+  const prevPlans = useMemo(() => {
+    const prevPlanMap: Record<number, number> = {};
+    (plansResponse?.previous_month_plans || []).forEach((plan) => {
+      prevPlanMap[plan.equipment_id] = plan.required_qty;
+    });
+    return prevPlanMap;
+  }, [plansResponse?.previous_month_plans]);
+  const loading = equipmentLoading || plansLoading;
+
+  const handleExportPlan = () => {
+    try {
+      const exportData = filteredAndSortedEquipments.map((item, index) => {
+        const row: WorksheetRow = {
+          "#": index + 1,
+          "รหัสอุปกรณ์": item.item_code,
+          "ชื่ออุปกรณ์": item.name,
+          "หน่วย": item.unit,
+          "ยอดคลังกลาง": item.remaining_stock,
+          "ยอดมีอยู่": inventory[item.id] || 0,
+        };
+        targetMonths.forEach(month => {
+          row[month] = plans[item.id]?.[month] ?? "";
         });
-      }
-      setPlans(planMap);
+        return row;
+      });
 
-      const invMap: Record<number, number> = {};
-      if (invRes.success) {
-        invRes.data.forEach((row: any) => invMap[row.equipment_id] = row.qty);
-      }
-      setInventory(invMap);
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Planning Worksheet");
+      
+      // Auto-fit column widths
+      const maxColWidths = Object.keys(exportData[0] || {}).map(key => {
+        let maxLen = key.length;
+        exportData.forEach(row => {
+          const val = String(row[key] || "");
+          if (val.length > maxLen) maxLen = val.length;
+        });
+        return { wch: Math.max(maxLen + 2, 10) };
+      });
+      ws["!cols"] = maxColWidths;
 
-      if (plansRes.success && plansRes.previous_month_plans) {
-        const pMap: Record<number, number> = {};
-        plansRes.previous_month_plans.forEach((p: any) => pMap[p.equipment_id] = p.required_qty);
-        setPrevPlans(pMap);
-      }
-
-      setLoading(false);
-    }).catch(console.error);
-  }, [jobId, projectId]);
-  
-  const filteredAndSortedEquipments = useMemo(() => {
-    let result = [...equipments];
-
-    // Filter
-    if (searchTerm) {
-      const lower = searchTerm.toLowerCase();
-      result = result.filter(e => 
-        e.item_code.toLowerCase().includes(lower) || 
-        e.name.toLowerCase().includes(lower)
-      );
+      XLSX.writeFile(wb, `Planning_Worksheet_${projectId}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (e) {
+      console.error(e);
+      toast.error("เกิดข้อผิดพลาดในการดาวน์โหลด Excel");
     }
+  };
 
-    // Sort
-    if (sortConfig.key && sortConfig.direction) {
-      result.sort((a, b) => {
-        let aVal: any;
-        let bVal: any;
+  const handleImportPlan = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isLocked) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-        if (sortConfig.key === "item") {
-          aVal = a.item_code + a.name;
-          bVal = b.item_code + b.name;
-        } else if (sortConfig.key === "center") {
-          aVal = a.remaining_stock;
-          bVal = b.remaining_stock;
-        } else if (sortConfig.key === "stock") {
-          aVal = inventory[a.id] || 0;
-          bVal = inventory[b.id] || 0;
-        } else {
-          // Month columns
-          aVal = plans[a.id]?.[sortConfig.key] || 0;
-          bVal = plans[b.id]?.[sortConfig.key] || 0;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const wsName = wb.SheetNames[0];
+        const ws = wb.Sheets[wsName];
+        const data = XLSX.utils.sheet_to_json<ImportedWorksheetRow>(ws);
+
+        if (data.length === 0) {
+          toast.info("ไม่พบข้อมูลในไฟล์ Excel");
+          return;
         }
 
-        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
+        const codeToEqMap = new Map(equipments.map(eq => [eq.item_code.trim().toUpperCase(), eq]));
+        const newPlans = { ...plans };
 
-    return result;
-  }, [equipments, searchTerm, sortConfig, inventory, plans]);
+        data.forEach(row => {
+          const itemCode = String(row["รหัสอุปกรณ์"] || row["Item Code"] || "").trim().toUpperCase();
+          if (!itemCode) return;
+
+          const eq = codeToEqMap.get(itemCode);
+          if (!eq) return;
+
+          if (!newPlans[eq.id]) {
+            newPlans[eq.id] = {};
+          }
+
+          targetMonths.forEach(month => {
+            if (row[month] !== undefined) {
+              const val = row[month];
+              if (val === "" || val === null || val === undefined) {
+                delete newPlans[eq.id][month];
+              } else {
+                const parsedVal = parseInt(String(val).replace(/[^0-9]/g, ''));
+                if (!isNaN(parsedVal)) {
+                  newPlans[eq.id][month] = Math.max(0, parsedVal);
+                }
+              }
+            }
+          });
+        });
+
+        setPlans(newPlans);
+        toast.success("นำเข้าข้อมูลจาก Excel เรียบร้อยแล้ว (โปรดตรวจสอบข้อมูลและกด Save Draft อีกครั้ง)");
+      } catch (err) {
+        console.error(err);
+        toast.error("เกิดข้อผิดพลาดในการอ่านไฟล์ Excel");
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = "";
+  };
+
+  useEffect(() => {
+    if (!plansResponse?.success) return;
+
+    const hydratePlans = async () => {
+      const planMap: Record<number, Record<string, number>> = {};
+      plansResponse.data.forEach((p) => {
+        if (!planMap[p.equipment_id]) planMap[p.equipment_id] = {};
+        planMap[p.equipment_id][p.month] = p.required_qty;
+      });
+      setPlans(planMap);
+    };
+
+    void hydratePlans();
+  }, [plansResponse]);
+  
+  let filteredAndSortedEquipments = [...equipments];
+
+  // Filter
+  if (searchTerm) {
+    const lower = searchTerm.toLowerCase();
+    filteredAndSortedEquipments = filteredAndSortedEquipments.filter(e => 
+      e.item_code.toLowerCase().includes(lower) || 
+      e.name.toLowerCase().includes(lower)
+    );
+  }
+
+  // Sort
+  if (sortConfig.key && sortConfig.direction) {
+    filteredAndSortedEquipments.sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+
+      if (sortConfig.key === "item") {
+        aVal = a.item_code + a.name;
+        bVal = b.item_code + b.name;
+      } else if (sortConfig.key === "center") {
+        aVal = a.remaining_stock;
+        bVal = b.remaining_stock;
+      } else if (sortConfig.key === "stock") {
+        aVal = inventory[a.id] || 0;
+        bVal = inventory[b.id] || 0;
+      } else {
+        // Month columns
+        aVal = plans[a.id]?.[sortConfig.key] || 0;
+        bVal = plans[b.id]?.[sortConfig.key] || 0;
+      }
+
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
 
   const requestSort = (key: string) => {
     let direction: 'asc' | 'desc' | null = 'desc'; // default to desc for stock
@@ -212,7 +333,7 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
     setSaving(true);
     
     // Save Plans
-    const plansArray: any[] = [];
+    const plansArray: PlanPayload[] = [];
     Object.entries(plans).forEach(([equipmentId, monthData]) => {
       Object.entries(monthData).forEach(([month, qty]) => {
         if (qty !== null && qty !== undefined) {
@@ -231,10 +352,21 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ job_id: jobId, project_id: projectId, plans: plansArray })
       });
+      await fetch(`/api/site/jobs/${jobId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "DRAFT" })
+      });
+      await mutatePlans();
+      await Promise.all([
+        mutateCache(`/api/site/jobs/${jobId}`),
+        mutateCache(`/api/site/jobs?project_id=${projectId}`),
+        mutateCache("/api/site/jobs"),
+      ]);
       setSaveModalOpen(false);
-      alert("บันทึกข้อมูลเรียบร้อยแล้ว");
-    } catch (e) {
-      alert("เกิดข้อผิดพลาดในการบันทึก");
+      toast.success("บันทึกข้อมูลเรียบร้อยแล้ว");
+    } catch {
+      toast.error("เกิดข้อผิดพลาดในการบันทึก");
     } finally {
       setSaving(false);
     }
@@ -244,7 +376,7 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
     setSaving(true);
     try {
       // Auto-save before submitting
-      const plansArray: any[] = [];
+      const plansArray: PlanPayload[] = [];
       Object.entries(plans).forEach(([equipmentId, monthData]) => {
         Object.entries(monthData).forEach(([month, qty]) => {
           if (qty !== null && qty !== undefined) {
@@ -269,18 +401,21 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "SUBMITTED" })
       });
+      await mutatePlans();
+      await Promise.all([
+        mutateCache(`/api/site/jobs/${jobId}`),
+        mutateCache(`/api/site/jobs?project_id=${projectId}`),
+        mutateCache("/api/site/jobs"),
+      ]);
       
       setSubmitModalOpen(false);
-      alert("ส่งแผนสำเร็จ");
-      window.location.reload();
-    } catch (e) {
-      alert("Error submitting job");
+      toast.success("ส่งแผนสำเร็จ");
+    } catch {
+      toast.error("Error submitting job");
     } finally {
       setSaving(false);
     }
   };
-
-  const isLocked = isClosed || (jobStatus === "SUBMITTED" && !isUnlocked) || (jobStatus === "APPROVED" && !isUnlocked);
 
   if (loading) {
     return (
@@ -310,11 +445,34 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
           />
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
+          <button 
+            onClick={handleExportPlan} 
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+          >
+            <Download size={16} />
+            Export Excel
+          </button>
+          <button 
+            onClick={() => !isLocked && fileInputRef.current?.click()} 
+            disabled={isLocked}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            <Upload size={16} />
+            Import Excel
+          </button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleImportPlan} 
+            accept=".xlsx,.xls" 
+            disabled={isLocked}
+            className="hidden" 
+          />
           <button 
             onClick={() => setSaveModalOpen(true)} 
             disabled={saving || isLocked} 
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             Save Draft (บันทึก)
@@ -471,13 +629,20 @@ export default function PlanningWorksheet({ jobId, projectId, targetMonths, isCl
                         />
                         <div className="h-4 flex items-center mt-1">
                           {(() => {
-                            const prevQty = mIdx === 0 ? (prevPlans[item.id] ?? 0) : (plans[item.id]?.[targetMonths[mIdx-1]] ?? 0);
+                            const prevQty = mIdx === 0 ? (inventory[item.id] || 0) : (plans[item.id]?.[targetMonths[mIdx-1]] ?? 0);
                             const currentQty = qty ?? 0;
                             if (currentQty < prevQty) {
                               return (
                                 <div className="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100 font-bold flex items-center gap-0.5 animate-in fade-in zoom-in duration-300">
                                   <RefreshCw size={8} className="animate-spin-slow" />
                                   คืน {prevQty - currentQty}
+                                </div>
+                              );
+                            }
+                            if (currentQty > prevQty) {
+                              return (
+                                <div className="text-[9px] text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded-full border border-orange-100 font-bold flex items-center gap-0.5 animate-in fade-in zoom-in duration-300">
+                                  🛩️ ส่ง {currentQty - prevQty}
                                 </div>
                               );
                             }

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/db";
+import { getDb, type Env } from "@/db";
 import { project_inventory } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq, and } from "drizzle-orm";
+import { requireProject } from "@/lib/auth-check";
+import { getSiteInventoryCacheKey, invalidateCache } from "@/lib/cache";
 
 
 export async function GET(request: NextRequest) {
@@ -10,26 +12,39 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get("project_id") || "P1";
 
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
+    const auth = await requireProject(request, projectId);
+    if (!auth.ok) return auth.response;
+
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
+    const cacheKey = getSiteInventoryCacheKey(projectId);
+    const cached = await env.CACHE_KV?.get(cacheKey, "json") as { success: true; data: unknown[] } | null;
+    if (cached) {
+      return NextResponse.json(cached);
+    }
 
     const inventory = await db.select().from(project_inventory).where(eq(project_inventory.project_id, projectId));
 
-    return NextResponse.json({ success: true, data: inventory });
-  } catch (error) {
+    const payloadResponse = { success: true, data: inventory };
+    await env.CACHE_KV?.put(cacheKey, JSON.stringify(payloadResponse), { expirationTtl: 120 });
+    return NextResponse.json(payloadResponse);
+  } catch {
     return NextResponse.json({ success: false, error: "Failed to fetch inventory" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
     const body = await request.json() as { project_id: string, inventory: { equipment_id: number, qty: number }[] };
 
     if (!body.project_id || !body.inventory) {
       return NextResponse.json({ success: false, error: "Missing fields" }, { status: 400 });
     }
+
+    const auth = await requireProject(request, body.project_id, ["SITE"]);
+    if (!auth.ok) return auth.response;
 
     for (const item of body.inventory) {
       const existing = await db.select().from(project_inventory)
@@ -49,8 +64,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    await invalidateCache(env.CACHE_KV);
+
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ success: false, error: "Failed to save inventory" }, { status: 500 });
   }
 }

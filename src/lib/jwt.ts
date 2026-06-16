@@ -1,15 +1,14 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 
 const getJwtSecretKey = () => {
-  const secret = process.env.JWT_SECRET_KEY;
+  const secret = process.env.JWT_SECRET_KEY || process.env.JWT_TOKEN;
   if (!secret || secret.length === 0) {
-    console.warn('JWT_SECRET_KEY is not set. Using a fallback secret. Do NOT use in production!');
-    return 'fallback-secret-do-not-use-in-production';
+    throw new Error('JWT_SECRET_KEY or JWT_TOKEN is not configured');
   }
   return secret;
 };
 
-export const signToken = async (payload: any) => {
+export const signToken = async (payload: JWTPayload) => {
   try {
     const secret = new TextEncoder().encode(getJwtSecretKey());
     const alg = 'HS256';
@@ -19,7 +18,7 @@ export const signToken = async (payload: any) => {
       .setIssuedAt()
       .setExpirationTime('1d') // 1 day
       .sign(secret);
-  } catch (error) {
+  } catch {
     throw new Error('Failed to sign token');
   }
 };
@@ -29,7 +28,7 @@ export const verifyToken = async (token: string) => {
     const secret = new TextEncoder().encode(getJwtSecretKey());
     const { payload } = await jwtVerify(token, secret);
     return payload;
-  } catch (error) {
+  } catch {
     return null;
   }
 };

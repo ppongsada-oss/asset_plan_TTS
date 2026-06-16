@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/db";
+import { getDb, type Env } from "@/db";
 import { users } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getUserPayload } from "@/lib/auth-check";
+import { invalidateCache, USERS_CACHE_KEY } from "@/lib/cache";
+
+type UserCreateBody = {
+  email?: string;
+  password?: string;
+  global_role?: "ADMIN" | "STORE_CENTER" | "USER";
+};
 
 
 export async function GET(request: NextRequest) {
@@ -12,8 +19,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
     }
 
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
+    const kv = env.CACHE_KV;
+
+    const cached = await kv?.get(USERS_CACHE_KEY, "json") as { success: true; data: unknown[] } | null;
+    if (cached) {
+      return NextResponse.json(cached);
+    }
 
     // Fetch all users
     const allUsers = await db
@@ -24,7 +37,9 @@ export async function GET(request: NextRequest) {
       })
       .from(users);
 
-    return NextResponse.json({ success: true, data: allUsers });
+    const payloadResponse = { success: true, data: allUsers };
+    await kv?.put(USERS_CACHE_KEY, JSON.stringify(payloadResponse), { expirationTtl: 120 });
+    return NextResponse.json(payloadResponse);
   } catch (error) {
     console.error("GET Users Error:", error);
     return NextResponse.json({ success: false, error: "Failed to fetch users" }, { status: 500 });
@@ -40,9 +55,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
     }
 
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
-    const body = await request.json() as any;
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
+    const body = await request.json() as UserCreateBody;
 
     const { email, password, global_role } = body;
     if (!email || !password) {
@@ -57,11 +72,13 @@ export async function POST(request: NextRequest) {
       global_role: global_role || "USER",
     });
 
+    await invalidateCache(env.CACHE_KV);
     return NextResponse.json({ success: true, message: "User created successfully" });
-  } catch (error: any) {
-    if (error.message?.includes("UNIQUE constraint failed") || error.message?.includes("D1_ERROR")) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    if (message.includes("UNIQUE constraint failed") || message.includes("D1_ERROR")) {
       return NextResponse.json({ success: false, error: "Email already exists" }, { status: 400 });
     }
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

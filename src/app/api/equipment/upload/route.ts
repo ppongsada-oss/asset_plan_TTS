@@ -5,10 +5,14 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import Papa from "papaparse";
 import { eq } from "drizzle-orm";
 import { invalidateCache } from "@/lib/cache";
+import { requireRole } from "@/lib/auth-check";
 
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
     const env = getCloudflareContext().env;
     const db = getDb(env as any);
 

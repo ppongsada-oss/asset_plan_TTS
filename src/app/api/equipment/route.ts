@@ -1,15 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/db";
+import { getDb, type Env } from "@/db";
 import { equipment_items, categories, sub_categories } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { desc, eq } from "drizzle-orm";
-import { invalidateCache } from "@/lib/cache";
+import { EQUIPMENT_CACHE_KEY, invalidateCache } from "@/lib/cache";
+import { requireRole } from "@/lib/auth-check";
+
+type EquipmentMutationBody = {
+  id?: number;
+  item_code?: string;
+  name?: string;
+  category_code?: string | null;
+  sub_category_code?: string | null;
+  unit?: string;
+  buy_price?: number | string;
+  rent_price?: number | string;
+  lead_time?: string | null;
+  remaining_stock?: number | string;
+};
 
 
 export async function GET(request: NextRequest) {
   try {
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
+    const kv = env.CACHE_KV;
+
+    const cached = await kv?.get(EQUIPMENT_CACHE_KEY, "json") as { success: true; data: unknown[] } | null;
+    if (cached) {
+      return NextResponse.json(cached);
+    }
 
     // Join with categories to return human readable names
     const items = await db.select({
@@ -31,7 +54,9 @@ export async function GET(request: NextRequest) {
     .leftJoin(sub_categories, eq(equipment_items.sub_category_code, sub_categories.code))
     .orderBy(desc(equipment_items.id));
 
-    return NextResponse.json({ success: true, data: items });
+    const payloadResponse = { success: true, data: items };
+    await kv?.put(EQUIPMENT_CACHE_KEY, JSON.stringify(payloadResponse), { expirationTtl: 120 });
+    return NextResponse.json(payloadResponse);
   } catch (error) {
     console.error("GET Equipment Error:", error);
     return NextResponse.json({ success: false, error: "Failed to fetch equipment" }, { status: 500 });
@@ -40,15 +65,22 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
-    const body = (await request.json()) as any;
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
+    const body = (await request.json()) as EquipmentMutationBody;
+
+    if (!body.item_code || !body.name || !body.category_code || !body.unit) {
+      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+    }
 
     const newItem = await db.insert(equipment_items).values({
       item_code: body.item_code,
       name: body.name,
       category_code: body.category_code,
-      sub_category_code: body.sub_category_code,
+      sub_category_code: body.sub_category_code || "",
       unit: body.unit,
       buy_price: Number(body.buy_price) || 0,
       rent_price: Number(body.rent_price) || 0,
@@ -66,9 +98,12 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
-    const body = (await request.json()) as any;
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
+    const body = (await request.json()) as EquipmentMutationBody;
 
     if (!body.id) {
       return NextResponse.json({ success: false, error: "Missing equipment ID" }, { status: 400 });
@@ -77,8 +112,8 @@ export async function PUT(request: NextRequest) {
     await db.update(equipment_items)
       .set({
         name: body.name,
-        category_code: body.category_code,
-        sub_category_code: body.sub_category_code,
+        category_code: body.category_code || "",
+        sub_category_code: body.sub_category_code || "",
         unit: body.unit,
         buy_price: Number(body.buy_price) || 0,
         rent_price: Number(body.rent_price) || 0,

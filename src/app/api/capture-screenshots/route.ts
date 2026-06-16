@@ -1,45 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/db";
-import { users, project_roles } from "@/db/schema";
+import { getDb, type Env } from "@/db";
+import { users } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { signToken } from "@/lib/jwt";
+import { TokenPayload } from "@/lib/auth-check";
 import { eq } from "drizzle-orm";
+import { getPasswordTokenFingerprint } from "@/lib/password";
+
+const allowUnsafeDevHelpers =
+  process.env.NODE_ENV !== "production" &&
+  process.env.ENABLE_UNSAFE_DEV_HELPERS === "true";
+const helperEmail = process.env.UNSAFE_DEV_SCREENSHOT_EMAIL;
+
+const notFound = () =>
+  NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+
+const misconfigured = () =>
+  NextResponse.json(
+    { success: false, error: "Unsafe screenshot helper is not configured" },
+    { status: 500 }
+  );
 
 export async function GET(request: NextRequest) {
+  if (!allowUnsafeDevHelpers) {
+    return notFound();
+  }
+
+  if (!helperEmail) {
+    return misconfigured();
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action");
 
     if (action === "auth") {
-      const env = getCloudflareContext().env;
-      const db = getDb(env as any);
+      const env = getCloudflareContext().env as Env;
+      const db = getDb(env);
       
-      const email = "p.pongsada@gmail.com";
-      const userRecords = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      const userRecords = await db.select().from(users).where(eq(users.email, helperEmail)).limit(1);
       const user = userRecords[0];
 
       if (!user) {
         return NextResponse.json({ success: false, error: "User not found in database" }, { status: 404 });
       }
-
-      // Fetch project roles
-      const userRoles = await db.select().from(project_roles).where(eq(project_roles.user_id, user.id));
-      const projectRolesMap = userRoles.reduce((acc, roleItem) => {
-        acc[roleItem.project_id] = roleItem.role;
-        return acc;
-      }, {} as Record<string, string>);
-
-      // Create JWT
-      const payload = {
+      const payload: TokenPayload = {
         id: user.id,
         email: user.email,
-        role: user.global_role,
-        projectRoles: projectRolesMap,
+        pwd: await getPasswordTokenFingerprint(user.password_hash),
       };
       const token = await signToken(payload);
 
       // Set cookie
-      const response = NextResponse.json({ success: true, message: "Logged in successfully as p.pongsada@gmail.com" });
+      const response = NextResponse.json({ success: true, message: "Logged in successfully" });
       response.cookies.set({
         name: "token",
         value: token,
@@ -54,8 +67,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Capture-Screenshots Auth Error:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
   }
 }

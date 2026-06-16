@@ -1,9 +1,9 @@
 import SiteJobDashboard from "@/components/site-plan/SiteJobDashboard";
 import { HardHat } from "lucide-react";
 import { cookies } from "next/headers";
-import { verifyToken } from "@/lib/jwt";
+import { getUserPayloadFromToken } from "@/lib/auth-check";
 import { redirect } from "next/navigation";
-import { getDb } from "@/db";
+import { getDb, type Env } from "@/db";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { projects as projectsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -17,15 +17,15 @@ export default async function SitePlanPage({ searchParams }: { searchParams: Pro
   const token = cookieStore.get("token")?.value;
   if (!token) redirect("/login");
 
-  const payload = await verifyToken(token) as any;
+  const payload = await getUserPayloadFromToken(token);
   if (!payload) redirect("/login");
 
   const globalRole = payload.role;
   let accessibleProjects: string[] = [];
 
   if (globalRole === "ADMIN" || globalRole === "STORE_CENTER") {
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
     const allActive = await db.select({ id: projectsTable.id }).from(projectsTable).where(eq(projectsTable.status, "ACTIVE"));
     accessibleProjects = allActive.map(p => p.id);
   } else {

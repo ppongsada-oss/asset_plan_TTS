@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, X, AlertCircle } from "lucide-react";
 import useSWR, { mutate } from "swr";
+import { useToast } from '@/hooks/useToast';
 
 const fetcher = (url: string): Promise<any> => fetch(url).then(res => res.json());
 
@@ -13,6 +14,7 @@ type User = {
 };
 
 export default function UsersManagementPage() {
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,10 +103,10 @@ export default function UsersManagementPage() {
       if (data.success) {
         fetchUsers();
       } else {
-        alert(data.error);
+        toast.error(data.error);
       }
     } catch (err) {
-      alert("Failed to delete user");
+      toast.error("Failed to delete user");
     }
   };
 

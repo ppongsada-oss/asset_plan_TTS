@@ -25,7 +25,8 @@ export function useCenterRequests(filters: { limit?: number, search?: string, st
 
   const { data, error, size, setSize, isLoading, isValidating, mutate } = useSWRInfinite(getKey, fetcher, {
     revalidateOnFocus: false,
-    dedupingInterval: 0,
+    dedupingInterval: 30000,
+    keepPreviousData: true,
   });
 
   const requests = data ? data.flatMap((page) => page?.data || []).filter(Boolean) : [];
@@ -49,7 +50,7 @@ export function useCenterRequests(filters: { limit?: number, search?: string, st
 export function useCenterAlerts() {
   const { data, error, isLoading, mutate } = useSWR('/api/center/alerts', fetcher, {
     revalidateOnFocus: false,
-    dedupingInterval: 0, 
+    dedupingInterval: 30000,
   });
 
   return {

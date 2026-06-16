@@ -3,10 +3,14 @@ import { getDb } from "@/db";
 import { equipment_items, project_inventory, project_plans, projects, planning_cycles, planning_jobs, center_decisions } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq, and, inArray, desc } from "drizzle-orm";
+import { requireAuth } from "@/lib/auth-check";
 
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (!auth.ok) return auth.response;
+
     const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const kv = (env as any).CACHE_KV;
@@ -19,7 +23,11 @@ export async function GET(request: NextRequest) {
     // 1. Fetch cycles and projects
     const cycles = await db.select().from(planning_cycles).orderBy(desc(planning_cycles.created_at));
     const allProjectsRaw = await db.select().from(projects);
-    const filteredProjects = showArchived ? allProjectsRaw : allProjectsRaw.filter(p => p.status === "ACTIVE");
+    const accessibleIds = Object.keys(auth.payload.projectRoles || {});
+    const scopedProjects = (auth.payload.role === "ADMIN" || auth.payload.role === "STORE_CENTER")
+      ? allProjectsRaw
+      : allProjectsRaw.filter((p) => accessibleIds.includes(p.id));
+    const filteredProjects = showArchived ? scopedProjects : scopedProjects.filter(p => p.status === "ACTIVE");
     
     const sites = filteredProjects.filter(p => p.type?.toUpperCase() === "SITE");
     const warehouses = filteredProjects.filter(p => p.type?.toUpperCase() === "WAREHOUSE");
@@ -48,7 +56,9 @@ export async function GET(request: NextRequest) {
 
     const cacheKey = `matrix_report_v3_c${activeCycleId}_m${activeMonths.join("-")}_a${showArchived}`;
 
-    if (kv) {
+    const bypassCache = searchParams.get("refresh") === "true" || process.env.NODE_ENV !== "production";
+
+    if (kv && !bypassCache) {
       const cached = await kv.get(cacheKey, "json");
       if (cached) {
         console.log("[API] Matrix Report v3 served from Cache:", cacheKey);

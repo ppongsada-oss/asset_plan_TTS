@@ -1,54 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { UserPlus, Shield, Trash2, ArrowLeft, Search, Check, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { UserPlus, Shield, Trash2, ArrowLeft, Search, Check } from "lucide-react";
 import Link from "next/link";
 import useSWR, { mutate } from "swr";
+import { useToast } from '@/hooks/useToast';
 
-const fetcher = (url: string): Promise<any> => fetch(url).then(res => res.json());
+const fetcher = <T,>(url: string): Promise<T> => fetch(url).then(res => res.json() as Promise<T>);
 
 type User = { id: number; email: string; global_role: string };
 type ProjectRole = { id: number; project_id: string; role: string; user_id: number; email: string };
+type Project = { id: string; name: string };
 
 export default function ProjectRolesPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [roles, setRoles] = useState<ProjectRole[]>([]);
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   const [form, setForm] = useState({ user_id: "", role: "STORE_SITE" });
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [projectSearch, setProjectSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: usersRes } = useSWR<{ success: boolean; data: User[] }>("/api/users", fetcher);
-  const { data: rolesRes } = useSWR<{ success: boolean; data: ProjectRole[] }>("/api/projects/roles", fetcher);
-  const { data: projectsRes } = useSWR<{ success: boolean; data: any[] }>("/api/projects", fetcher);
-
-  useEffect(() => {
-    if (usersRes?.success) setUsers(usersRes.data);
-  }, [usersRes]);
-
-  useEffect(() => {
-    if (rolesRes?.success) setRoles(rolesRes.data);
-  }, [rolesRes]);
-
-  useEffect(() => {
-    if (projectsRes?.success) setProjects(projectsRes.data);
-  }, [projectsRes]);
-
-  useEffect(() => {
-    if (usersRes && rolesRes && projectsRes) {
-      setLoading(false);
-    } else {
-      setLoading(true);
-    }
-  }, [usersRes, rolesRes, projectsRes]);
-
-  const fetchData = async () => {
-    mutate("/api/users");
-    mutate("/api/projects/roles");
-    mutate("/api/projects");
+  const swrOptions = {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+    keepPreviousData: true,
   };
+  const { data: usersRes } = useSWR<{ success: boolean; data: User[] }>("/api/users", fetcher, swrOptions);
+  const { data: rolesRes } = useSWR<{ success: boolean; data: ProjectRole[] }>("/api/projects/roles", fetcher, swrOptions);
+  const { data: projectsRes } = useSWR<{ success: boolean; data: Project[] }>("/api/projects", fetcher, swrOptions);
+  const users = usersRes?.data || [];
+  const roles = useMemo(() => rolesRes?.data || [], [rolesRes?.data]);
+  const projects = projectsRes?.data || [];
+  const loading = !usersRes || !rolesRes || !projectsRes;
 
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,10 +54,11 @@ export default function ProjectRolesPage() {
       setForm({ user_id: "", role: "STORE_SITE" });
       setSelectedProjectIds([]);
       setProjectSearch("");
-      fetchData();
+      await mutate("/api/projects/roles");
+      await mutate("/api/projects");
     } catch (err) {
       console.error(err);
-      alert("Failed to assign some roles");
+      toast.error("Failed to assign some roles");
     } finally {
       setSubmitting(false);
     }
@@ -108,13 +91,14 @@ export default function ProjectRolesPage() {
       for (const id of ids) {
         await fetch(`/api/projects/roles?id=${id}`, { method: "DELETE" });
       }
-      fetchData();
+      await mutate("/api/projects/roles");
+      await mutate("/api/projects");
     } catch (err) {
       console.error(err);
     }
   };
 
-  const groupedRoles = roles.reduce((acc, curr) => {
+  const groupedRoles = useMemo(() => roles.reduce((acc, curr) => {
     const key = `${curr.user_id}-${curr.role}`;
     if (!acc[key]) {
       acc[key] = {
@@ -128,7 +112,7 @@ export default function ProjectRolesPage() {
     acc[key].project_ids.push(curr.project_id);
     acc[key].ids.push(curr.id);
     return acc;
-  }, {} as Record<string, { user_id: number; email: string; role: string; project_ids: string[]; ids: number[] }>);
+  }, {} as Record<string, { user_id: number; email: string; role: string; project_ids: string[]; ids: number[] }>), [roles]);
 
   const rolesToDisplay = Object.values(groupedRoles);
 

@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { Database, LayoutDashboard, Building2, TableProperties, ArrowRight, UserCheck, ShieldCheck } from "lucide-react";
 import { cookies } from "next/headers";
-import { verifyToken } from "@/lib/jwt";
+import { getUserPayloadFromToken, type AuthPayload } from "@/lib/auth-check";
 
 export default async function Home() {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
   
-  let user: any = null;
+  let user: AuthPayload | null = null;
   if (token) {
-    user = await verifyToken(token);
+    user = await getUserPayloadFromToken(token);
   }
 
   const isAdmin = user?.role === "ADMIN";

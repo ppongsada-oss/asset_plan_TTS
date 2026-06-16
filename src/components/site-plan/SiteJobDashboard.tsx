@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FileText, Calendar, Clock, ChevronRight, Loader2, Filter, LayoutGrid, Lock, AlertTriangle, Timer } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 
 type SiteJob = {
   id: number;
@@ -24,47 +25,36 @@ type Props = {
 };
 
 export default function SiteJobDashboard({ initialProjectId, accessibleProjects }: Props) {
-  const [jobs, setJobs] = useState<SiteJob[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId);
   const router = useRouter();
-
-  const fetchJobs = async (pid: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/site/jobs?project_id=${pid}`);
-      
-      let data;
+  const { data, isLoading } = useSWR(
+    `/api/site/jobs?project_id=${selectedProjectId}`,
+    async (url: string) => {
+      const res = await fetch(url);
       const contentType = res.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json() as any;
-      } else {
+      if (!contentType || !contentType.includes("application/json")) {
         const text = await res.text();
         console.error("API non-JSON response:", text.substring(0, 500));
         throw new Error("ระบบตอบกลับผิดพลาด (Non-JSON)");
       }
 
-      if (data.success) {
-        setJobs(data.data);
-      } else {
-        console.error("Fetch Jobs Error:", data.error);
-        setJobs([]);
+      const json = await res.json() as { success: boolean; data?: SiteJob[]; error?: string };
+      if (!json.success) {
+        throw new Error(json.error || "Fetch jobs failed");
       }
-    } catch (e) {
-      console.error("Fetch Jobs Failed:", e);
-      setJobs([]);
+      return json.data || [];
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
+      keepPreviousData: true,
     }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchJobs(selectedProjectId);
-  }, [selectedProjectId]);
+  );
+  const jobs = data || [];
+  const loading = isLoading && jobs.length === 0;
 
   const handleProjectChange = (pid: string) => {
     setSelectedProjectId(pid);
-    // Update URL without full refresh to maintain state if needed, 
-    // though here we handle state locally.
     router.replace(`/site-plan?project_id=${pid}`, { scroll: false });
   };
 

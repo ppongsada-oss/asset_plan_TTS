@@ -4,10 +4,12 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Filter, Loader2, Table, ChevronDown, CheckCircle2, Info, ArrowUpDown, ChevronUp, ChevronDown as ChevronDownIcon, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import useSWR from "swr";
+import { useToast } from '@/hooks/useToast';
 
 const fetcher = (url: string): Promise<any> => fetch(url).then(res => res.json());
 
 export default function MatrixReport() {
+  const { toast } = useToast();
   const [data, setData] = useState<any[]>([]);
   const [projects, setProjects] = useState<{ sites: string[], warehouses: string[] }>({ sites: [], warehouses: [] });
   const [projectMapping, setProjectMapping] = useState<any[]>([]);
@@ -221,7 +223,7 @@ export default function MatrixReport() {
     });
 
     if (exportData.length === 0) {
-      alert("ไม่มีรายการจัดซื้อหรือจัดเช่าในขณะนี้");
+      toast.info("ไม่มีรายการจัดซื้อหรือจัดเช่าในขณะนี้");
       return;
     }
 

@@ -3,10 +3,14 @@ import { getDb } from "@/db";
 import { project_inventory } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq } from "drizzle-orm";
+import { requireRole } from "@/lib/auth-check";
 
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
     const env = getCloudflareContext().env;
     const db = getDb(env as any);
 

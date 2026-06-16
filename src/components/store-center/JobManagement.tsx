@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useToast } from '@/hooks/useToast';
 import { Plus, Calendar, Loader2, CheckCircle2, Edit2, ShieldAlert, Search, X, Trash2, Clock, AlertTriangle, Timer, Lock, LockOpen } from "lucide-react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import useSWR from "swr";
 
 type Project = {
   id: string;
@@ -16,6 +19,7 @@ type Job = {
   job_number: string;
   status: string;
   is_unlocked: number;
+  edit_requested: number;
 };
 
 type Cycle = {
@@ -27,6 +31,11 @@ type Cycle = {
   jobs: Job[];
 };
 
+type ApiListResponse<T> = {
+  success: boolean;
+  data: T[];
+};
+
 const getDynamicMonths = (year: number) => {
   return Array.from({ length: 12 }, (_, i) => {
     const monthNum = String(i + 1).padStart(2, "0");
@@ -35,11 +44,13 @@ const getDynamicMonths = (year: number) => {
 };
 
 export default function JobManagement() {
-  const [cycles, setCycles] = useState<Cycle[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const fetcher = async <T,>(url: string): Promise<T> => fetch(url).then((res) => res.json() as Promise<T>);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [revertModalOpen, setRevertModalOpen] = useState(false);
+  const [revertJobId, setRevertJobId] = useState<number | null>(null);
+  const [reverting, setReverting] = useState(false);
   const [editingCycle, setEditingCycle] = useState<Cycle | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -51,27 +62,42 @@ export default function JobManagement() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [projectFilter, setProjectFilter] = useState<string>("SITE");
   const [projectSearch, setProjectSearch] = useState<string>("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { data: cyclesResponse, isLoading: cyclesLoading, mutate: mutateCycles } = useSWR<ApiListResponse<Cycle>>("/api/center/cycles", (url: string) => fetcher<ApiListResponse<Cycle>>(url), {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+  });
+  const { data: projectsResponse, isLoading: projectsLoading, mutate: mutateProjects } = useSWR<ApiListResponse<Project>>("/api/projects", (url: string) => fetcher<ApiListResponse<Project>>(url), {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+  });
+
+  const cycles = cyclesResponse?.success ? (cyclesResponse.data as Cycle[]) : [];
+  const projects = projectsResponse?.success ? (projectsResponse.data as Project[]) : [];
+  const loading = cyclesLoading || projectsLoading || refreshing;
 
   const fetchData = async () => {
-    setLoading(true);
+    setRefreshing(true);
     try {
-      const [cycleRes, projRes] = await Promise.all([
-        fetch("/api/center/cycles"),
-        fetch("/api/projects")
-      ]);
-      const cycleJson = await cycleRes.json() as any;
-      const projJson = await projRes.json() as any;
-      if (cycleJson.success) setCycles(cycleJson.data);
-      if (projJson.success) setProjects(projJson.data);
-    } catch (e) {
-      console.error(e);
+      await Promise.all([mutateCycles(), mutateProjects()]);
+    } finally {
+      setRefreshing(false);
     }
-    setLoading(false);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const patchCycleJobCache = (jobId: number, updater: (job: Job) => Job) => {
+    void mutateCycles((current: any) => {
+      if (!current?.success || !Array.isArray(current.data)) return current;
+      return {
+        ...current,
+        data: current.data.map((cycle: Cycle) => ({
+          ...cycle,
+          jobs: cycle.jobs.map((job) => (job.id === jobId ? updater(job) : job)),
+        })),
+      };
+    }, { revalidate: false });
+  };
 
   const openCreateModal = () => {
     setEditingCycle(null);
@@ -107,8 +133,8 @@ export default function JobManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedMonths.length === 0) return alert("กรุณาเลือกเดือนอย่างน้อย 1 เดือน");
-    if (selectedProjectIds.length === 0) return alert("กรุณาเลือกโครงการอย่างน้อย 1 โครงการ");
+    if (selectedMonths.length === 0) { toast.info("กรุณาเลือกเดือนอย่างน้อย 1 เดือน"); return; }
+    if (selectedProjectIds.length === 0) { toast.info("กรุณาเลือกโครงการอย่างน้อย 1 โครงการ"); return; }
 
     setSubmitting(true);
     try {
@@ -131,12 +157,12 @@ export default function JobManagement() {
       
       if (json.success) {
         setIsModalOpen(false);
-        fetchData();
+        await fetchData();
       } else {
-        alert("Error: " + json.error);
+        toast.error("Error: " + json.error);
       }
     } catch (e) {
-      alert("Error submitting request");
+      toast.error("Error submitting request");
     }
     setSubmitting(false);
   };
@@ -150,7 +176,7 @@ export default function JobManagement() {
     ) || [];
 
     if (jobsToCancel.length === 0) {
-      return alert("ไม่มีโครงการที่สามารถยกเลิกได้ (หรือโครงการที่เลือกถูก APPROVED แล้ว)");
+      toast.info("ไม่มีโครงการที่สามารถยกเลิกได้ (หรือโครงการที่เลือกถูก APPROVED แล้ว)"); return;
     }
 
     if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการยกเลิก ${jobsToCancel.length} โครงการที่เลือก? ข้อมูลแผนงานจะถูกลบออกทั้งหมด`)) return;
@@ -161,9 +187,9 @@ export default function JobManagement() {
         await fetch(`/api/center/jobs/${job.id}`, { method: "DELETE" });
       }
       setIsModalOpen(false);
-      fetchData();
+      await fetchData();
     } catch (e) {
-      alert("Error cancelling jobs");
+      toast.error("Error cancelling jobs");
     } finally {
       setSubmitting(false);
     }
@@ -171,26 +197,23 @@ export default function JobManagement() {
 
   const handleDeleteCycle = async (cycleId: number, hasApproved: boolean) => {
     if (hasApproved) {
-      return alert("ไม่สามารถลบงวดงานนี้ได้ เนื่องจากมีบางโครงการได้รับการอนุมัติ (APPROVED) แล้ว");
+      toast.info("ไม่สามารถลบงวดงานนี้ได้ เนื่องจากมีบางโครงการได้รับการอนุมัติ (APPROVED) แล้ว"); return;
     }
 
     if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบงวดงานนี้? ข้อมูลโครงการและแผนงานทั้งหมดในงวดนี้จะถูกลบออกถาวร")) return;
 
-    setLoading(true);
     try {
       const res = await fetch(`/api/center/cycles/${cycleId}`, {
         method: "DELETE",
       });
       const json = await res.json() as any;
       if (json.success) {
-        fetchData();
+        await fetchData();
       } else {
-        alert("Error: " + json.error);
+        toast.error("Error: " + json.error);
       }
     } catch (e) {
-      alert("Error deleting cycle");
-    } finally {
-      setLoading(false);
+      toast.error("Error deleting cycle");
     }
   };
 
@@ -206,12 +229,37 @@ export default function JobManagement() {
       });
       const json = await res.json() as any;
       if (json.success) {
-        fetchData();
+        patchCycleJobCache(jobId, (job) => ({ ...job, is_unlocked: newState }));
       } else {
-        alert("Error: " + json.error);
+        toast.error("Error: " + json.error);
       }
     } catch (e) {
-      alert("เกิดข้อผิดพลาด");
+      toast.error("เกิดข้อผิดพลาด");
+    }
+  };
+
+  const handleRevertApproval = async () => {
+    if (!revertJobId) return;
+    setReverting(true);
+    try {
+      const res = await fetch("/api/center/jobs/revert-approval", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id: revertJobId }),
+      });
+      const json = await res.json() as any;
+      if (json.success) {
+        toast.success("อนุมัติคำขอแก้ไขสำเร็จ แผนงานกลับเป็น SUBMITTED แล้ว");
+        patchCycleJobCache(revertJobId, (job) => ({ ...job, status: "SUBMITTED", edit_requested: 0 }));
+      } else {
+        toast.error("Error: " + json.error);
+      }
+    } catch (e) {
+      toast.error("เกิดข้อผิดพลาด");
+    } finally {
+      setReverting(false);
+      setRevertModalOpen(false);
+      setRevertJobId(null);
     }
   };
 
@@ -438,26 +486,37 @@ export default function JobManagement() {
                       </div>
 
                       {/* Footer */}
-                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                         <span className={`text-xs font-semibold ${
                           job.is_unlocked === 1 ? "text-emerald-600" :
                           isOverdue ? "text-rose-500" : isLocked ? "text-slate-400" : "text-indigo-600"
                         }`}>
                           {job.is_unlocked === 1 ? "🔓 ปลดล็อคชั่วคราว" : isApproved ? "อนุมัติแล้ว" : isSubmitted ? "รออนุมัติ" : isOverdue ? "เลยกำหนด" : "เปิดงาน"}
                         </span>
-                        {(isOverdue || isApproved) && (
-                          <button
-                            onClick={() => handleToggleUnlock(job.id, job.is_unlocked)}
-                            title={job.is_unlocked === 1 ? "ล็อคคืน" : "ปลดล็อค"}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
-                              job.is_unlocked === 1
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                                : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
-                            }`}
-                          >
-                            {job.is_unlocked === 1 ? <><Lock size={10} /> ล็อคคืน</> : <><LockOpen size={10} /> ปลดล็อค</>}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {isApproved && !!job.edit_requested && (
+                            <button
+                              onClick={() => { setRevertJobId(job.id); setRevertModalOpen(true); }}
+                              title="อนุมัติคำขอแก้ไขของ PM"
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                            >
+                              Reject (แก้ไข)
+                            </button>
+                          )}
+                          {(isOverdue || isApproved) && (
+                            <button
+                              onClick={() => handleToggleUnlock(job.id, job.is_unlocked)}
+                              title={job.is_unlocked === 1 ? "ล็อคคืน" : "ปลดล็อค"}
+                              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
+                                job.is_unlocked === 1
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                  : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                              }`}
+                            >
+                              {job.is_unlocked === 1 ? <><Lock size={10} /> ล็อคคืน</> : <><LockOpen size={10} /> ปลดล็อค</>}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -637,6 +696,18 @@ export default function JobManagement() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={revertModalOpen}
+        onClose={() => { setRevertModalOpen(false); setRevertJobId(null); }}
+        onConfirm={handleRevertApproval}
+        title="อนุมัติคำขอแก้ไขของ PM"
+        message="แผนงานจะถูกเปลี่ยนสถานะกลับเป็น SUBMITTED เพื่อให้ PM แก้ไขได้ คุณต้องการดำเนินการต่อหรือไม่?"
+        confirmText="ยืนยัน"
+        cancelText="ยกเลิก"
+        type="warning"
+        isLoading={reverting}
+      />
     </div>
   );
 }

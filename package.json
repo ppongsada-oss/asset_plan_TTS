@@ -4,9 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "find . -type f -name '._*' -delete 2>/dev/null || true; next dev",
-    "build": "next build",
+    "build": "npm run build:next && (find .next -type f -name '._*' -delete 2>/dev/null || true) && npx opennextjs-cloudflare build --skipNextBuild && rm -rf dist && mkdir -p dist && cp -R .open-next/. dist/ && (find dist -type f -name '._*' -delete 2>/dev/null || true)",
+    "build:next": "rm -f .next/dev/lock; find . -type f -name '._*' -delete 2>/dev/null || true; next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "npm run test:unit",
+    "test:unit": "node --import tsx --test tests/auth/*.test.ts tests/site-plans/*.test.ts",
+    "test:auth": "node --import tsx --test tests/auth/*.test.ts",
+    "test:rollback": "node --import tsx --test tests/site-plans/*.test.ts",
+    "test:runtime": "node --import tsx scripts/runtime-access-regression.ts"
   },
   "dependencies": {
     "@cloudflare/workers-types": "^4.20260430.1",

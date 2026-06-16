@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/Navbar";
+import { ToastProvider } from "@/hooks/useToast";
+import Toast from "@/components/ui/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,8 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
-        <Navbar />
-        <main className="flex-1 flex flex-col">{children}</main>
+        <ToastProvider>
+          <Navbar />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <Toast />
+        </ToastProvider>
       </body>
     </html>
   );

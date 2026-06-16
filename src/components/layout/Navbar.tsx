@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Database, Building2, LayoutDashboard, TableProperties, User, LogOut, Settings, ChevronDown, UserCheck } from "lucide-react";
+import { Home, Database, Building2, LayoutDashboard, TableProperties, User, LogOut, Settings, ChevronDown, UserCheck, FileText } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 type UserPayload = {
@@ -158,6 +158,13 @@ export function Navbar() {
                       </Link>
                     </>
                   )}
+                  <Link 
+                    href="/docs/manual/index.html"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 w-full"
+                  >
+                    <FileText size={16} /> คู่มือการใช้งาน
+                  </Link>
                   <Link 
                     href="/profile"
                     onClick={() => setDropdownOpen(false)}

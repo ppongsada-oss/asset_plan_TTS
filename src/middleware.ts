@@ -18,25 +18,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const payload = await verifyToken(token) as any;
+  const payload = await verifyToken(token);
 
   if (!payload) {
     const loginUrl = new URL('/login', request.url);
     const response = NextResponse.redirect(loginUrl);
     response.cookies.delete('token');
     return response;
-  }
-
-  const projectId = request.nextUrl.searchParams.get('project_id');
-  if (projectId && projectId !== 'ALL') {
-    const isGlobalAdmin = payload.role === "ADMIN";
-    const hasProjectRole = payload.projectRoles && payload.projectRoles[projectId];
-
-    if (!isGlobalAdmin && !hasProjectRole) {
-      const unauthorizedUrl = new URL('/', request.url);
-      unauthorizedUrl.searchParams.set('error', 'unauthorized_project');
-      return NextResponse.redirect(unauthorizedUrl);
-    }
   }
 
   return NextResponse.next();

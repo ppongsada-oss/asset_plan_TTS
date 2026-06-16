@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Building2, Search, Filter, Archive, CheckCircle2, MoreVertical, Plus, Trash2, Warehouse, HardHat, ChevronRight, FileText, Package } from "lucide-react";
+import { useState, useMemo } from "react";
+import useSWR from "swr";
+import { useToast } from "@/hooks/useToast";
+import { Building2, Search, Archive, CheckCircle2, Plus, Warehouse, HardHat, Package, Pencil } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
 type Project = {
@@ -14,35 +16,70 @@ type Project = {
   inventory_list?: { name: string; qty: number }[];
 };
 
+type ProjectApiRow = Omit<Project, "inventory_list" | "site_assets_count"> & {
+  inventory_list?: Project["inventory_list"] | string | null;
+  site_assets_count: number | string;
+};
+
+type ProjectsApiResponse = {
+  success: boolean;
+  data: ProjectApiRow[];
+  error?: string;
+};
+
+type ProjectsResponse = {
+  success: boolean;
+  data: Project[];
+  error?: string;
+};
+
+const normalizeProject = (project: ProjectApiRow): Project => ({
+  ...project,
+  site_assets_count: Number(project.site_assets_count || 0),
+  inventory_list: (() => {
+    const parsed = typeof project.inventory_list === "string"
+      ? JSON.parse(project.inventory_list) as Project["inventory_list"]
+      : (project.inventory_list || []);
+
+    const deduped = new Map<string, number>();
+    for (const item of parsed || []) {
+      if (!item?.name) continue;
+      deduped.set(item.name, Math.max(deduped.get(item.name) || 0, Number(item.qty || 0)));
+    }
+
+    return Array.from(deduped.entries()).map(([name, qty]) => ({ name, qty }));
+  })()
+});
+
 export default function ProjectManagement() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | "SITE" | "WAREHOUSE">("ALL");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "ACTIVE" | "ARCHIVED">("ALL");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-
-  const fetchProjects = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/projects");
-      const json = await res.json() as any;
-      if (json.success) {
-        setProjects(json.data.map((p: any) => ({ 
-          ...p, 
-          site_assets_count: Number(p.site_assets_count || 0),
-          inventory_list: typeof p.inventory_list === 'string' ? JSON.parse(p.inventory_list) : p.inventory_list
-        })));
-      }
-    } catch (e) {
-      console.error(e);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ id: "", name: "", type: "SITE" as "SITE" | "WAREHOUSE", status: "ACTIVE" as "ACTIVE" | "ARCHIVED" });
+  const [creating, setCreating] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({ id: "", name: "", type: "SITE" as "SITE" | "WAREHOUSE", status: "ACTIVE" as "ACTIVE" | "ARCHIVED" });
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+  const { data, isLoading, mutate } = useSWR<ProjectsResponse>(
+    "/api/admin/projects",
+    async (url: string) => {
+      const res = await fetch(url);
+      const json = await res.json() as ProjectsApiResponse;
+      return {
+        ...json,
+        data: (json.data || []).map(normalizeProject)
+      };
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
+      keepPreviousData: true,
     }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  );
+  const projects = useMemo(() => data?.data || [], [data?.data]);
 
   const handleUpdateStatus = async (id: string, newStatus: "ACTIVE" | "ARCHIVED") => {
     setUpdatingId(id);
@@ -52,14 +89,84 @@ export default function ProjectManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus }),
       });
-      const json = await res.json() as any;
+      const json = await res.json() as { success: boolean; error?: string };
       if (json.success) {
-        setProjects(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
+        await mutate(
+          (current) => current ? {
+            ...current,
+            data: current.data.map((p) => p.id === id ? { ...p, status: newStatus } : p)
+          } : current,
+          false
+        );
       }
     } catch (e) {
       console.error(e);
     }
     setUpdatingId(null);
+  };
+
+  const handleCreate = async () => {
+    if (!addForm.id.trim() || !addForm.name.trim()) {
+      toast.info("กรุณากรอกรหัสและชื่อโครงการ");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch("/api/admin/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(addForm),
+      });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (json.success) {
+        toast.success("เพิ่มโครงการสำเร็จ");
+        setShowAddModal(false);
+        setAddForm({ id: "", name: "", type: "SITE", status: "ACTIVE" });
+        await mutate();
+      } else {
+        toast.error(json.error || "เกิดข้อผิดพลาด");
+      }
+    } catch {
+      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่");
+    }
+    setCreating(false);
+  };
+
+  const openEditModal = (p: Project) => {
+    setEditForm({ id: p.id, name: p.name, type: p.type, status: p.status });
+    setShowEditModal(true);
+  };
+
+  const handleEdit = async () => {
+    if (!editForm.name.trim()) {
+      toast.info("กรุณากรอกชื่อโครงการ");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/projects", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editForm.id, name: editForm.name, type: editForm.type, status: editForm.status }),
+      });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (json.success) {
+        toast.success("แก้ไขโครงการสำเร็จ");
+        setShowEditModal(false);
+        await mutate(
+          (current) => current ? {
+            ...current,
+            data: current.data.map((p) => p.id === editForm.id ? { ...p, ...editForm } : p)
+          } : current,
+          false
+        );
+      } else {
+        toast.error(json.error || "เกิดข้อผิดพลาด");
+      }
+    } catch {
+      toast.error("เกิดข้อผิดพลาด กรุณาลองใหม่");
+    }
+    setSaving(false);
   };
 
   const filteredProjects = useMemo(() => {
@@ -84,6 +191,13 @@ export default function ProjectManagement() {
           <p className="text-slate-500 mt-1">จัดการไซต์งานก่อสร้าง และคลังสินค้าทั้งหมดในระบบ</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-md"
+          >
+            <Plus size={18} />
+            เพิ่มโครงการ
+          </button>
           <div className="px-4 py-2 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center gap-6">
             <div className="text-center">
               <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Active Sites</p>
@@ -141,7 +255,7 @@ export default function ProjectManagement() {
       </div>
 
       {/* Grid Layout */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-200 border-dashed">
           <Loader2 className="animate-spin text-indigo-600 mb-4" size={40} />
           <p className="text-slate-500 font-medium">กำลังโหลดข้อมูลโครงการ...</p>
@@ -209,6 +323,14 @@ export default function ProjectManagement() {
                   </span>
                   
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openEditModal(p)}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 rounded-xl text-xs font-bold transition-all"
+                      title="Edit Project"
+                    >
+                      <Pencil size={14} />
+                      Edit
+                    </button>
                     {p.status === "ACTIVE" ? (
                       <button 
                         onClick={() => handleUpdateStatus(p.id, "ARCHIVED")}
@@ -241,6 +363,138 @@ export default function ProjectManagement() {
               <p className="text-lg font-medium">ไม่พบโครงการที่ค้นหา</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Edit Project Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+            <h2 className="text-xl font-bold text-slate-800 mb-1">แก้ไขโครงการ</h2>
+            <p className="text-xs text-slate-400 mb-5 font-mono">{editForm.id}</p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ชื่อโครงการ *</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="mt-1.5 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ประเภท</label>
+                  <select
+                    value={editForm.type}
+                    onChange={e => setEditForm(prev => ({ ...prev, type: e.target.value as "SITE" | "WAREHOUSE" }))}
+                    className="mt-1.5 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                  >
+                    <option value="SITE">ไซต์งาน (Site)</option>
+                    <option value="WAREHOUSE">คลังสินค้า (Warehouse)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">สถานะ</label>
+                  <select
+                    value={editForm.status}
+                    onChange={e => setEditForm(prev => ({ ...prev, status: e.target.value as "ACTIVE" | "ARCHIVED" }))}
+                    className="mt-1.5 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="ARCHIVED">Archived</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-bold hover:bg-slate-200 transition-all"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleEdit}
+                disabled={saving}
+                className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {saving ? <Loader2 size={16} className="animate-spin" /> : <Pencil size={16} />}
+                {saving ? "กำลังบันทึก..." : "บันทึก"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Project Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+            <h2 className="text-xl font-bold text-slate-800 mb-5">เพิ่มโครงการใหม่</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">รหัสโครงการ *</label>
+                <input
+                  type="text"
+                  value={addForm.id}
+                  onChange={e => setAddForm(prev => ({ ...prev, id: e.target.value.toUpperCase() }))}
+                  placeholder="เช่น PROJ-001"
+                  className="mt-1.5 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ชื่อโครงการ *</label>
+                <input
+                  type="text"
+                  value={addForm.name}
+                  onChange={e => setAddForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="ชื่อโครงการ / ไซต์งาน"
+                  className="mt-1.5 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ประเภท</label>
+                  <select
+                    value={addForm.type}
+                    onChange={e => setAddForm(prev => ({ ...prev, type: e.target.value as "SITE" | "WAREHOUSE" }))}
+                    className="mt-1.5 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                  >
+                    <option value="SITE">ไซต์งาน (Site)</option>
+                    <option value="WAREHOUSE">คลังสินค้า (Warehouse)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">สถานะ</label>
+                  <select
+                    value={addForm.status}
+                    onChange={e => setAddForm(prev => ({ ...prev, status: e.target.value as "ACTIVE" | "ARCHIVED" }))}
+                    className="mt-1.5 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="ARCHIVED">Archived</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => { setShowAddModal(false); setAddForm({ id: "", name: "", type: "SITE", status: "ACTIVE" }); }}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-2xl text-sm font-bold hover:bg-slate-200 transition-all"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={creating}
+                className="flex-1 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {creating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                {creating ? "กำลังบันทึก..." : "เพิ่มโครงการ"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

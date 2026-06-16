@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/d1';
 
 export interface Env {
   DB: D1Database;
+  CACHE_KV?: KVNamespace;
 }
 
 // Custom D1Database mock to direct local development queries to live Cloudflare D1 HTTP REST API
@@ -73,7 +74,6 @@ class RemoteD1Client {
       });
 
       const data = await res.json() as any;
-      console.log("DEBUG: raw response from D1 API:", JSON.stringify(data));
       if (!data.success) {
         throw new Error(data.errors?.[0]?.message || 'D1 API error');
       }
@@ -131,7 +131,9 @@ class RemoteD1Client {
       throw e;
     }
   }
+
 }
+
 
 class RemoteD1Database {
   private client: RemoteD1Client;
@@ -171,6 +173,20 @@ class RemoteD1Database {
     } as D1Result<T>;
   }
 }
+
+export function getRawD1(env: Env): D1Database {
+  if (process.env.NODE_ENV === 'development') {
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    const databaseId = process.env.CLOUDFLARE_DATABASE_ID;
+    const apiToken = process.env.CLOUDFLARE_D1_API_TOKEN;
+
+    if (accountId && databaseId && apiToken) {
+      return new RemoteD1Database(accountId, databaseId, apiToken) as unknown as D1Database;
+    }
+  }
+  return env.DB;
+}
+
 
 export function getDb(env: Env) {
   if (process.env.NODE_ENV === 'development') {

@@ -3,6 +3,7 @@
 import { PackageSearch, ArrowUpDown, ChevronUp, ChevronDown, FileSearch, Save, Send, AlertCircle, Loader2, Search, RefreshCw, TrendingUp, TrendingDown, CheckCircle, XCircle } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import { useToast } from '@/hooks/useToast';
 
 type Equipment = {
   id: number;
@@ -24,6 +25,9 @@ type Job = {
   status: string;
   target_months: string; // JSON string
   cycle_id?: number;
+  edit_requested?: number;
+  has_center_actions?: boolean;
+  locked_edit_items?: string[];
 };
 
 type Props = {
@@ -31,6 +35,7 @@ type Props = {
 };
 
 export default function PMReviewTable({ jobId: propJobId }: Props) {
+  const { toast } = useToast();
   const [job, setJob] = useState<Job | null>(null);
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [plans, setPlans] = useState<Record<number, Record<string, number>>>({}); // equipment_id -> month -> qty
@@ -48,6 +53,7 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [requestEditModalOpen, setRequestEditModalOpen] = useState(false);
   const [rejectNotes, setRejectNotes] = useState("");
 
   useEffect(() => {
@@ -154,7 +160,7 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
       let itemDemand = 0;
       let itemReturn = 0;
       let isChanged = false;
-      let current = prevPlans[item.id] || 0;
+      let current = siteInventory[item.id] || 0;
       
       targetMonths.forEach(m => {
         const p = itemPlans[m] ?? 0;
@@ -233,6 +239,14 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
   };
 
   const isReadOnly = job?.status !== "SUBMITTED";
+  const lockedEditItems = job?.locked_edit_items || [];
+  const hasCenterActions = !!job?.has_center_actions;
+  const lockedItemsLabel = lockedEditItems.length > 0
+    ? `${lockedEditItems.slice(0, 3).join(", ")}${lockedEditItems.length > 3 ? ` และอีก ${lockedEditItems.length - 3} รายการ` : ""}`
+    : "บางรายการ";
+  const requestEditTooltip = hasCenterActions
+    ? `รายการ ${lockedItemsLabel} ถูกดำเนินการวางแผนไปแล้ว จึงไม่สามารถขอแก้ไขได้`
+    : "";
 
   const handleQtyChange = (equipmentId: number, month: string, val: string) => {
     if (isReadOnly) return;
@@ -315,11 +329,11 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
         throw new Error(data.error || "Failed to save edits");
       }
 
-      alert("บันทึกการแก้ไขสำเร็จ");
+      toast.success("บันทึกการแก้ไขสำเร็จ");
       setOriginalPlans(JSON.parse(JSON.stringify(plans)));
       return true;
     } catch (err: any) {
-      alert(`ไม่สามารถบันทึกได้: ${err.message}`);
+      toast.error(`ไม่สามารถบันทึกได้: ${err.message}`);
       return false;
     } finally {
       setSaving(false);
@@ -344,10 +358,10 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
         body: JSON.stringify({ job_id: job.id })
       });
       if (!res.ok) throw new Error("Approval failed");
-      alert("อนุมัติสำเร็จ! แผนงานถูกส่งเข้าคลังกลางแล้ว");
+      toast.success("อนุมัติสำเร็จ! แผนงานถูกส่งเข้าคลังกลางแล้ว");
       window.location.href = "/site-plan/pm-approval";
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -368,14 +382,35 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
         throw new Error(data.error || "Rejection failed");
       }
       
-      alert("ตีกลับแผนงานสำเร็จ");
+      toast.success("ตีกลับแผนงานสำเร็จ");
       window.location.href = "/site-plan/pm-approval";
     } catch (err: any) {
       console.error("Reject Error:", err);
-      alert(`ไม่สามารถตีกลับได้: ${err.message}`);
+      toast.error(`ไม่สามารถตีกลับได้: ${err.message}`);
     } finally {
       setSaving(false);
       setRejectModalOpen(false);
+    }
+  };
+
+  const handleRequestEdit = async () => {
+    if (!job) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/pm/jobs/request-edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id: job.id })
+      });
+      const data = await res.json() as any;
+      if (!res.ok || !data.success) throw new Error(data.error || "Request failed");
+      toast.success("ส่งคำขอแก้ไขสำเร็จ รอ Store Center อนุมัติ");
+      fetchData();
+    } catch (err: any) {
+      toast.error(`ไม่สามารถส่งคำขอได้: ${err.message}`);
+    } finally {
+      setSaving(false);
+      setRequestEditModalOpen(false);
     }
   };
 
@@ -470,7 +505,7 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
         {job.status === "SUBMITTED" && (
           <div className="flex gap-3">
             {hasChanges && (
-              <button 
+              <button
                 onClick={() => setSaveModalOpen(true)}
                 disabled={saving}
                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
@@ -479,7 +514,7 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
                 Save Edits
               </button>
             )}
-            <button 
+            <button
               onClick={() => setRejectModalOpen(true)}
               disabled={saving}
               className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors"
@@ -487,7 +522,7 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
               <XCircle size={18} />
               Reject (ตีกลับ)
             </button>
-            <button 
+            <button
               onClick={() => setApproveModalOpen(true)}
               disabled={saving}
               className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-500 transition-colors shadow-sm shadow-indigo-600/20"
@@ -495,6 +530,47 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
               {saving ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle size={18} />}
               Approve (อนุมัติ)
             </button>
+          </div>
+        )}
+
+        {job.status === "APPROVED" && !job.edit_requested && !hasCenterActions && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => setRequestEditModalOpen(true)}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+            >
+              {saving ? <Loader2 className="animate-spin" size={18} /> : <XCircle size={18} />}
+              ขอแก้ไข
+            </button>
+          </div>
+        )}
+
+        {job.status === "APPROVED" && !job.edit_requested && hasCenterActions && (
+          <div className="flex gap-3">
+            <div className="relative group/tooltip">
+              <button
+                type="button"
+                disabled
+                title={requestEditTooltip}
+                className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-slate-400 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed"
+              >
+                <XCircle size={18} />
+                ขอแก้ไข
+              </button>
+              <div className="absolute bottom-full right-0 mb-2 w-72 bg-slate-800 text-white text-[11px] leading-relaxed rounded-xl p-3 shadow-2xl opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-200 transform translate-y-2 group-hover/tooltip:translate-y-0 z-50">
+                {requestEditTooltip}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {job.status === "APPROVED" && !!job.edit_requested && (
+          <div className="flex gap-3">
+            <span className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-amber-600 bg-amber-50 border border-amber-200 rounded-lg">
+              <Loader2 size={16} className="animate-spin" />
+              รอ Store Center อนุมัติคำขอแก้ไข...
+            </span>
           </div>
         )}
       </div>
@@ -521,6 +597,18 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
         confirmText="บันทึกการแก้ไข"
         cancelText="ยกเลิก"
         type="info"
+        isLoading={saving}
+      />
+
+      <ConfirmModal
+        isOpen={requestEditModalOpen}
+        onClose={() => setRequestEditModalOpen(false)}
+        onConfirm={handleRequestEdit}
+        title="ขอแก้ไขแผนงาน"
+        message="คุณต้องการส่งคำขอแก้ไขแผนงานนี้ไปยัง Store Center ใช่หรือไม่? แผนงานจะยังคงอยู่ในสถานะ APPROVED จนกว่า Store Center จะอนุมัติคำขอ"
+        confirmText="ส่งคำขอแก้ไข"
+        cancelText="ยกเลิก"
+        type="warning"
         isLoading={saving}
       />
 
@@ -620,13 +708,20 @@ export default function PMReviewTable({ jobId: propJobId }: Props) {
                           />
                           <div className="h-4 flex items-center mt-1">
                             {(() => {
-                              const prevQty = mIdx === 0 ? (prevPlans[item.id] ?? 0) : (plans[item.id]?.[targetMonths[mIdx-1]] ?? 0);
+                              const prevQty = mIdx === 0 ? (siteInventory[item.id] || 0) : (plans[item.id]?.[targetMonths[mIdx-1]] ?? 0);
                               const currentQty = qty ?? 0;
                               if (currentQty < prevQty) {
                                 return (
                                   <div className="text-[9px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100 font-bold flex items-center gap-0.5">
                                     <RefreshCw size={8} />
                                     คืน {prevQty - currentQty}
+                                  </div>
+                                );
+                              }
+                              if (currentQty > prevQty) {
+                                return (
+                                  <div className="text-[9px] text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-full border border-indigo-100 font-bold flex items-center gap-0.5">
+                                    🛩️ ส่ง {currentQty - prevQty}
                                   </div>
                                 );
                               }

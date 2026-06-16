@@ -3,10 +3,14 @@ import { getDb } from "@/db";
 import { categories, sub_categories } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { invalidateCache } from "@/lib/cache";
+import { requireRole } from "@/lib/auth-check";
 
 
 export async function GET(request: Request) {
   try {
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
     const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
@@ -21,20 +25,29 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
     const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const body = (await request.json()) as any;
 
     if (body.type === "category") {
-      await db.insert(categories).values({ code: body.code, name: body.name }).onConflictDoNothing();
+      const existing = await db.select().from(categories).where(eq(categories.code, body.code)).limit(1);
+      if (existing.length === 0) {
+        await db.insert(categories).values({ code: body.code, name: body.name });
+      }
       await invalidateCache(env.CACHE_KV);
       return Response.json({ success: true, message: "Category saved" });
     } else if (body.type === "sub_category") {
-      await db.insert(sub_categories).values({
-        code: body.code,
-        category_code: body.category_code,
-        name: body.name
-      }).onConflictDoNothing();
+      const existing = await db.select().from(sub_categories).where(eq(sub_categories.code, body.code)).limit(1);
+      if (existing.length === 0) {
+        await db.insert(sub_categories).values({
+          code: body.code,
+          category_code: body.category_code,
+          name: body.name
+        });
+      }
       await invalidateCache(env.CACHE_KV);
       return Response.json({ success: true, message: "Sub-Category saved" });
     }
@@ -47,6 +60,9 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
     const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const body = (await request.json()) as any;
@@ -69,6 +85,9 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
     const env = getCloudflareContext().env;
     const db = getDb(env as any);
     const body = (await request.json()) as any;

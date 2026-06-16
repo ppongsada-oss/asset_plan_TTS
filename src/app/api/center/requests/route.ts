@@ -3,6 +3,8 @@ import { getDb } from "@/db";
 import { project_plans, project_inventory, equipment_items, center_decisions, projects, planning_jobs, planning_cycles } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq, or, inArray, and, sql } from "drizzle-orm";
+import { requireRole } from "@/lib/auth-check";
+import { getCenterRequestsCacheKey } from "@/lib/cache";
 
 
 // Helper to handle SQLite's parameter limits (usually 999)
@@ -25,12 +27,39 @@ async function fetchInChunks(db: any, table: any, column: any, values: any[], se
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
     const env = getCloudflareContext().env;
     const db = getDb(env as any);
+    const kv = (env as any).CACHE_KV;
 
     const { searchParams: sp } = new URL(request.url);
+    const page = parseInt(sp.get("page") || "1");
+    const limit = parseInt(sp.get("limit") || "50");
+    const search = sp.get("search")?.toLowerCase() || "";
+    const status = sp.get("status") || "ALL";
+    const type = sp.get("type") || "DEMAND";
+    const month = sp.get("month") || "";
     const cycleIdParam = sp.get("cycle_id");
     const cycleIdNum = (cycleIdParam && !isNaN(parseInt(cycleIdParam))) ? parseInt(cycleIdParam) : null;
+    const offset = (page - 1) * limit;
+    const cacheKey = getCenterRequestsCacheKey({
+      page,
+      limit,
+      search,
+      status,
+      type,
+      month,
+      cycleId: cycleIdNum,
+    });
+
+    if (kv) {
+      const cached = await kv.get(cacheKey, "json");
+      if (cached) {
+        return NextResponse.json({ ...cached, fromCache: true });
+      }
+    }
     
     // 1. Fetch all projects associated with this cycle (even if no plans yet)
     let projectsInCycle: any[] = [];
@@ -280,14 +309,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const page = parseInt(sp.get("page") || "1");
-    const limit = parseInt(sp.get("limit") || "50");
-    const search = sp.get("search")?.toLowerCase() || "";
-    const status = sp.get("status") || "ALL";
-    const type = sp.get("type") || "DEMAND";
-    const month = sp.get("month") || "";
-    const offset = (page - 1) * limit;
-
     // Filter before pagination
     const allFiltered = centerRequests.map(req => {
       // If we have a cycle calibration for warehouse, use it instead of global stock
@@ -341,7 +362,7 @@ export async function GET(request: NextRequest) {
 
     console.log(`[API] Returning Page ${page} (${paginatedData.length}/${total} items) for search: "${search}", status: ${status}`);
 
-    return NextResponse.json({ 
+    const responsePayload = {
       success: true, 
       data: paginatedData,
       counts,
@@ -351,7 +372,13 @@ export async function GET(request: NextRequest) {
         limit,
         totalPages: Math.ceil(total / limit)
       }
-    });
+    };
+
+    if (kv) {
+      await kv.put(cacheKey, JSON.stringify(responsePayload), { expirationTtl: 120 });
+    }
+
+    return NextResponse.json(responsePayload);
   } catch (error) {
     console.error("GET Center Requests Error:", error);
     return NextResponse.json({ success: false, error: "Failed to fetch center requests" }, { status: 500 });

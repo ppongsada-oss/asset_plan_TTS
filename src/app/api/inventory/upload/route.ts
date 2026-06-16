@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/db";
+import { getDb, getRawD1 } from "@/db";
 import { equipment_items, projects, project_inventory } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { read, utils } from "xlsx";
 import { eq, inArray } from "drizzle-orm";
 import { invalidateCache } from "@/lib/cache";
+import { requireRole } from "@/lib/auth-check";
 
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    if (!auth.ok) return auth.response;
+
     const env = getCloudflareContext().env;
     const db = getDb(env as any);
 
@@ -38,16 +42,16 @@ export async function POST(request: NextRequest) {
       }
 
       if (inserts.length > 0) {
-        const d1 = env.DB as D1Database;
-        
-        // Chunk inserts into batches of 50 to avoid D1 parameter limits (50 * 4 = 200 parameters)
-        const chunkSize = 50;
+        const d1 = getRawD1(env as any);
+
+        // Chunk inserts into batches of 15 to avoid D1 parameter limits (15 * 4 = 60 parameters)
+        const chunkSize = 15;
         for (let i = 0; i < inserts.length; i += chunkSize) {
           const chunk = inserts.slice(i, i + chunkSize);
-          
+
           const placeholders = chunk.map(() => "(?, ?, ?, ?)").join(", ");
           const sqlStr = `INSERT INTO project_inventory (project_id, equipment_id, cycle_id, qty) VALUES ${placeholders}`;
-          
+
           const params = chunk.flatMap((item: any) => [
             item.project_id,
             item.equipment_id,

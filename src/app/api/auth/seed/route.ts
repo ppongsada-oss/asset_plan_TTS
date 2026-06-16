@@ -1,36 +1,60 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/db";
+import { NextResponse } from "next/server";
+import { getDb, type Env } from "@/db";
 import { users } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { hashPassword } from "@/lib/password";
 import { eq } from "drizzle-orm";
 
+const allowUnsafeDevHelpers =
+  process.env.NODE_ENV !== "production" &&
+  process.env.ENABLE_UNSAFE_DEV_HELPERS === "true";
+const seedEmail = process.env.UNSAFE_DEV_SEED_EMAIL;
+const seedPassword = process.env.UNSAFE_DEV_SEED_PASSWORD;
 
-export async function GET(request: NextRequest) {
+const notFound = () =>
+  NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+
+const misconfigured = () =>
+  NextResponse.json(
+    { success: false, error: "Unsafe dev seed helper is not configured" },
+    { status: 500 }
+  );
+
+export async function GET() {
+  return notFound();
+}
+
+export async function POST() {
+  if (!allowUnsafeDevHelpers) {
+    return notFound();
+  }
+
+  if (!seedEmail || !seedPassword) {
+    return misconfigured();
+  }
+
   try {
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
 
-    const email = "admin@tts-construction.com";
-    
-    const password_hash = await hashPassword("password123");
+    const password_hash = await hashPassword(seedPassword);
 
     // Check if user exists
-    const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const existing = await db.select().from(users).where(eq(users.email, seedEmail)).limit(1);
     if (existing.length > 0) {
-      await db.update(users).set({ password_hash }).where(eq(users.email, email));
-      return NextResponse.json({ success: true, message: "User already seeded, password updated to SHA-256" });
+      await db.update(users).set({ password_hash }).where(eq(users.email, seedEmail));
+      return NextResponse.json({ success: true, message: "User already seeded, password updated" });
     }
 
     await db.insert(users).values({
-      email,
+      email: seedEmail,
       password_hash,
       global_role: "ADMIN"
     });
 
     return NextResponse.json({ success: true, message: "Admin user seeded successfully" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Seed Error:", error);
-    return NextResponse.json({ success: false, error: error.message || String(error), stack: error.stack }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Seed failed" }, { status: 500 });
   }
 }

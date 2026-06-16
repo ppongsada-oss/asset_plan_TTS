@@ -7,6 +7,7 @@ import useSWR, { mutate } from "swr";
 const fetcher = (url: string): Promise<any> => fetch(url).then((res) => res.json());
 import EquipmentListTable from "./EquipmentListTable";
 import * as XLSX from "xlsx";
+import { useToast } from '@/hooks/useToast';
 
 type EquipmentItem = {
   id: number;
@@ -35,6 +36,7 @@ type SubCategory = {
 };
 
 export default function EquipmentTable() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"EQUIPMENT" | "CATEGORY">("EQUIPMENT");
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -262,11 +264,11 @@ export default function EquipmentTable() {
     if (!previewCatCode || !previewCatName) return;
 
     if (categories.some(c => c.code.toLowerCase() === previewCatCode.toLowerCase())) {
-      alert("รหัสหมวดหมู่ซ้ำในระบบ");
+      toast.info("รหัสหมวดหมู่ซ้ำในระบบ");
       return;
     }
     if (categories.some(c => c.name.toLowerCase() === previewCatName.toLowerCase())) {
-      alert("ชื่อหมวดหมู่ซ้ำในระบบ");
+      toast.info("ชื่อหมวดหมู่ซ้ำในระบบ");
       return;
     }
 
@@ -282,10 +284,10 @@ export default function EquipmentTable() {
         setPreviewCatName("");
         fetchData();
       } else {
-        alert(json.message);
+        toast.error(json.message);
       }
     } catch (e) {
-      alert("Failed to add category");
+      toast.error("Failed to add category");
     }
   };
 
@@ -294,11 +296,11 @@ export default function EquipmentTable() {
     if (!previewSubCatCode || !previewSubCatName || !previewSubCatParent) return;
 
     if (subCategories.some(s => s.code.toLowerCase() === previewSubCatCode.toLowerCase())) {
-      alert("รหัสหมวดย่อยซ้ำในระบบ");
+      toast.info("รหัสหมวดย่อยซ้ำในระบบ");
       return;
     }
     if (subCategories.some(s => s.name.toLowerCase() === previewSubCatName.toLowerCase() && s.category_code === previewSubCatParent)) {
-      alert("ชื่อหมวดย่อยซ้ำในหมวดหมู่นี้");
+      toast.info("ชื่อหมวดย่อยซ้ำในหมวดหมู่นี้");
       return;
     }
 
@@ -315,10 +317,10 @@ export default function EquipmentTable() {
         setPreviewSubCatParent("");
         fetchData();
       } else {
-        alert(json.message);
+        toast.error(json.message);
       }
     } catch (e) {
-      alert("Failed to add sub-category");
+      toast.error("Failed to add sub-category");
     }
   };
 
@@ -327,7 +329,7 @@ export default function EquipmentTable() {
     if (!newEqCode || !newEqName || !selectedSubForAddEq) return;
 
     if (data.some(item => item.item_code.toLowerCase() === newEqCode.toLowerCase())) {
-      alert(`รหัสอุปกรณ์ "${newEqCode}" มีอยู่ในระบบแล้ว!`);
+      toast.info(`รหัสอุปกรณ์ "${newEqCode}" มีอยู่ในระบบแล้ว!`);
       return;
     }
 
@@ -356,11 +358,11 @@ export default function EquipmentTable() {
         setNewEqStock(0);
         fetchData();
       } else {
-        alert("Failed to create equipment: " + json.error);
+        toast.error("Failed to create equipment: " + json.error);
       }
     } catch (e) {
       console.error(e);
-      alert("Error creating equipment.");
+      toast.error("Error creating equipment.");
     }
   };
 
@@ -420,13 +422,13 @@ export default function EquipmentTable() {
       });
       const json = (await res.json()) as any;
       if (json.success) {
-        alert(json.message);
+        toast.success(json.message);
         fetchData();
       } else {
-        alert("Error: " + json.error);
+        toast.error("Error: " + json.error);
       }
     } catch (error) {
-      alert("Upload failed.");
+      toast.error("Upload failed.");
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -440,7 +442,7 @@ export default function EquipmentTable() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!selectedCycleForUpload) {
-      alert("Please select a cycle first.");
+      toast.info("Please select a cycle first.");
       return;
     }
 
@@ -457,7 +459,7 @@ export default function EquipmentTable() {
       });
       const parseJson = (await parseRes.json()) as any;
       if (!parseJson.success) {
-        alert("Parse Error: " + (parseJson.error || "Unknown error"));
+        toast.error("Parse Error: " + (parseJson.error || "Unknown error"));
         setInventoryUploading(false);
         if (inventoryInputRef.current) inventoryInputRef.current.value = "";
         return;
@@ -466,7 +468,7 @@ export default function EquipmentTable() {
       const inserts = parseJson.validInserts || [];
       const total = inserts.length;
       if (total === 0) {
-        alert("ไม่พบข้อมูลอุปกรณ์คงเหลือที่ถูกต้องในไฟล์ Excel");
+        toast.info("ไม่พบข้อมูลอุปกรณ์คงเหลือที่ถูกต้องในไฟล์ Excel");
         setInventoryUploading(false);
         if (inventoryInputRef.current) inventoryInputRef.current.value = "";
         return;
@@ -480,7 +482,7 @@ export default function EquipmentTable() {
       });
       const clearJson = (await clearRes.json()) as any;
       if (!clearJson.success) {
-        alert("Clear Error: " + (clearJson.error || "Failed to clear existing stock"));
+        toast.error("Clear Error: " + (clearJson.error || "Failed to clear existing stock"));
         setInventoryUploading(false);
         if (inventoryInputRef.current) inventoryInputRef.current.value = "";
         return;
@@ -502,12 +504,12 @@ export default function EquipmentTable() {
         setInventoryUploadProgress({ current: Math.min(i + batch.length, total), total });
       }
 
-      alert(`อัปเดตยอดสต็อกสำเร็จทั้งหมด ${total} รายการ!`);
+      toast.success(`อัปเดตยอดสต็อกสำเร็จทั้งหมด ${total} รายการ!`);
       setShowUploadModal(false);
       fetchData();
       fetchCalibratedInventory(viewCycleId);
     } catch (error: any) {
-      alert("Inventory upload failed: " + (error.message || error));
+      toast.error("Inventory upload failed: " + (error.message || error));
     } finally {
       setInventoryUploading(false);
       if (inventoryInputRef.current) inventoryInputRef.current.value = "";
@@ -530,10 +532,10 @@ export default function EquipmentTable() {
         setNewCatName("");
         fetchData();
       } else {
-        alert(json.message);
+        toast.error(json.message);
       }
     } catch (e) {
-      alert("Failed to add category");
+      toast.error("Failed to add category");
     }
   };
 
@@ -554,10 +556,10 @@ export default function EquipmentTable() {
         setNewSubCatParent("");
         fetchData();
       } else {
-        alert(json.message);
+        toast.error(json.message);
       }
     } catch (e) {
-      alert("Failed to add sub-category");
+      toast.error("Failed to add sub-category");
     }
   };
 
@@ -576,10 +578,10 @@ export default function EquipmentTable() {
         setEditItem(null);
         fetchData();
       } else {
-        alert("Failed to save: " + json.error);
+        toast.error("Failed to save: " + json.error);
       }
     } catch (e) {
-      alert("Failed to save equipment");
+      toast.error("Failed to save equipment");
     }
   };
 
@@ -596,8 +598,8 @@ export default function EquipmentTable() {
       if (json.success) {
         setEditCategory(null);
         fetchData();
-      } else alert(json.message);
-    } catch (e) { alert("Failed to save category"); }
+      } else toast.error(json.message);
+    } catch (e) { toast.error("Failed to save category"); }
   };
 
   const handleDeleteCategory = async (code: string) => {
@@ -610,8 +612,8 @@ export default function EquipmentTable() {
       });
       const json = await res.json() as any;
       if (json.success) fetchData();
-      else alert(json.message);
-    } catch (e) { alert("Failed to delete category"); }
+      else toast.error(json.message);
+    } catch (e) { toast.error("Failed to delete category"); }
   };
 
   const handleEditSubCategorySave = async (e: React.FormEvent) => {
@@ -627,8 +629,8 @@ export default function EquipmentTable() {
       if (json.success) {
         setEditSubCategory(null);
         fetchData();
-      } else alert(json.message);
-    } catch (e) { alert("Failed to save sub-category"); }
+      } else toast.error(json.message);
+    } catch (e) { toast.error("Failed to save sub-category"); }
   };
 
   const handleDeleteSubCategory = async (code: string) => {
@@ -641,8 +643,8 @@ export default function EquipmentTable() {
       });
       const json = await res.json() as any;
       if (json.success) fetchData();
-      else alert(json.message);
-    } catch (e) { alert("Failed to delete sub-category"); }
+      else toast.error(json.message);
+    } catch (e) { toast.error("Failed to delete sub-category"); }
   };
 
   const handleDownloadInventoryTemplate = () => {

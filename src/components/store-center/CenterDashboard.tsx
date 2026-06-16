@@ -1,11 +1,13 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { PackageSearch, ArrowRightLeft, RefreshCw, ShoppingCart, Loader2, Send, AlertTriangle, ArrowUpDown, ChevronUp, ChevronDown, History, Trash2, CheckCircle2, Search, Filter, CheckSquare, Square, Calendar, Layers, Download } from "lucide-react";
+import { PackageSearch, ArrowRightLeft, RefreshCw, ShoppingCart, Loader2, Send, AlertTriangle, ArrowUpDown, ChevronUp, ChevronDown, History, Trash2, CheckCircle2, Search, Filter, CheckSquare, Square, Calendar, Layers, Download, Pencil } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useCenterRequests, useCenterAlerts } from "@/hooks/use-requests";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import useSWR from "swr";
 import * as XLSX from "xlsx";
+import { useToast } from '@/hooks/useToast';
 
 const fetcher = (url: string): Promise<any> => fetch(url).then(res => res.json());
 
@@ -25,6 +27,8 @@ type RequestItem = {
   decisions?: any[];
   type: "DEMAND" | "RETURN";
   cycle_id?: number | null;
+  equipment_id?: number;
+  current_inventory?: number;
 };
 
 const getActionInfo = (type: string) => {
@@ -41,6 +45,7 @@ const getActionInfo = (type: string) => {
 };
 
 export default function CenterDashboard() {
+  const { toast } = useToast();
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -50,7 +55,10 @@ export default function CenterDashboard() {
   const [viewMode, setViewMode] = useState<"DEMAND" | "RETURN">("DEMAND");
 
   // Fetch Cycles
-  const { data: cyclesData } = useSWR("/api/center/cycles", fetcher);
+  const { data: cyclesData } = useSWR("/api/center/cycles", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+  });
   const cycles = cyclesData?.success ? (cyclesData.data as any[]) : [];
 
   const availableMonths = useMemo(() => {
@@ -120,7 +128,9 @@ export default function CenterDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: "", direction: null });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<number[]>([]);
+  const [selectedDecisionIds, setSelectedDecisionIds] = useState<number[]>([]);
+  const [editingDecision, setEditingDecision] = useState<any | null>(null);
   const [exporting, setExporting] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -144,11 +154,78 @@ export default function CenterDashboard() {
     ]);
   };
 
+  const queueRefresh = () => {
+    void Promise.all([
+      mutateRequests(),
+      mutateAlerts()
+    ]);
+  };
+
+  const sumDecisionQty = (decisions: any[], types: string[]) =>
+    decisions
+      .filter((decision) => types.includes(decision.action_type))
+      .reduce((sum, decision) => sum + (decision.qty || 0), 0);
+
+  const buildUpdatedRequest = (request: RequestItem, decisions: any[]) => {
+    const fulfilledQty = request.type === "RETURN"
+      ? sumDecisionQty(decisions, ["RECEIVE"])
+      : decisions
+          .filter((decision) => !["RECEIVE", "REJECT_RETURN"].includes(decision.action_type))
+          .reduce((sum, decision) => sum + (decision.qty || 0), 0);
+
+    return {
+      ...request,
+      decisions,
+      fulfilled_qty: fulfilledQty,
+    };
+  };
+
+  const mutateRequestCache = (requestId: number | string, updater: (req: any) => any) => {
+    setActiveReq((prev) => {
+      if (!prev || prev.id !== requestId) return prev;
+      return updater(prev);
+    });
+
+    void mutateRequests((pages: any[] | undefined) => {
+      if (!pages) return pages;
+      return pages.map((page) => ({
+        ...page,
+        data: (page.data || []).map((request: any) => (
+          request.id === requestId ? updater(request) : request
+        )),
+      }));
+    }, { revalidate: false });
+  };
+
+  const resetHistorySelection = () => {
+    setSelectedDecisionIds([]);
+    setPendingDeleteIds([]);
+  };
+
+  const closeHistoryModal = () => {
+    setActiveReq(null);
+    setShowHistory(false);
+    setEditingDecision(null);
+    resetHistorySelection();
+  };
+
+  const closeActionModal = () => {
+    if (editingDecision) {
+      setEditingDecision(null);
+      setShowHistory(true);
+      return;
+    }
+
+    setActiveReq(null);
+  };
+
   const openModal = (req: RequestItem, type: "DISPATCH" | "CIRCULATE" | "SUBSTITUTE" | "BUY" | "RECEIVE" | "REJECT_RETURN") => {
     setActiveReq(req);
     setActionType(type);
     setActionQty(req.qty - req.fulfilled_qty);
     setNotes("");
+    setEditingDecision(null);
+    setShowHistory(false);
   };
 
   const handleSubmitDecision = async (e: React.FormEvent) => {
@@ -158,9 +235,10 @@ export default function CenterDashboard() {
     setSubmitting(true);
     try {
       const res = await fetch("/api/center/decisions", {
-        method: "POST",
+        method: editingDecision ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          decision_id: editingDecision?.id,
           plan_id: activeReq.id,
           action_type: actionType,
           notes: notes,
@@ -172,13 +250,29 @@ export default function CenterDashboard() {
       });
       const json = await res.json() as any;
       if (json.success) {
-        await refreshData();
-        setActiveReq(null);
+        if (json.decision) {
+          mutateRequestCache(activeReq.id, (request) => {
+            const currentDecisions = Array.isArray(request.decisions) ? request.decisions : [];
+            const nextDecisions = editingDecision
+              ? currentDecisions.map((decision: any) => decision.id === editingDecision.id ? json.decision : decision)
+              : [...currentDecisions, json.decision];
+            return buildUpdatedRequest(request, nextDecisions);
+          });
+        }
+
+        if (editingDecision) {
+          setEditingDecision(null);
+          setShowHistory(true);
+          queueRefresh();
+        } else {
+          setActiveReq(null);
+          queueRefresh();
+        }
       } else {
-        alert("Failed: " + json.error);
+        toast.error("Failed: " + json.error);
       }
     } catch (err) {
-      alert("Error submitting decision");
+      toast.error("Error submitting decision");
     }
     setSubmitting(false);
   };
@@ -186,38 +280,71 @@ export default function CenterDashboard() {
   const openHistoryModal = (req: RequestItem) => {
     setActiveReq(req);
     setShowHistory(true);
+    setEditingDecision(null);
+    resetHistorySelection();
   };
 
-  const handleDeleteDecision = async (decisionId: number) => {
+  const openEditDecision = (decision: any) => {
+    if (!activeReq) return;
+    setEditingDecision(decision);
+    setActionType(decision.action_type);
+    setActionQty(decision.qty || 0);
+    setNotes(decision.notes || "");
+    setShowHistory(false);
+  };
+
+  const handleDeleteDecision = async (decisionIds: number[]) => {
+    if (!activeReq || decisionIds.length === 0) return;
+
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/center/decisions?id=${decisionId}`, {
-        method: "DELETE"
+      const res = await fetch("/api/center/decisions", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: decisionIds,
+          total_qty: activeReq.qty,
+        })
       });
       const json = await res.json() as any;
       
       if (json.success) {
+        const deletedIds = Array.isArray(json.deleted_ids) ? json.deleted_ids : decisionIds;
+        mutateRequestCache(activeReq.id, (request) => {
+          const currentDecisions = Array.isArray(request.decisions) ? request.decisions : [];
+          const nextDecisions = currentDecisions.filter((decision: any) => !deletedIds.includes(decision.id));
+          return buildUpdatedRequest(request, nextDecisions);
+        });
         setSelectedIds([]);
-        await refreshData();
-        setActiveReq(null);
-        setShowHistory(false);
+        resetHistorySelection();
         setShowDeleteConfirm(false);
-        setDeletingId(null);
+        queueRefresh();
       } else {
-        alert("ลบไม่สำเร็จ: " + json.error);
+        toast.error("ลบไม่สำเร็จ: " + json.error);
       }
     } catch (err: any) {
-      alert("เกิดข้อผิดพลาดขณะลบ: " + err.message);
+      toast.error("เกิดข้อผิดพลาดขณะลบ: " + err.message);
     }
     setSubmitting(false);
+  };
+
+  const toggleDecisionSelection = (decisionId: number) => {
+    setSelectedDecisionIds((prev) => (
+      prev.includes(decisionId)
+        ? prev.filter((id) => id !== decisionId)
+        : [...prev, decisionId]
+    ));
   };
   
   const filteredRequests = useMemo(() => {
     return requests;
   }, [requests]);
 
+  const historyDecisions = activeReq?.decisions || [];
+  const allHistorySelected = historyDecisions.length > 0 && selectedDecisionIds.length === historyDecisions.length;
+
   const sortedRequests = useMemo(() => {
-    let result = [...filteredRequests];
+    const result = [...filteredRequests];
 
     // First priority: Sort by completion (Incomplete first, Complete last)
     result.sort((a, b) => {
@@ -293,7 +420,7 @@ export default function CenterDashboard() {
       setSelectedIds([]);
       await refreshData();
     } catch (err) {
-      alert("Error in bulk dispatch");
+      toast.error("Error in bulk dispatch");
     }
     setSubmitting(false);
   };
@@ -319,7 +446,7 @@ export default function CenterDashboard() {
       const dataReturn = await resReturn.json() as any;
 
       if (!dataDemand.success || !dataReturn.success) {
-        alert("Failed to fetch data for export");
+        toast.error("Failed to fetch data for export");
         return;
       }
 
@@ -380,7 +507,7 @@ export default function CenterDashboard() {
       XLSX.writeFile(wb, fileName);
     } catch (error) {
       console.error("Export Error:", error);
-      alert("เกิดข้อผิดพลาดในการส่งออกข้อมูล");
+      toast.error("เกิดข้อผิดพลาดในการส่งออกข้อมูล");
     } finally {
       setExporting(false);
     }
@@ -676,6 +803,11 @@ export default function CenterDashboard() {
                         </div>
                       </div>
                     )}
+                    {req.fulfilled_qty > 0 && req.fulfilled_qty < req.qty && (
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 mt-1 whitespace-nowrap">
+                        ค้าง: {req.qty - req.fulfilled_qty}
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="px-2 py-4 text-center font-bold text-emerald-600 w-20">
@@ -749,7 +881,7 @@ export default function CenterDashboard() {
                                 </div>
                                 {d.notes && (
                                   <div className="mt-1.5 pt-1.5 border-t border-slate-700 text-slate-300 italic line-clamp-2 text-left whitespace-normal">
-                                    "{d.notes}"
+                                    &quot;{d.notes}&quot;
                                   </div>
                                 )}
                               </div>
@@ -795,7 +927,8 @@ export default function CenterDashboard() {
             <div className="p-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-bold text-slate-800">
-                  {actionType === "DISPATCH" ? "เบิกจ่ายจากคลัง (Dispatch)" :
+                  {editingDecision ? "แก้ไขการดำเนินการ" :
+                   actionType === "DISPATCH" ? "เบิกจ่ายจากคลัง (Dispatch)" :
                    actionType === "CIRCULATE" ? "หมุนเวียนอุปกรณ์ (Circulate)" :
                    actionType === "SUBSTITUTE" ? "สลับสเปก (Substitute)" :
                    actionType === "RECEIVE" ? "รับสินค้าคืน (Receive Return)" :
@@ -803,7 +936,7 @@ export default function CenterDashboard() {
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">{activeReq.item_name} • {activeReq.project} • Demand: {activeReq.qty}</p>
               </div>
-              <button onClick={() => setActiveReq(null)} className="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+              <button onClick={closeActionModal} className="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
             </div>
 
             <form onSubmit={handleSubmitDecision} className="p-6 space-y-5">
@@ -813,13 +946,15 @@ export default function CenterDashboard() {
                   <input 
                     type="number" 
                     min={1} 
-                    max={activeReq.qty - activeReq.fulfilled_qty} 
+                    max={editingDecision ? undefined : activeReq.qty - activeReq.fulfilled_qty}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     value={actionQty}
-                    onChange={e => setActionQty(parseInt(e.target.value))}
+                    onChange={e => setActionQty(parseInt(e.target.value, 10) || 0)}
                     required
                   />
-                  <span className="text-sm text-slate-500 whitespace-nowrap">/ {activeReq.qty - activeReq.fulfilled_qty} (คงเหลือ)</span>
+                  <span className="text-sm text-slate-500 whitespace-nowrap">
+                    {editingDecision ? "แก้ไขจำนวนที่บันทึกไว้" : `/ ${activeReq.qty - activeReq.fulfilled_qty} (คงเหลือ)`}
+                  </span>
                 </div>
               </div>
 
@@ -873,11 +1008,12 @@ export default function CenterDashboard() {
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <button type="button" onClick={() => setActiveReq(null)} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors">ยกเลิก</button>
+                <button type="button" onClick={closeActionModal} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors">ยกเลิก</button>
                 <button type="submit" disabled={submitting} className="px-6 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                   {submitting && <Loader2 className="animate-spin" size={16} />}
                   <span>
-                    {submitting ? "กำลังบันทึก..." : 
+                    {submitting ? "กำลังบันทึก..." :
+                     editingDecision ? "บันทึกการแก้ไข" :
                      actionType === "RECEIVE" ? "ยืนยันการรับคืน" :
                      actionType === "REJECT_RETURN" ? "ยืนยันการปฏิเสธ" : "ยืนยันมติการจัดหา"}
                   </span>
@@ -900,15 +1036,46 @@ export default function CenterDashboard() {
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">{activeReq.item_name} • {activeReq.project}</p>
               </div>
-              <button onClick={() => { setActiveReq(null); setShowHistory(false); }} className="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+              <button onClick={closeHistoryModal} className="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
             </div>
 
             <div className="p-6 max-h-[400px] overflow-y-auto">
-              {activeReq.decisions && activeReq.decisions.length > 0 ? (
+              {historyDecisions.length > 0 ? (
                 <div className="space-y-4">
-                  {activeReq.decisions.map((d: any) => (
+                  <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <label className="flex items-center gap-3 text-sm font-medium text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={allHistorySelected}
+                        onChange={() => setSelectedDecisionIds(allHistorySelected ? [] : historyDecisions.map((decision: any) => decision.id))}
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      เลือกทั้งหมด {historyDecisions.length} รายการ
+                    </label>
+                    {selectedDecisionIds.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPendingDeleteIds(selectedDecisionIds);
+                          setShowDeleteConfirm(true);
+                        }}
+                        className="inline-flex items-center gap-2 rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
+                      >
+                        <Trash2 size={16} />
+                        ลบที่เลือก ({selectedDecisionIds.length})
+                      </button>
+                    )}
+                  </div>
+                  {historyDecisions.map((d: any) => (
                     <div key={d.id} className="p-4 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-start">
-                      <div>
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedDecisionIds.includes(d.id)}
+                          onChange={() => toggleDecisionSelection(d.id)}
+                          className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             d.action_type === 'DISPATCH' ? 'bg-indigo-100 text-indigo-700' :
@@ -925,19 +1092,30 @@ export default function CenterDashboard() {
                         <p className="text-sm text-slate-600">{d.notes || "ไม่มีหมายเหตุ"}</p>
                         <p className="text-[10px] text-slate-400 mt-2">{new Date(d.created_at).toLocaleString('th-TH')}</p>
                       </div>
-                      <button 
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setDeletingId(d.id);
-                          setShowDeleteConfirm(true);
-                        }}
-                        className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
-                        title="ยกเลิกรายการนี้"
-                      >
-                        <Trash2 size={20} />
-                      </button>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openEditDecision(d)}
+                          className="p-2 text-slate-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-all cursor-pointer"
+                          title="แก้ไขรายการนี้"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setPendingDeleteIds([d.id]);
+                            setShowDeleteConfirm(true);
+                          }}
+                          className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                          title="ยกเลิกรายการนี้"
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -947,7 +1125,7 @@ export default function CenterDashboard() {
             </div>
 
             <div className="p-6 border-t border-slate-100 flex justify-end">
-              <button onClick={() => { setActiveReq(null); setShowHistory(false); }} className="px-6 py-2 bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 rounded-lg transition-colors">ปิด</button>
+              <button onClick={closeHistoryModal} className="px-6 py-2 bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 rounded-lg transition-colors">ปิด</button>
             </div>
           </div>
         </div>
@@ -984,11 +1162,13 @@ export default function CenterDashboard() {
       {/* Deletion Confirmation Modal */}
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        onClose={() => { setShowDeleteConfirm(false); setDeletingId(null); }}
-        onConfirm={() => deletingId && handleDeleteDecision(deletingId)}
+        onClose={() => { setShowDeleteConfirm(false); setPendingDeleteIds([]); }}
+        onConfirm={() => handleDeleteDecision(pendingDeleteIds)}
         title="ยกเลิกการดำเนินการ"
-        message="คุณต้องการยกเลิกการดำเนินการนี้ใช่หรือไม่? ระบบจะทำการคืนค่าสต็อกหรือยอดแผนงานให้โดยอัตโนมัติ"
-        confirmText="ยืนยันการลบ"
+        message={pendingDeleteIds.length > 1
+          ? `คุณต้องการยกเลิก ${pendingDeleteIds.length} รายการใช่หรือไม่? ระบบจะคืนค่าสต็อกหรือยอดแผนงานให้อัตโนมัติ`
+          : "คุณต้องการยกเลิกการดำเนินการนี้ใช่หรือไม่? ระบบจะทำการคืนค่าสต็อกหรือยอดแผนงานให้โดยอัตโนมัติ"}
+        confirmText={pendingDeleteIds.length > 1 ? "ยืนยันการลบหลายรายการ" : "ยืนยันการลบ"}
         cancelText="ยกเลิก"
         type="danger"
         isLoading={submitting}
