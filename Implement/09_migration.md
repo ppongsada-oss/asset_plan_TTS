@@ -3,6 +3,17 @@
 > Use this guide when a project already has an older version of the harness installed.
 > Do NOT use for fresh projects — use Track A in `02_setup.md` instead.
 
+## One-command usage
+
+To migrate a project, hand the agent exactly this instruction — nothing else is needed:
+
+> **"Run `Implement/09_migration.md` top to bottom. Do every step (M0 → M5) in order. Do not skip any step. Do not touch `src/`."**
+
+This guide is **self-contained**, **idempotent**, and **vendor-agnostic** (works for any agent, not only Claude):
+- **Self-contained** — M0 clones the current harness source itself. There is no `<placeholder>` to fill in and no second repo to locate by hand.
+- **Idempotent** — safe to run again. Steps already done are detected and skipped; nothing is duplicated or broken.
+- **`src/` is never touched** — only harness files are read and written.
+
 ## When to use
 
 | Signal | Action |
@@ -10,8 +21,49 @@
 | `.agents/skills/` exists but skill files have no `## Trigger` block | → this guide |
 | `knowledge/` indexes have old schema (missing `topics[]`, `backlinks[]`) | → this guide |
 | `.sessions/` has `chat_tokens.md` instead of `session_tokens.md` | → this guide |
+| `.agents/platform/detected.md` has stale model IDs / old `token_formula` from a prior harness | → this guide (M2.4 re-detects it) |
 | Tree structure doesn't match `REPO_MAP.md` | → this guide |
 | Harness files present but 08_checklist fails ≥3 sections | → this guide |
+
+---
+
+## M0 — Preflight (run first · resolves source + skips redundant work)
+
+Every copy step below needs the *current* harness files to copy from. M0 fetches them and decides how much work is actually required. **Run this before M1.**
+
+### M0.1 · Clone the current harness source
+
+```bash
+HARNESS_SRC=$(mktemp -d)
+git clone --depth 1 https://github.com/ppongsada-oss/Codeing_harness_killer.git "$HARNESS_SRC"
+echo "✓ source cloned to $HARNESS_SRC"
+```
+
+> `$HARNESS_SRC` is the single source of truth used by every `cp` step below. Keep this shell session open for the whole migration so the variable stays set. If the clone URL ever changes, edit it **here only**.
+
+### M0.2 · Version check — skip redundant file-copy
+
+```bash
+SRC_VER=$(grep "^harness_version:" "$HARNESS_SRC/VERSION" 2>/dev/null | awk '{print $2}')
+DST_VER=$(grep "^harness_version:" ./VERSION 2>/dev/null | awk '{print $2}')
+if [ -n "$DST_VER" ] && [ "$SRC_VER" = "$DST_VER" ]; then
+  SKIP_COPY=1; echo "Already current ($DST_VER) → SKIP framework copy (M2/M3); still run M1 + M4"
+else
+  SKIP_COPY=0; echo "Upgrade: ${DST_VER:-none} → ${SRC_VER:-?} → run all steps"
+fi
+echo "SKIP_COPY=$SKIP_COPY"
+```
+
+- `SKIP_COPY=1` → the framework is already current: **skip the M2/M3 file-copy**, but still run **M1** (re-index project state) and **M4** (verify).
+- `SKIP_COPY=0` → run every step M1–M5.
+
+### M0.3 · Run contract (hard rules for the whole migration)
+
+- Run **top to bottom: M0 → M1 → M2 → M3 → M4 → M5**. Do not reorder.
+- **Idempotent** — every step checks before writing, so re-running is always safe.
+- **Never touch** `src/`, `db_migrations/`, or user data in `knowledge/index_*.json` beyond the M1 re-index scripts.
+- **`detected.md` is ALWAYS re-detected, never preserved or copied** — M2.4 resets it and the agent re-runs B4 inline this run, so stale model IDs / `token_formula` from the old harness are discarded (this is the one harness file that is machine-specific — see M2.4).
+- **Last copy step stamps the version:** after M3 completes, run `cp "$HARNESS_SRC/VERSION" ./VERSION` so the next migration's M0.2 detects "already current".
 
 ---
 
@@ -112,9 +164,25 @@ If JSON invalid → inspect + fix manually. Expected schema per entry:
 }
 ```
 
+### M1.5 · Regenerate indexes, code graph + REPO_MAP (inline — no cross-file pointer)
+
+Run the idempotent regenerators (safe to re-run — they rebuild from the current files on disk):
+
+```bash
+python3 scripts/backlink_analyzer.py      # index_files.json + related[]/backlinks[]
+python3 scripts/symbol_indexer.py         # index_variables.json (cross-file symbols)
+python3 scripts/code_graph.py --write      # imports[]/imported_by[] hard import edges
+python3 scripts/rule_indexer.py           # rules_defined[]/rules_referenced[]
+python3 scripts/repo_map_check.py --sync   # REPO_MAP.md AUTO structure block (folders + counts)
+```
+
+Verify: `python3 -c "import json; json.load(open('knowledge/index_files.json'))"` exits 0 (valid JSON).
+
 ---
 
 ## M2 — Re-structure Harness Tree
+
+> If `SKIP_COPY=1` (M0.2 said "already current"), you may skip M2–M3 and jump to M4. Otherwise run every step.
 
 ### M2.1 · Required directories
 
@@ -143,29 +211,51 @@ echo "✓ session files checked"
 
 ```bash
 [ -f docs/session_templates/mece_plan_schema.md ] \
-  && echo "✓ mece_plan_schema.md present" \
-  || echo "MISSING — copy from current harness repo: docs/session_templates/mece_plan_schema.md"
+  || cp "$HARNESS_SRC/docs/session_templates/mece_plan_schema.md" docs/session_templates/mece_plan_schema.md
+echo "✓ mece_plan_schema.md present"
 ```
 
-If missing: copy the file from the current harness version source.
+### M2.4 · Platform detected.md — FORCE re-detection (never preserve stale values)
 
-### M2.4 · Platform detected.md
+> `detected.md` is **machine/provider-specific** — it holds the model IDs + `token_formula` for THIS
+> install. An old harness's copy carries **stale** values, and boot-time B4 will NOT refresh a file
+> whose `platform:`/`api_provider:` are already filled (B4 re-detects only when they are `unknown`/missing).
+> So migration MUST re-detect it **inline** — never copy it from `$HARNESS_SRC`, never blindly keep the old one.
 
 ```bash
-[ -f .agents/platform/detected.md ] \
-  && echo "✓ detected.md present" \
-  || echo "platform: unknown" > .agents/platform/detected.md && echo "created blank detected.md"
+# Back up the old values, then reset detection fields so the agent re-detects fresh THIS run
+if [ -f .agents/platform/detected.md ]; then
+  cp .agents/platform/detected.md .agents/platform/detected.md.bak
+  echo "✓ backed up old detected.md → detected.md.bak"
+fi
+printf "platform: unknown\napi_provider: unknown\n" > .agents/platform/detected.md
+echo "→ detected.md reset to unknown — agent MUST run B4 NOW (not next boot)"
 ```
 
-B4 will auto-detect and fill on next boot.
+**Agent action (mandatory · do NOT defer to next boot):** run **B4** from `AGENTS.md §Boot` right now —
+the platform probe (list tools → map platform) **and** the provider sub-probe (steps 1-3:
+platform→provider, else model-id heuristic) — then write the **full** `detected.md` with every field
+filled from `## Known Provider Profiles` (model_high/medium/low · api_provider · cache_mechanism ·
+context_cliff_tokens · token_formula · cache_write_cost). Never hardcode model IDs.
+
+Verify:
+```bash
+grep -E "^platform:|^api_provider:|^token_formula:|^model_(high|medium|low):" .agents/platform/detected.md
+# → no value may be "unknown" after B4 runs
+[ -f .agents/platform/detected.md.bak ] && diff .agents/platform/detected.md.bak .agents/platform/detected.md
+# → shows exactly which stale values (model IDs / token_formula) were refreshed
+```
 
 ### M2.5 · Required scripts (incl. current hook + index automation)
 
 ```bash
+# Copy the whole harness scripts/ dir (idempotent — overwrites with current versions)
+mkdir -p scripts
+cp "$HARNESS_SRC/scripts/"*.py "$HARNESS_SRC/scripts/"*.sh scripts/ 2>/dev/null
 ls scripts/ | grep -E "lookup.py|session_indexer.py|symbol_indexer.py|backlink_analyzer.py|code_graph.py|index_reconcile.py|repo_map_check.py|rule_indexer.py|posttool_track.py|compact_reset.py|verify_runner.py|safe_run.py|trim_exec_log.py"
 ```
 
-Missing scripts → copy from current harness repo `scripts/` directory. Full purpose + trigger of each: Implement/05_scripts.md §9.
+Full purpose + trigger of each script: Implement/05_scripts.md §9.
 
 ### M2.6 · Re-wire hooks (.claude/settings.json)
 
@@ -183,7 +273,7 @@ Must list all 5. Missing any → copy the matching hook block from the current h
 
 ## M3 — Update / Overwrite Skills + Config
 
-> Strategy: overwrite all harness files with current versions. Preserve `src/`, user data, session history.
+> Skip this whole section if `SKIP_COPY=1` (M0.2). Otherwise: overwrite all harness files with current versions from `$HARNESS_SRC`. Preserve `src/`, user data, session history.
 
 ### M3.1 · Files to OVERWRITE (copy from current harness)
 
@@ -192,7 +282,7 @@ CLAUDE.md                              ← full overwrite (not src-specific)
 AGENTS.md                              ← full overwrite
 CODING_FAILURE_PATTERNS.md            ← merge: keep user's existing CFPs, append new ones
 INVARIANTS.md                          ← merge: keep §I2 user rules, overwrite §I1 harness rules
-REPO_MAP.md                            ← regenerate (run auto-discovery step in 02_setup.md §8 Step 2.5)
+REPO_MAP.md                            ← regenerate via M1.5 (scripts/repo_map_check.py --sync) — do not hand-copy
 .agents/skills/*/SKILL.md             ← overwrite each (behavioral contract format required)
 .agents/skills/skill-manifest.json    ← overwrite
 .agents/skills/registry.md            ← overwrite
@@ -220,7 +310,7 @@ For each SKILL.md:
 wc -l .agents/skills/<skill_name>/SKILL.md
 
 # Overwrite with current version (copy from harness repo)
-cp <harness_repo>/.agents/skills/<skill_name>/SKILL.md .agents/skills/<skill_name>/SKILL.md
+cp $HARNESS_SRC/.agents/skills/<skill_name>/SKILL.md .agents/skills/<skill_name>/SKILL.md
 
 # Verify 5-element behavioral contract intact
 grep -c "## Trigger\|## Refusal\|## Workflow\|## Output Contract\|## Routing" \
@@ -241,9 +331,9 @@ Create directories + copy SKILL.md + SKILL_detail.md for each:
 ```bash
 for skill in harness_editor harness_doctor session_manager; do
   mkdir -p .agents/skills/$skill
-  cp <harness_repo>/.agents/skills/$skill/SKILL.md .agents/skills/$skill/SKILL.md
-  [ -f <harness_repo>/.agents/skills/$skill/SKILL_detail.md ] && \
-    cp <harness_repo>/.agents/skills/$skill/SKILL_detail.md .agents/skills/$skill/SKILL_detail.md
+  cp $HARNESS_SRC/.agents/skills/$skill/SKILL.md .agents/skills/$skill/SKILL.md
+  [ -f $HARNESS_SRC/.agents/skills/$skill/SKILL_detail.md ] && \
+    cp $HARNESS_SRC/.agents/skills/$skill/SKILL_detail.md .agents/skills/$skill/SKILL_detail.md
   echo "✓ $skill installed"
 done
 ```
@@ -263,6 +353,15 @@ grep -c "^## CFP-" CODING_FAILURE_PATTERNS.md
 # Append new CFPs from current harness (manually copy entries not already present)
 # Identify by CFP-ID — never duplicate
 ```
+
+### M3.6 · Stamp the version (last copy step)
+
+```bash
+cp "$HARNESS_SRC/VERSION" ./VERSION
+echo "✓ stamped $(grep '^harness_version:' ./VERSION)"
+```
+
+This makes the next migration's M0.2 detect "already current" and skip redundant copies.
 
 ---
 

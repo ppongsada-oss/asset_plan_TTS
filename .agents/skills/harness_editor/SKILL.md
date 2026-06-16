@@ -29,6 +29,9 @@ description: >
 - Minimal diff discipline. Add only what is absent. Do not rewrite working sections to "clean them up" — that destroys audit trail and creates merge risk with no upside.
 - Discipline over enforcement. Prefer Operating Stance and Signal Contracts for judgment calls. Reserve BCs strictly for actions that cause irreversible damage when skipped. A BC for a style preference is over-engineering.
 - Audit before adding. Before inserting a new BC or rule, run BC Selection Guide (§BC Selection Guide) to confirm tier. If the check passes Signal Contract, write a Signal Contract — not a BC.
+- Write for the auditor's bar. Every SKILL.md you produce must pass the 9arm framework + `knowledge/audit_engine_rubric.md` stance — that bar is the design target, not a post-hoc check. The point of a skill is to make the agent execute simply and directly: no step the agent must infer, no instruction that contradicts another.
+- Minimal output, not only minimal diff. The skill you produce must itself be minimal — smallest scope that works, no prose bloat, reuse existing structure (Operating Stance · Signal Contract · Hard Rules) over adding parallel sections. Complexity written into a skill becomes inference burden on every agent that runs it.
+- Single front-door for new skills. The bundled `skill-creator` plugin may scaffold a draft only; a draft becomes a project skill ONLY after passing through harness_editor — auditor bar (above) + R8 index wiring (backlink · index_files · skill-manifest · REPO_MAP). Reuse its *ideas* (progressive disclosure · structural validate · description tuning), never its files: the plugin is global, overwritten on update, and not wired to this project's index or gates.
 
 ## When NOT to Use
 - Target file is under `src/` only (no harness file touched) → delegate to `coder` or `editor` · do not invoke harness_editor for application code
@@ -84,7 +87,7 @@ grep "\[/\] T-" docs/master_roadmap.md                          # task tracked [
 
 ### Stage 3 · EDIT  (per Behavior Contracts)
 - `[pre-edit] Symbol:<name> · file:<path>` before every Edit
-- Targeted Edit only (grep the line first) — never a full-file rewrite on existing content
+- Targeted Edit only (grep the line first) — never a full-file rewrite on existing content (canonical: Hard Rules §1)
 - `[✓ written]` + grep verify immediately after each change
 - SKILL.md edit: after the change confirm all 8 framework components survive — grep the file's ACTUAL section headers (read them first; never assume fixed names like "## Trigger")
 
@@ -221,6 +224,7 @@ Pick the **lowest tier** that enforces the rule. Ask in order — stop at first 
 - File Size Contract: ≤200L 🟢 · 201-250L 🟡 (SKILL_detail.md required) · >250L 🔴 HALT+split
 - harness_flow_20260526.md + affected Implement/ MUST be updated in same task (Stage 4)
 - [harness-edit-done] emit required before returning to orchestrator
+- canonical for the signals + thresholds above = Workflow Stage 1–3 + Hard Rules (also mirrored in Implement/04_skills.md) — on any change edit the canonical + regenerate this block · never let copies drift
 ```
 
 ## Hard Rules

@@ -23,14 +23,19 @@ description: >
 
 ## Overview
 Analyzes any web app project codebase → generates interlinked HTML manual pages
-served at `/doc/manual` within the target project → produces a Playwright screenshot
-capture script → optionally exports to PDF via `pdf` skill.
+produces a Playwright screenshot capture script → optionally exports to PDF via `pdf` skill.
 
-Outputs:
-- `<project>/public/doc/manual/index.html` — overview + flow diagram
-- `<project>/public/doc/manual/<role>.html` — one page per role / feature group
-- `<project>/scripts/capture_manual.py` — Playwright script to capture all screenshots
-- `<project>/public/doc/manual/assets/` — screenshots named by convention
+> **Scope rule (hard):** doc_builder NEVER writes inside the target project tree. It only
+> *reads* (scans) the project source, and writes ALL of its own output to a separate
+> `doc_output/<project_name>/` root that lives OUTSIDE the target project. `<project_name>` =
+> the basename of the scanned project root. The target project's `src/` and files are
+> strictly read-only — the skill adds nothing to the customer's repo.
+
+Outputs (all under the external `doc_output/<project_name>/` root — never inside the project):
+- `doc_output/<project_name>/manual/index.html` — overview + flow diagram
+- `doc_output/<project_name>/manual/<role>.html` — one page per role / feature group
+- `doc_output/<project_name>/capture_manual.py` — Playwright script to capture all screenshots
+- `doc_output/<project_name>/manual/assets/` — screenshots named by convention
 
 ## Trigger
 Use this skill when the user says any of:
@@ -70,6 +75,15 @@ Also trigger when: user wants to sell / demo / onboard users to a web app projec
 - Role-driven structure. Every page maps to a real user role or cross-role task — do not create pages for technical modules, DB schemas, or implementation details unless the user explicitly requests them.
 - Minimal scope. Produce only what the target project actually has — do not invent features, roles, or pages not evidenced in the codebase scan.
 
+## Model Routing (the understanding phase must be COMPLETE before building)
+The phases that REASON about the project — §1 Analyze, §2 Storyboard, and the Grounding Gate — run on
+**model_medium as a floor, escalating to model_high for large or multi-role projects** (many routes,
+>5 roles, or unclear architecture). This is deliberate: a weak model skims and invents, which is the
+root cause of "the manual describes features the project doesn't have." Treat §1/§2 like a MECE plan
+that must be thorough and confirmed *before* any HTML is written — not a quick skim.
+Only the mechanical, fully-specified steps (running the capture script, writing finalized HTML from a
+confirmed storyboard, PDF export) may use a lower tier. **Never route §1/§2/Grounding to model_low.**
+
 ## §1 · Analyze Project
 
 **Goal:** understand what the system does, its roles, permissions, and feature map.
@@ -79,7 +93,33 @@ Steps:
 2. Scope probe: `find <project_root>/src -name "*.ts" -o -name "*.tsx" -o -name "*.py" | wc -l`
    - ≥5 files → spawn `Explore` agent (≤500 tok summary) · <5 → inline grep
 3. G1 scan — one Bash call: routes · roles/permissions · features (→ detail: **SKILL_detail.md §1-scan**)
-4. Build System Map: name · type · roles · pages-per-role · flow — emit `[✓ system-map]` · confirm before §2
+4. Build System Map: name · type · roles · pages-per-role · flow — **every entry carries a `source:` (a route string or `file:line` from the scan)** — emit `[✓ system-map]` · confirm before §2
+
+## Grounding Gate (hard — no evidence = no write)
+Every fact that reaches the manual (a role, a page, a feature, a flow step, a button label) MUST trace
+back to a real hit in the §1 scan. The skill describes only what it actually found — never what a
+typical app *probably* has.
+- **Each System Map row needs a `source:`** — a route (`/admin/users`) or `file:line` from the scan.
+  A row with no source is not allowed into the map.
+- **§6 build emits mapped facts only.** Before writing any page, re-check each claim against the
+  confirmed System Map. A claim with no backing entry → do NOT write it → emit
+  `[grounding-drop] <claim> · reason: no scan source` and skip it.
+- **Verify-back step (before `[✓ doc-builder-done]`):** grep every page/role/feature name in the
+  generated HTML against the scan output. Any name with zero scan hits → flag + remove or ask user.
+- If the scan is too thin to ground a section, say so plainly — do not fill the gap from assumption.
+
+## Coverage Gate (hard — every scanned feature must be documented)
+The inverse twin of the Grounding Gate: Grounding blocks EXTRA (invented) content; Coverage blocks
+MISSING content. Every role, route, and feature found in the §1 scan MUST appear somewhere in the manual.
+- **§1 builds a full Coverage Inventory** — one row per role / route / feature found in the scan, each
+  with its `source:` and a `documented_in:` slot (the page/section that will cover it, filled during §2).
+  Nothing in the scan may be left without a planned home. Emit `[✓ coverage-inventory] items: <N>`.
+  (row format → **SKILL_detail.md §1-scan · Coverage Inventory table**)
+- **Verify-back step (before `[✓ doc-builder-done]`):** count documented-vs-inventory — walk every
+  inventory item and confirm it has a real page/section in the generated HTML. Any item with no
+  coverage → emit `[coverage-gap] <item> · source: <scan src>` → halt and ask the user (add the page,
+  or confirm a deliberate omission). Never close with a silent gap.
+- A feature shared by >1 role counts as covered once it has its single canonical section (see cross-role rule).
 
 ## §2 · Storyboard HTML Pages
 
@@ -87,14 +127,25 @@ Steps:
 
 Page architecture:
 ```
-index.html          — Overview: system name · flow diagram · role cards (links to role pages)
-<role>.html         — Per-role: features list · flow steps · screenshots placeholder
-shared/<task>.html  — Cross-role tasks: accessible by multiple roles → hyperlinked from role pages
+index.html               — Overview: system name · flow diagram · role cards (links to role pages)
+<role>.html              — Per-role: features list · flow steps · screenshots placeholder.
+                           A feature shared by >1 role lives ONCE here in its owner role page, marked
+                           with an id="<feature-id>" anchor; other roles deep-link to it (new tab).
+<role>_<task>_steps.html — Step-by-step walkthrough: customer-followable guide for one task
 ```
 
 Rules:
 - Each role gets exactly 1 HTML page
-- Tasks accessible by >1 role → write in primary role page · hyperlink from others
+- **Step-by-step walkthrough pages (the customer-followable format — F5):** for each key task,
+  build a numbered walkthrough where **1 step = exactly 1 instruction + 1 screenshot**. The reader
+  completes the task by looking at each step's image and doing what its single sentence says — no
+  step bundles two actions. Steps are numbered (Step 1, Step 2, …); each `<img>` is that one step's
+  screenshot, named `<role>_<task>_step<NN>.png` (zero-padded, so the order is unambiguous).
+- **Cross-role single source of truth:** a task/feature used by >1 role is written ONCE in its **owner**
+  role page (owner = the most-relevant / most-used role — the agent decides), with an `id="<feature-id>"`
+  anchor on that section. Every other role links to it with `<a href="<owner>.html#<feature-id>"
+  target="_blank">` — opens a NEW TAB and jumps straight to that section. Other roles get the link only,
+  never a copy of the content.
 - Every page has: header (system name + nav) · breadcrumb · footer (PDF export button)
 - Flow diagrams: ASCII or Mermaid (inline `<pre class="mermaid">`)
 - Screenshot placeholders: `<img src="assets/<name>.png" alt="<desc>">` — named in §3
@@ -128,27 +179,28 @@ Stop conditions:
 - Missing prerequisite → emit `[doc-builder-refused]` · halt immediately
 - User rejects system-map or storyboard → revise · do NOT advance to next §
 - Playwright capture fails → halt · do NOT call `pdf` skill on incomplete captures
+- Runaway iteration → see **Loop Guard** below · emit `[doc-builder-eject]` · halt + ask user
+
+## Loop Guard (hard — bounded + ejectable)
+doc_builder must never loop forever. Every step that can repeat (re-scanning, re-storyboarding after
+rejection, retrying a failed capture, regenerating a page) is bounded and can eject.
+- **Max iterations per step = 3.** A 4th attempt at the same step is not allowed — eject instead.
+- **Read `[token-state]` Loop_W at the start of every retry cycle.** If `Loop_W > 50`, do not start
+  another cycle — eject.
+- **Early-eject:** on hitting the iteration cap OR the Loop_W threshold, STOP immediately and emit:
+  `[doc-builder-eject] reason: <runaway|loop_w-high> · step: <§N> · attempts: <N> · Loop_W: <N>`
+  then ask the user "ทำต่อ / ข้ามขั้นนี้ / ยกเลิก?" and WAIT — never silently retry past the cap.
+- The eject is a hard halt: no file writes, no `pdf` call, no further capture after it fires.
 
 ## Output Tone
-Keep:   `[✓ system-map]` signal + role list + page count · `[doc-builder-refused]` + reason
-Strip:  internal deliberation ("I'll now scan...") · apologies for missing features · hedging ("this might not be complete")
-Format: `[✓ system-map] roles: <N> · pages: <N> · confirmed: yes` — signal first, counts second
-Prohibited: "Here's what I found so far..." · "I wasn't able to identify all roles but..." · "This is a rough draft of the manual structure"
-
-## Tone Guide
-Keep:
-- Doc type label (e.g. "User Manual · Admin Guide · API Reference")
-- Target audience statement (e.g. "Audience: end-users · role: admin")
-
-Strip:
-- "I'll generate..." preamble before delivering content
-- "Feel free to..." filler phrases at end of response
-- Hedging openers ("This might not cover everything...")
-
-Format:
-- Structured markdown with headers (`##`, `###`)
-- Signal-first: emit `[✓ system-map]` or `[doc-builder-refused]` before prose
-- Never wrap deliverables in conversational padding
+Keep:   `[✓ system-map]` signal + role list + page count · `[doc-builder-refused]` + reason ·
+        doc-type label ("User Manual · Admin Guide") · target-audience statement ("Audience: admin")
+Strip:  internal deliberation ("I'll now scan…") · "I'll generate…" preamble · "Feel free to…" filler ·
+        apologies for missing features · hedging openers ("this might not be complete / cover everything")
+Format: signal-first — emit `[✓ system-map]` / `[doc-builder-refused]` before any prose ·
+        `[✓ system-map] roles: <N> · pages: <N> · confirmed: yes` · structured markdown headers ·
+        never wrap deliverables in conversational padding
+Prohibited: "Here's what I found so far…" · "I wasn't able to identify all roles but…" · "This is a rough draft…"
 
 ## Hard Rules
 - Never write any HTML file before `[✓ system-map]` is confirmed by user — §1 gate is mandatory, not advisory.
@@ -156,9 +208,10 @@ Format:
 - Never invent roles or features not evidenced in the codebase scan — every role page must trace to a real route or permission group.
 - Never run Playwright capture before all HTML placeholders are finalized — screenshots of incomplete pages waste capture budget.
 - Never omit the PDF export button — every page footer requires `<button onclick="window.print()">Export PDF</button>`.
-- Never produce a manual with >1 canonical page per role — cross-role tasks get one page with links from others, not duplicated content.
+- Never duplicate a shared feature across roles — a feature used by >1 role is written ONCE in its owner role page (owner = most-relevant/most-used, agent's call) with an `id="<feature-id>"` anchor; other roles get a `target="_blank"` deep link (`<owner>.html#<feature-id>`) opening a new tab on that exact section — single source of truth.
 - Never call `pdf` skill without user confirming all screenshot captures are complete first.
 - Quality heuristic: if §1 scan finds >15 distinct roles, group into role families (admin/user/system) before §2 — a 15-page manual with no grouping is unnavigable.
+- Screenshot naming: reference shots `<role>_<feature>_<state>.png` (e.g. `admin_users_list.png`) · walkthrough shots `<role>_<task>_step<NN>.png` (zero-padded). Append `<button onclick="window.print()">Export PDF</button>` to every page footer.
 
 ## Output Contract
 - Every response that creates a file MUST emit `[✓ written] <path>` after the write
@@ -167,9 +220,5 @@ Format:
 - Final deliverable includes: HTML pages + Playwright script + asset directory listing
 - No response ends with filler ("Let me know if you need changes!") — end with signal or next-step prompt
 
-## MECE Constraints Block
-- Always confirm system-map with user before writing any HTML (§1 gate)
-- Page storyboard must be user-confirmed before screenshot plan (§2 gate)
-- Playwright script runs AFTER all HTML placeholders finalized (§4 after §5)
-- Screenshot naming: `<role>_<feature>_<state>.png` (e.g. `admin_users_list.png`)
-- PDF hook: append `<button onclick="window.print()">Export PDF</button>` to every page footer
+<!-- MECE Constraints Block merged into Hard Rules + Output Contract (S6 dedup · F6 fix) -->
+<!-- §1/§2 gates → Hard Rules · screenshot naming + PDF footer → Hard Rules · write/refusal signals → Output Contract -->>

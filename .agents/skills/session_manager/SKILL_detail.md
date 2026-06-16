@@ -125,12 +125,15 @@ Advisory only — does NOT block current task. Does NOT write to any file at ses
     "ทำเลย" / "yes" → run self_improve §Section 4 · then proceed to Step 1
 ```
 
-### Step 1 — Find and close current session JSON
+### Step 1 — Write the rich session detail file
 ```
-Bash: ls -t .sessions/session_*.json | head -1    → identify active session file
-Read: active session file
-Edit: set "status": "completed"
-Edit: write "summary_context": "<what was accomplished this session>"
+Bash: python3 scripts/session_close.py --task "<task>" --next "<next>" [--summary "<what was accomplished>"]
+      → creates a NEW next-numbered .sessions/session_NNN.json (find_next_session_id = max+1 · never edits an old one)
+      → the detail file is the RICH source of truth: files_changed (from git), task_ids, skill, date, summary
+      → also runs session_indexer.py to refresh the thin index_sessions.json pointer
+Note: you usually do NOT run this by hand — the Stop-hook reconciler (index_reconcile.py) auto-fires
+      `session_close.py --record-only` once when active_thread phase==done and the task is not yet recorded
+      (guarded + idempotent · no token reset). Run it manually only to force-close mid-flow.
 ```
 
 ### Step 2 — Reset session_tokens.md
@@ -192,7 +195,7 @@ Verify: grep -c "session_<NNN>" knowledge/index_sessions.json → ≥1
 ### Step 6 — Confirm to user
 ```
 ✅ Session ปิดแล้วครับ — ไฟล์ที่บันทึก:
-· .sessions/session_<NNN>_<topic>.json → status: completed
+· .sessions/session_<NNN>.json → status: completed (next-numbered · no topic suffix)
 · .sessions/session_tokens.md → SESSION_TOTAL: ~<N>k
 · .sessions/active_thread.md → phase: done
 · .sessions/session_handoff.md → next: <summary>

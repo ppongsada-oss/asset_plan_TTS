@@ -181,6 +181,48 @@ def execute_regen(regen):
     return results
 
 
+def session_close_guard(dry_run=False):
+    """T-199: auto-heal session close at Stop, the same rhythm as backlink/symbol/repo_map.
+
+    Fire session_close.py --record-only ONCE when active_thread phase==done AND no
+    session_*.json detail file yet records this task. The 'already recorded?' check is
+    the guard — it makes the call idempotent (re-run every turn = no-op, no spam) and
+    --record-only means NO token reset / handoff rewrite. Fail-safe: never blocks close.
+    """
+    try:
+        at = os.path.join(REPO, ".sessions", "active_thread.md")
+        if not os.path.exists(at):
+            return ["[session-close-skip] no active_thread.md"]
+        phase = task = None
+        with open(at, encoding="utf-8") as fh:
+            for line in fh:
+                if line.startswith("phase:"):
+                    phase = line.split(":", 1)[1].strip()
+                elif line.startswith("task:"):
+                    task = line.split(":", 1)[1].strip()
+        if phase != "done":
+            return [f"[session-close-skip] phase={phase or 'unknown'} — not done"]
+        if not task:
+            return ["[session-close-skip] no task in active_thread.md"]
+        # guard: already recorded in a detail file? → no-op (idempotent)
+        for p in glob.glob(os.path.join(REPO, ".sessions", "session_*.json")):
+            try:
+                with open(p, encoding="utf-8") as fh:
+                    if json.load(fh).get("task", "").strip() == task:
+                        return [f"[session-close-skip] already recorded: {task[:50]}"]
+            except (OSError, ValueError):
+                continue
+        if dry_run:
+            return [f"[session-close-fire] would record (dry-run): {task[:50]}"]
+        r = subprocess.run(
+            ["python3", "scripts/session_close.py", "--record-only", "--task", task],
+            cwd=REPO, capture_output=True, text=True, timeout=30)
+        status = "ok" if r.returncode == 0 else f"exit {r.returncode}"
+        return [f"[session-close-fire] recorded ({status}): {task[:50]}"]
+    except Exception as exc:  # noqa: BLE001 — fail-safe: never crash a Stop hook
+        return [f"[session-close-error] {exc} — skipped (close not blocked)"]
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true",
@@ -190,6 +232,10 @@ def main():
     args = ap.parse_args()
     try:
         drift, regen = reconcile()
+        # T-199: auto-heal session close (guarded · idempotent) — runs even when the
+        # index is clean, since a no-file-change session still needs its record.
+        for line in session_close_guard(dry_run=args.dry_run):
+            print(line)
         if not drift and not regen:
             print("[index-clean] no index drift detected this session")
             return 0

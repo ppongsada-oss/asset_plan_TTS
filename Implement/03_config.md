@@ -76,6 +76,7 @@ Each turn (in order):
    · bucket fields required — write 0 if value unknown (never omit fields from schema)
 4. Footer: `*(Turn: N · Loop_W: N | Session: ~NNNk | Chat: ~NNNk tokens)*` · if SESSION_TOTAL >5k add `[sys:Nk tools:Nk hist:Nk out:Nk]`
    · Turn 1 with [compact-restore]: hook fires pre-B1 → use B1-written session_tokens.md values, not hook pre-B1 values
+   · ⚠️ Mid-turn live read (CFP-041): `[token-state]` is a **start-of-turn / prior-turn-end snapshot** — it does NOT include the current turn's tool I/O, so it lags reality by up to 1 turn. The PostToolUse hook writes the running total to `session_tokens.md` DURING the turn, so at any mid-turn DECISION point (compact_checkpoint · an R3/C0.5 threshold · before continuing past a checkpoint on a heavy-tool turn ≥5 calls / clone / bulk-copy) grep LIVE `.sessions/session_tokens.md` instead of reusing the snapshot — **main-context turns ONLY** (subagents overwrite that file). The footer value stays the start-of-turn total and is labelled as such (CLAUDE.md §R1 + AGENTS.md §C0.5 / §Compact-check). Detection: single-turn CHAT jump >40k between consecutive [token-state] reports.
 
 **Spike Detection — 6 alert types:**
 | Alert | Condition | Emit |

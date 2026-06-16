@@ -560,3 +560,12 @@ Detection: [compact-STOP] repeats with ~identical CHAT across ≥2 turns; OR a /
 topic: token-tracking
 count: 0
 recurrences: []
+
+## CFP-041 · [token-state] Is a Turn-Boundary Snapshot — Mid-Turn Decisions Use Stale Numbers
+Symptom: The [token-state] line the agent trusts is surfaced by the UserPromptSubmit hook only at the START of each turn, so it reflects the PRIOR turn's END total. The PostToolUse hook updates session_tokens.md live DURING the turn, but the agent keeps making token decisions (compact_checkpoint, R3/C0.5 thresholds, footer) off the stale start-of-turn value. On a heavy-tool turn (clone / bulk copy / many reads) the real growth is invisible until the next turn. T-207 migration: agent judged "CHAT ~50k, continue" at the post-S2 compact_checkpoint while the turn actually crossed the 120k ceiling — only seen next turn as a single jump 47k→128k. Display lags reality by exactly 1 turn (user-observed, confirmed).
+Root: [token-state] is a turn-boundary snapshot treated as if it were a live gauge. No mid-turn re-read of the live PostToolUse-updated session_tokens.md at decision points; footer prints prior-turn-end without labelling it as such, so it reads as "current".
+Prevention: (a) at ANY mid-turn token decision point (compact_checkpoint · R3/C0.5 threshold check · before continuing a heavy-tool turn) → grep .sessions/session_tokens.md for the LIVE value, do NOT reuse the start-of-turn [token-state]; (b) footer value labelled explicitly "start-of-turn / prior-turn total (this turn's tool I/O not yet counted)"; (c) heavy-tool turns (≥5 tool calls OR clone/bulk-copy) force one mid-turn live re-check before proceeding past a checkpoint.
+Detection: single-turn CHAT jump >40k between consecutive [token-state] reports; OR a compact_checkpoint / threshold decision made on a turn that then ran ≥5 tool calls with no mid-turn live re-check emitted.
+topic: token-tracking
+count: 0
+recurrences: []
