@@ -1,77 +1,119 @@
 # CLAUDE.th.md — คู่มือสำหรับ User (Asset Plan)
 
 > ไฟล์นี้เป็นเวอร์ชันภาษาไทยสำหรับ user อ่านทำความเข้าใจเท่านั้น
-> Claude ใช้ CLAUDE.md (English) เป็นต้นฉบับ — ไม่อ่านไฟล์นี้
+> **Claude ใช้ CLAUDE.md (English) เป็นต้นฉบับเสมอ** — ถ้า R-number ขัดแย้งกัน CLAUDE.md ชนะ
+> ⚠️ R-numbers ที่แสดงด้านล่างตรงกับ CLAUDE.md ทุก rule (R1–R18)
 
 ---
 
 ## ทำไมถึงมี Rules เหล่านี้?
 
 CLAUDE.md ควบคุมพฤติกรรมของ Claude ใน Asset Plan โดยเฉพาะ
-มี 2 ชั้น: Global rules (R1-R10) + Project-specific rules (R4, R6, R7)
 
 ---
 
 ## Boot Sequence
 ทุก session Claude จะ:
-1. ดู session ล่าสุดใน .sessions/ ว่างานค้างอะไรอยู่
-2. เช็ค roadmap ว่า task ถัดไปคืออะไร
-3. แจ้งสถานะบรรทัดแรกก่อนทำงาน
+1. อ่าน `.sessions/active_thread.md` → ถ้า `phase: in_progress` ต่องานเก่าทันที
+2. อ่าน `skill-manifest.json` → match intent → identify skill path → โหลด SKILL.md
+3. แจ้งสถานะ `[Boot]` บรรทัดแรกก่อนทำงาน
 
 ---
 
-## R1 · Token Footer
-Claude แสดง `*(Session output: ~NNN tokens)*` ท้ายทุก response
-ตัวเลขสะสมตั้งแต่ต้น session และเขียนลง `.sessions/session_tokens.md` ทุกครั้ง
-- เมื่อเห็นใกล้ 15k → เตรียมรับคำเตือน
-- เมื่อเห็นใกล้ 30k → เตรียม /clear
-- หลัง /clear ทุกครั้ง: ล้างไฟล์กลับเป็น SESSION_OUTPUT_TOTAL: 0
+## Loop Architecture — 3 Phases
+งานทุกชิ้นผ่าน 3 เฟส:
+
+| เฟส | ชื่อ | สิ่งที่ทำ |
+|---|---|---|
+| 1 | Info Gather | ค้นหาบริบทผ่าน index ก่อนอ่านไฟล์จริง |
+| 2 | MECE Plan | สร้างแผน → เขียน `.sessions/mece_plan.md` → รอ user confirm |
+| 3 | Execution | REACT LOOP ตามขั้นตอนด้านล่าง |
+
+**Phase 3 REACT LOOP (ทำซ้ำต่อ section):**
+0. **MARK START** → อัปเดต `mece_plan.md`: section นี้ `[ ]` → `[/]` ก่อน tool call แรก
+1. TOKEN CHECK: SESSION > 60k? → หยุดชั่วคราว ถามผู้ใช้
+2. SELECT tool สำหรับ step ปัจจุบัน
+3. EXECUTE → รัน tool
+4. OBSERVE → ผลไม่ตรง? → diagnose → retry 1× → ยังผิด → BLOCKED
+5. VERIFY → รัน Verify-N ของ section → ผ่าน? emit `[✓ written]` → section eligible for done
+6. DECIDE → มี step เพิ่ม? → [loop] ต่อ · section เสร็จ → อัปเดต `mece_plan.md`: `[/]` → `[X]` → emit [loop] done
+
+**สถานะ section ใน mece_plan.md:**
+- `- [ ]` ยังไม่เริ่ม
+- `- [/]` กำลังทำอยู่
+- `- [X]` เสร็จแล้ว
+
+> ดูรายละเอียดเต็มใน CLAUDE.md §Phase 3 REACT LOOP (authoritative)
+
+---
+
+## R1 · Token Tracking
+Claude คำนวณ Input+Output tokens ทุก response สะสมใน `SESSION_TOTAL`
+- แสดง `*(Session total: ~NNN tokens)*` ท้ายทุก response
+- เขียนลง `.sessions/session_tokens.md` เฉพาะที่ checkpoint (TOKEN PAUSE / BLOCKED / session close)
 
 ## R2 · Tool Budget
-จำกัด 5 tool calls ต่อ 1 response ป้องกัน Claude วนลูป
+จำกัด 5 tool calls ต่อ 1 response — retry สูงสุด 2 ครั้ง แล้ว diagnose
 
-## R3 · Output Limit + Handoff
-- >15k → แจ้งเตือน + เรียก token_auditor skill
-- >30k → หยุด → /compact → ถ้ายังใหญ่ → สร้าง Handoff Brief
+## R3 · Session Pause
+| SESSION_TOTAL | สิ่งที่เกิดขึ้น |
+|---|---|
+| >60k | TOKEN PAUSE → load `token_auditor` → บันทึก state → แจ้ง user |
+| >90k | HALT ทันที → บันทึก state → รายงาน user |
 
-Handoff Brief คือสรุปงาน ≤600 tokens ใน .sessions/session_handoff.md
-ให้ /clear แล้ว paste brief → session ใหม่ต่อยอดแบบไร้รอยต่อ
+## R4 · Sub-agent Decision
+ก่อนเริ่ม task ทุกครั้ง Claude รัน 1 Bash scope probe:
+- < 5 files / < 300 lines → ทำใน main context ปกติ
+- ≥ 5 files / ≥ 300 lines → spawn Explore sub-agent → รับ summary ≤500 tokens
 
-## R3.5 · Sub-agent
-งานค้นหาขนาดใหญ่ Claude spawn sub-agent แยก ป้องกัน context หลักบวม
+> ⚠️ Sub-agent ต้องรับ R1–R13 constraints ใน prompt — ไม่โหลด CLAUDE.md อัตโนมัติ
 
-## R4 · Index-First Lookup (สำคัญมากสำหรับ project นี้)
+## R5 · Index-First Lookup (สำคัญมาก)
 ลำดับบังคับก่อนแก้ไขไฟล์ใดๆ:
-1. grep ใน knowledge/index_variables.json หา symbol
-2. grep ใน knowledge/index_files.json หา file path
-3. ได้เลขบรรทัดแล้วค่อย Read แบบ offset/limit
-ห้าม Read ไฟล์ทั้งหมดโดยไม่มี offset/limit เด็ดขาด
+1. T1: grep `knowledge/index_variables.json` หา symbol → ได้ line number
+2. T2: grep เพิ่ม context ถ้า T1 ไม่พอ
+3. T3: `Read offset=<line> limit=60` — **ห้าม Read ไฟล์ทั้งหมดโดยไม่มี offset/limit**
 
-## R5 · Output Filter
-Claude filter output Terminal ก่อนส่งคืน ไม่ dump raw
+## R6 · Output Filter
+ทุก Bash command ต้องผ่าน: `cmd 2>&1 | grep -iE "error|warn|fail" | tail -20`
 
-## R6 · Index Sync
-ทุกครั้งที่สร้าง/ลบ/ย้ายไฟล์หรือ symbol → อัปเดต knowledge/ indexes ทันที
+## R7 · Response Density
+Claude ตอบ table/bullet แทน prose — ประหยัด token ~40%
+
+## R8 · Index Sync
+ทุกครั้งที่สร้าง/ลบ/ย้ายไฟล์หรือ symbol → อัปเดต `knowledge/` indexes ทันที
 รัน `python scripts/symbol_indexer.py` หลังเปลี่ยน symbol
 
-## R7 · Error Protocol
-ก่อน debug ทุกครั้ง → ค้น knowledge/error_index.md ก่อนเสมอ
-ถ้าเป็น error ใหม่ → เพิ่ม roadmap task → fix → กำหนด ERR code → เขียน index
+## R9 · Error Protocol
+ก่อน debug ทุกครั้ง → ค้น `knowledge/error_index.md` **3 ขั้น** ก่อนเสมอ:
+1. grep symptom ใน error_index.md
+2. grep symbol ใน index_variables.json
+3. grep file ใน index_files.json
 
-## R8 · English-first Analysis
-งาน analysis ซับซ้อน Claude เขียน outline English ก่อน สรุปไทย
-ประหยัด token ส่วน reasoning ~50%
+ถ้า error ใหม่ → เพิ่ม roadmap task → fix → กำหนด ERR-XXX code → เขียน index
 
-## R9 · Tool Result Cap
-ตัด output ที่ยาวเกิน 300 บรรทัด ป้องกัน context บวม
+## R10 · Tool Result Cap
+ตัด output ที่ยาวเกิน 300 บรรทัด — ถ้า >300 ให้ grep เฉพาะส่วนที่เกี่ยวข้อง
 
-## R11 · Scope Probe
-ก่อนเริ่ม task ใหญ่ทุกครั้ง Claude รัน 1 Bash command นับขนาดงานก่อนเสมอ ไม่เดาเอง
-- < 5 files / < 300 lines → ทำใน main context ปกติ
-- ≥ 5 files / ≥ 300 lines → spawn Explore sub-agent → รับ summary ≤500 tokens → ทำงานต่อจาก summary
+## R11 · English-first Analysis
+งาน reasoning ซับซ้อน >5 ขั้นตอน → Claude เขียน outline English ก่อน → สรุปไทยให้ user
 
-## R10 · Response Density
-Claude ตอบ table/bullet แทน prose ใช้ token น้อยกว่า ~40%
+## R12 · Post-Edit Verification
+ทุก write ต้องมีการ verify ก่อนรายงาน success — grep confirm ใน file จริง
+
+## R13 · Escalation
+ถ้า step fail ครบ 2 ครั้ง → STOP → emit `[blocked]` → รอ user — **ห้าม auto-retry**
+
+---
+
+## R14–R18 · Gates (ดูรายละเอียดใน INVARIANTS.md)
+| Rule | Gate ที่ trigger | ไฟล์อ้างอิง |
+|---|---|---|
+| R14 | Destructive Action Gate — I1 | INVARIANTS.md |
+| R15 | DB Structure Hard Stop — I2 | INVARIANTS.md |
+| R16 | Index Sync Gate — I3 | INVARIANTS.md |
+| R17 | Symbol Check Gate — I4 | INVARIANTS.md |
+| R18 | Roadmap Gate — I5 | INVARIANTS.md |
 
 ---
 

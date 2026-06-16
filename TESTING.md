@@ -34,3 +34,11 @@ After every `src/` write:
 | `bcrypt` (Node) | WebCrypto only (`crypto.subtle`) — bcryptjs also banned in edge runtime |
 | `jsonwebtoken` | `jose` |
 | `/tmp/` for staging | `temp/` (project-local only) |
+
+## Regression Entry Points
+
+- `npm run test:auth` runs the auth freshness regression tests in `tests/auth/`.
+- `npm run test:rollback` runs the site-plan rollback regression tests in `tests/site-plans/`.
+- `npm run test:unit` runs both automated suites together.
+- `npm run test:runtime` runs the localhost access-policy smoke script against `TEST_BASE_URL` or `http://localhost:3000`.
+- Default seeded credentials for the runtime smoke script match `scripts/seed.ts`: `admin@asset.com`, `center@asset.com`, and `site@asset.com` with password `123456` unless overridden by `TEST_*` env vars.

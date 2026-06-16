@@ -48,7 +48,7 @@ HALT (emit `[file-index-halt]`) if:
 
 ## Workflow (ordered steps)
 1. Verify entry exists: check current entry for `<changed-file-path>` in `index_files.json` (grep or targeted Read)
-2. Determine action: add entry · update backlinks · remove entry · remove stale backlinks
+2. Determine action: add entry (with size object: bytes+lines) · update backlinks · remove entry · remove stale backlinks
 3. Apply changes via grep-only (Never-Full-Load: use targeted edits, not full read)
 4. Confirm result: verify entry count is ≥1 (add/update) or 0 (delete) using any method
 5. Emit `[✓ written]` with count of backlinks updated

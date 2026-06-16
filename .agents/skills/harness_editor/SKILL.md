@@ -63,7 +63,6 @@ description: >
 - [ ] No harness file targeted = skip entirely
       → Purely `src/` edits → delegate to `coder` / `editor` · emit `[harness-skip]`
 
-→ if `flow_updated=no` at task end when harness file was changed: emit `[harness-refused] reason:step5-incomplete` · complete Step 5 first · skip = BC-docs-close violation
 
 ## Workflow — 5-stage cycle (AUDIT → PLAN → EDIT → CLOSE · CFP loops back on abnormal)
 
@@ -81,12 +80,19 @@ grep "^date:" .sessions/mece_plan.md | grep $(date +%Y-%m-%d)   # plan dated tod
 grep "\[/\] T-" docs/master_roadmap.md                          # task tracked [/]
 ```
 → both present → `[✓ gates-pass]` · either missing → `[harness-refused] reason:<no-plan|no-task-id>` · HALT
+- **Parallel-cycle scan** (save wall-clock time): group sections with NO shared file-write AND no mutual dependency into ONE parallel Cycle (spawn agents + barrier to rejoin) · shared file OR dependency → serial · ≥5 files/≥300L → spawn agents (R4) · <5 files → main-context serial · record the grouping in the plan's `### Cycle grouping` block
 
 ### Stage 3 · EDIT  (per Behavior Contracts)
 - `[pre-edit] Symbol:<name> · file:<path>` before every Edit
 - Targeted Edit only (grep the line first) — never a full-file rewrite on existing content
 - `[✓ written]` + grep verify immediately after each change
 - SKILL.md edit: after the change confirm all 8 framework components survive — grep the file's ACTUAL section headers (read them first; never assume fixed names like "## Trigger")
+
+### Stage 3.5 · BEHAVIORAL VERIFY  (Signal Contract · trigger-gated)
+After a *behavioural* edit (BC / gate / signal-contract / step-sequence) — skip typo/doc/format — empirically test the rule, don't just confirm text landed.
+- `[behave-test]` → spawn a 3-config ladder cheapest-first with **early-exit on first PASS** — each config reads ONLY the edited file + a trigger prompt derived from the BC `Pre:` clause, scored by whether the required `Post:`/signal is emitted: ① Haiku (robustness floor) → ② Sonnet@medium → ③ Sonnet@high. First PASS stops the ladder (no effort param on Agent tool → effort = prompt framing, see detail). Non-behavioural edit → `[behave-skip]` (zero overhead).
+- Verdict (early-exit): Haiku PASS → `[behave-pass]` → Stage 4 · Haiku fail / Sonnet@medium PASS → `[behave-gap]` (rule too subtle for the robustness floor) → loop Stage 5 · only Sonnet@high PASS → `[behave-gap]` `effort:high` (rule clear but needs deep reasoning) → loop Stage 5 · all 3 fail → `[behave-fail]` → Stage 5. Log every run to `knowledge/behave_test_log.jsonl` (feedback + regression suite).
+→ full procedure: @.agents/skills/harness_editor/SKILL_detail.md §Stage 3.5
 
 ### Stage 4 · CLOSE  (Index Sync + Docs Close — mandatory, same task)
 Edit a harness file → its paired Implement doc MUST update the same task (see §Implement Map).
@@ -112,6 +118,19 @@ Trigger: a BC was violated · OR the same edit failed 2× · OR a recurring harn
 
 @.agents/skills/harness_editor/SKILL_detail.md
 
+## Implement Map
+Edit a harness file → update its paired Implement/REPO doc in the SAME task (Stage 4). Closed list — no guessing:
+
+| Edited harness file | Paired doc to update |
+|---|---|
+| `CLAUDE.md` (R-rules · gates) | `Implement/03_config.md` |
+| `AGENTS.md` (boot · routing · phases) | `Implement/04_skills.md` (phases) + `Implement/06_orchestrator.md` (routing) |
+| `.agents/skills/*/SKILL.md` | `Implement/04_skills.md` |
+| hook (`.claude/settings.json`) | `Implement/02_setup.md` (+ `03_config.md` if token/loop logic) |
+| `scripts/*.py` | `Implement/05_scripts.md` |
+| workflow / checklist change | `Implement/08_checklist.md` |
+| new file / dir / skill | `REPO_MAP.md` (mandatory entry) |
+
 ## Output Contract
 
 | Action | Required | Label |
@@ -121,6 +140,7 @@ Trigger: a BC was violated · OR the same edit failed 2× · OR a recurring harn
 | Each file edited | `[✓ written]` + grep confirm (section header or symbol count intact) | **mandatory** |
 | User-facing Thai close | Thai summary after `[harness-edit-done]` (template below) | **mandatory** |
 | Mid-task probe result | `[scope-probe] file:<path> zone:🟢/🟡/🔴 lines:<N>` | **mandatory** |
+| Behavioral verify (Stage 3.5) | `[behave-test]` start (3-config early-exit ladder) · `[behave-skip]` non-behavioural · `[behave-pass]`/`[behave-gap]` (+`effort:high` if only Sonnet@high)/`[behave-fail]` verdict | **mandatory on behavioural edits** |
 | Next-step offer | one-line offer to route to skill_auditor or harness_doctor | **optional** |
 
 **User-facing close (Thai — mandatory after `[harness-edit-done]`):**
@@ -152,16 +172,16 @@ Calling them at the right step keeps index state consistent — absence causes s
 
 | Script | Purpose | Call at |
 |---|---|---|
-| `python3 scripts/backlink_analyzer.py` | Refresh `related[]` 3-tier links after knowledge/ edits | Step 4 |
-| `python3 scripts/knowledge_conflict_checker.py --file <path> --no-trigger` | Validate no conflicts after SKILL.md edit | Step 4 |
+| `python3 scripts/backlink_analyzer.py` | Refresh `related[]` 3-tier links after knowledge/ edits | Stage 4 |
+| `python3 scripts/knowledge_conflict_checker.py --file <path> --no-trigger` | Validate no conflicts after SKILL.md edit | Stage 4 |
 
 Why listed here: agent reading SKILL.md at runtime has no other signal these scripts exist or are required.
 
 ## When new data arrives later
 Edits rarely arrive complete. If scope expands mid-task (new file, changed requirement, target file grows):
-- Re-run Step 1 scope probe on new target — zone may have shifted
+- Re-run Stage 1 scope probe on new target — zone may have shifted
 - Re-check Prerequisites: mece_plan.md must still cover the expanded scope; if not, update before editing
-- Re-run Step 4 for any newly touched files — partial sync creates silent inconsistency
+- Re-run Stage 4 for any newly touched files — partial sync creates silent inconsistency
 - Do not emit `[harness-edit-done]` until expanded scope is fully covered and verified
 
 ## Routing
@@ -199,15 +219,15 @@ Pick the **lowest tier** that enforces the rule. Ask in order — stop at first 
 - mece_plan.md dated today + T-N roadmap [/] REQUIRED before any file edit
 - [pre-edit] emit before every Edit · [✓ written] grep verify after every change
 - File Size Contract: ≤200L 🟢 · 201-250L 🟡 (SKILL_detail.md required) · >250L 🔴 HALT+split
-- harness_flow_20260526.md + affected Implement/ MUST be updated in same task (Step 5)
+- harness_flow_20260526.md + affected Implement/ MUST be updated in same task (Stage 4)
 - [harness-edit-done] emit required before returning to orchestrator
 ```
 
 ## Hard Rules
 - Never run a full-file rewrite on any file with existing content — targeted Edit only (grep line number first).
 - Never add a BC without passing BC Selection Guide tier check first — if Signal Contract tier applies, write a Signal Contract.
-- Never emit `[harness-edit-done]` with `flow_updated:no` when a harness file was changed — Step 5 is mandatory.
-- Never mark roadmap `[X]` before `[harness-edit-done]` is emitted and Step 5 confirmed complete.
+- Never emit `[harness-edit-done]` with `flow_updated:no` when a harness file was changed — Stage 4 is mandatory.
+- Never mark roadmap `[X]` before `[harness-edit-done]` is emitted and Stage 4 confirmed complete.
 - Never add a 7th BC to any file without converting one existing BC to Signal Contract first (hard limit: ≤6 BCs per file).
 - Never edit `src/` files — harness_editor scope is harness config only (CLAUDE.md · AGENTS.md · SKILL.md · knowledge/ · Implement/).
 - SKILL.md edits (structural): load `skill_auditor` first when target = SKILL.md AND change is structural (new BC / new section / rewrite ≥10L) — not required for minor fixes (<3L) · judgment call, not a gate.

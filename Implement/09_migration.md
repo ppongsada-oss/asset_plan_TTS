@@ -41,7 +41,7 @@ ls .sessions/ | grep -E "chat_tokens|session_tokens"
 # If chat_tokens.md exists → migrate
 CHAT=$(grep "CHAT_TOTAL:" .sessions/chat_tokens.md 2>/dev/null | awk '{print $2}')
 SESSION=$(grep "SESSION_TOTAL:" .sessions/chat_tokens.md 2>/dev/null | awk '{print $2}')
-printf "SESSION_TOTAL: ${SESSION:-0}\nCHAT_TOTAL: ${CHAT:-7300}\n" > .sessions/session_tokens.md
+printf "SESSION_TOTAL: ${SESSION:-0}\nCHAT_TOTAL: ${CHAT:-11070}\n" > .sessions/session_tokens.md
 rm .sessions/chat_tokens.md
 echo "✓ session_tokens.md written"
 ```
@@ -131,7 +131,7 @@ echo "✓ directories checked"
 [ -f .sessions/active_thread.md ] || printf "task: \nphase: done\nnext: \n" > .sessions/active_thread.md
 
 # session_tokens.md (if not migrated in M1.1)
-[ -f .sessions/session_tokens.md ] || printf "SESSION_TOTAL: 0\nCHAT_TOTAL: 7300\n" > .sessions/session_tokens.md
+[ -f .sessions/session_tokens.md ] || printf "SESSION_TOTAL: 0\nCHAT_TOTAL: 11070\n" > .sessions/session_tokens.md
 
 # compact_state.md (create blank if missing)
 [ -f .sessions/compact_state.md ] || printf "dt=\ns=0k\ntask=none\ncfp=0\nsk=\nsk_h=\nmece_h=\np1=\np2=\np3=\nsection=\nstep=\nresume_at=none\n" > .sessions/compact_state.md
@@ -159,13 +159,25 @@ If missing: copy the file from the current harness version source.
 
 B4 will auto-detect and fill on next boot.
 
-### M2.5 · scripts/lookup.py + session_indexer.py
+### M2.5 · Required scripts (incl. current hook + index automation)
 
 ```bash
-ls scripts/ | grep -E "lookup.py|session_indexer.py|symbol_indexer.py|backlink_analyzer.py"
+ls scripts/ | grep -E "lookup.py|session_indexer.py|symbol_indexer.py|backlink_analyzer.py|code_graph.py|index_reconcile.py|repo_map_check.py|rule_indexer.py|posttool_track.py|compact_reset.py|verify_runner.py|safe_run.py|trim_exec_log.py"
 ```
 
-Missing scripts → copy from current harness repo `scripts/` directory.
+Missing scripts → copy from current harness repo `scripts/` directory. Full purpose + trigger of each: Implement/05_scripts.md §9.
+
+### M2.6 · Re-wire hooks (.claude/settings.json)
+
+An old harness may lack the current 5 hook events. Verify all are present (see 02_setup.md Step 4c for the full config):
+
+```bash
+grep -oE "SessionStart|UserPromptSubmit|PreToolUse|PostToolUse|\"Stop\"" .claude/settings.json | sort -u
+```
+
+Must list all 5. Missing any → copy the matching hook block from the current harness `.claude/settings.json`:
+- SessionStart (matcher "compact") → compact_reset.py · UserPromptSubmit → token-state emitter + learning_profile.py
+- PreToolUse → never-full-load + phase-gate + close-gate · PostToolUse → posttool_track.py · Stop → write_context_cache.sh + index_reconcile.py
 
 ---
 

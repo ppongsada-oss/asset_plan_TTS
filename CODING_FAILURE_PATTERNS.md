@@ -551,3 +551,12 @@ Detection: grep response for checklist table (| R8 | or | Roadmap | or | harness
 topic: session-close
 count: 1
 recurrences: []
+
+## CFP-040 · Stale Token Counter After /compact — False [compact-STOP] Ceiling
+Symptom: After a /compact, CHAT_TOTAL stays at the pre-compact value (e.g. 178k) → [compact-STOP] fires every turn at that stale number, blocking work even though the real context is now small. The counter never recomputes because /compact is invisible to the model (the CLI intercepts it) and the UserPromptSubmit hook PRESERVED the old CHAT on session_reset=armed.
+Root: Only B1 boot recomputed CHAT = compact_size + sys_fixed; no actor reset it immediately after the compact. Logic lived in two places (B1 + the hook) and drifted — the hook reset SESSION/LOOP but not CHAT.
+Prevention: Single-source scripts/compact_reset.py recomputes session_tokens.md (CHAT=compact_size+sys_fixed, LOOP=0, SESSION=0 if armed-marker or phase:done else preserve; flips armed→consumed). Wired into the SessionStart:compact hook (claude-code, automatic) and the C0 plain-text confirm path ("compact แล้ว"/"compacted"/"เคลียร์แล้ว", other providers). Every reset prints a visible [compact-reset] line. Stuck-counter guard (C0.5): [compact-STOP] with ~same CHAT (±2k) across ≥2 turns = didn't-reset bug, not a real ceiling → run compact_reset.py instead of re-nagging.
+Detection: [compact-STOP] repeats with ~identical CHAT across ≥2 turns; OR a /compact is known to have happened but no [compact-reset] line was surfaced; OR CHAT_TOTAL unchanged across a SessionStart:compact event.
+topic: token-tracking
+count: 0
+recurrences: []

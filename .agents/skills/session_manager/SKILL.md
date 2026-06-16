@@ -27,7 +27,7 @@ triggers: ["close session", "session complete", "wrap up", "end task", "ปิ�
 ## Trigger
 - **Topic switch** — C3 detects different topic → routes here → close current session → Phase 1 fresh
 - **Manual close** — user says "ปิด session / close / จบงาน / done"
-- **TOKEN PAUSE** — SESSION_TOTAL >60k → Phase 3 REACT loop fires this
+- **TOKEN PAUSE** — SESSION_TOTAL 60-80k → Phase 3 REACT loop fires this
 - **BLOCKED halt** — verify or observe fails 2× → Phase 3 fires this
 - **Session rotation** — new task after phase: done → create new session JSON
 - **Task complete** — Completion Gate Reviewer PASS → emit `[session-health]` · check SESSION_TOTAL vs thresholds (20k/40k/60k)
@@ -79,8 +79,8 @@ Enforce: session_handoff.md written without [handoff-valid] this turn = [violati
 - Continuous History logging after every interaction round (≤5 items — rolling compact)
 
 **Section 2 — Pause / Blocked:**
-- TOKEN PAUSE (>60k): finish current step → write `session_handoff.md` → emit `[pre-compact-state]` block → ask user continue?
-- /compact trigger (>80k): write `compact_state.md` (section + step + compact_size) → run /compact immediately — do NOT wait for user
+- TOKEN PAUSE (60-80k): finish current step → write `session_handoff.md` → emit `[pre-compact-state]` block → ask user continue?
+- /compact trigger (80-90k): write `compact_state.md` (section + step + compact_size) → run /compact immediately — do NOT wait for user
 - HALT (>90k): HALT immediately → write `session_handoff.md` → notify user → no new steps
   ```
   [pre-compact-state]
@@ -93,6 +93,19 @@ Enforce: session_handoff.md written without [handoff-valid] this turn = [violati
 - On resume: reload skill if different, reuse MECE plan if unchanged
 
 **Section 3 — Manual Close:**
+
+**Step −1 — Entry Gate (CFP-037 · fires the instant a close is triggered · prevents close-from-memory):**
+```
+Pre:    "ปิด session / close / จบงาน / done" detected — about to take ANY close action
+Contract: FIRST action MUST be Read @.agents/skills/session_manager/SKILL_detail.md §Manual Close —
+          NEVER run the close from memory. Close files MUST be written by `python3 scripts/session_close.py`
+          + Step 0 (reflections.md) — NEVER hand-written via printf/echo/Write.
+          emit [close-checklist-read] → then a per-item table (file · written? · signal) covering all close
+          artifacts incl reflections.md + [handoff-valid] BEFORE the "session closed" message.
+Post:   [close-checklist-read] emitted · session_close.py + Step 0 run (not hand-rolled)
+Enforce: any close file hand-written instead of via session_close.py, OR "session closed" reported without
+         [close-checklist-read] this turn = [violation] CFP-037 → re-run close via the skill
+```
 
 **Close Checklist Pre-Check (fires before §3 Step 0):**
 ```
@@ -165,7 +178,7 @@ Prohibited: "I've gone ahead and closed..." · "Feel free to start a new session
 | BLOCKED | `[blocked] Task: <T-ID> · Attempts: 2 · Cause: <root> · Need: <missing>` |
 | Session close | `✅ Session ปิดแล้วครับ` + list of all 5 files written |
 | CFP skip | `[cfp-skip]` or `[cfp-tally] New: N · Total: N` |
-| Task complete | `[session-health] Session: ~NNk · Chat: ~NNk · <recommendation>` · SESSION_TOTAL thresholds: <20k=✅ 20-40k=💡 40-60k=⚠️ compact now · >60k=🛑 TOKEN PAUSE · CHAT_TOTAL note: true API context ≈ CHAT_TOTAL × 1.5–2× — compact before CHAT_TOTAL >80k |
+| Task complete | `[session-health] Session: ~NNk · Chat: ~NNk · <recommendation>` · SESSION_TOTAL thresholds: <20k=✅ 20-40k=💡 40-60k=⚠️ compact now · 60-80k=🛑 TOKEN PAUSE · CHAT_TOTAL note: true API context ≈ CHAT_TOTAL × 1.5–2× — compact before CHAT_TOTAL >80k |
 
 **5 mandatory files at close (all required — no exceptions):**
 | Step | File | Content |
@@ -173,7 +186,7 @@ Prohibited: "I've gone ahead and closed..." · "Feel free to start a new session
 | 1 | `session_<NNN>.json` | `status: completed` + `summary_context` |
 | 2 | `session_tokens.md` | Reset 5 fields: `SESSION_TOTAL: 0 · CHAT_TOTAL: <sys_fixed> · CACHE_READ: 0 · CACHE_WRITE: 0 · TURN_COUNT: 0` · **LOOP_WEIGHT: preserve (do NOT reset — resets only at B1 after /compact)** |
 | 3 | `active_thread.md` | `phase: done` + task + next |
-| 4 | `session_handoff.md` | Full closeout contract (objective · outcome · changes · validation · root_cause · follow_ups) |
+| 4 | `session_handoff.md` | Full closeout contract — 5 REQUIRED fields matching BC-handoff (objective · outcome · changes · validation · follow_ups) · root_cause optional |
 | 5 | `index_sessions.json` | `python scripts/session_indexer.py` · then `python3 scripts/session_analyzer.py --seed` |
 
 ## Routing

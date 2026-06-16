@@ -46,7 +46,7 @@ Always-on passive skill. Activated at Boot B1 (load SESSION_TOTAL) and every tur
 - Token counts are estimates, not guarantees. Formulas approximate; actual billing may differ — never present estimates as exact charges.
 - Write before display. `session_tokens.md` must be written BEFORE the footer is appended — footer reading a stale file is a R1 violation.
 - One source of truth. All turns read SESSION_TOTAL from `session_tokens.md` — never carry the count in conversational memory only.
-- Thresholds are hard gates, not suggestions. >60k → TOKEN PAUSE; >90k → HALT. These are not advisory — act on them immediately when crossed.
+- Thresholds are hard gates, not suggestions. 60-80k → TOKEN PAUSE; >90k → HALT. These are not advisory — act on them immediately when crossed.
 
 ## Workflow
 Always-on per-turn loop: Boot B1 load 6 counters from `.sessions/session_tokens.md` → each turn estimate input+output → SESSION_TOTAL += turn_tokens · CHAT_TOTAL += hooks_overhead(700) + turn_tokens · TURN_COUNT += 1 → JSONL write `.sessions/token_log.jsonl` → checkpoint write at pause/blocked/gate → R3 threshold check → emit footer.
@@ -128,8 +128,8 @@ Never use UTF-8 bytes ÷ 3 — undercounts Thai by up to 1.7×.
 
 | SESSION_TOTAL | Action |
 |---|---|
-| > 60k | TOKEN PAUSE → finish current loop step → save state → ask user |
-| > 80k | /compact immediately → write compact_state.md → run /compact |
+| 60-80k | TOKEN PAUSE → finish current loop step → save state → ask user |
+| 80-90k | /compact immediately → write compact_state.md → run /compact |
 | > 90k | HALT immediately → save state → report to user |
 
 ## Refusal Contract

@@ -27,7 +27,7 @@ Activated when:
 - MECE plan Cycle grouping declares parallel sections to spawn
 
 ## When NOT to Use
-- Task fits in main context (<5 tool calls, <5 files) → proceed inline · spawning adds overhead with no gain
+- Task fits in main context (<5 tool calls, <5 files) → emit `[agent-inline] reason:fits-main-context` · proceed inline (this is a routing choice, not a refusal — no [agent-refused]) · spawning adds overhead with no gain
 - Task requires interactive back-and-forth with user mid-execution → keep in main context · agents cannot interrupt
 - Cycle depth > 1 (agent spawning agents) → HALT · max spawn depth = 1 · escalate to orchestrator
 - No MECE plan written → do not spawn ad-hoc · write plan first · emit `[agent-refused] reason:no-plan`
@@ -71,7 +71,7 @@ Required files written:
 - Orchestrator, not executor. Coordinates only — never writes code or edits files directly.
 - MECE before spawn. Every cycle fan-out requires a written MECE plan with Cycle groupings declared.
 - Barrier discipline. Sequential dependencies go in Cycle N+1. Parallel work goes in Cycle N. Never mix.
-- LOOP_WEIGHT accounting. Each Agent() spawn = +3 LOOP_WEIGHT. Check before each Cycle — CHAT_TOTAL>80k = [compact-rec] strong (primary); LOOP_WEIGHT>50 = [compact-rec] light hint (secondary).
+- LOOP_WEIGHT accounting. Each Agent() spawn = +3 LOOP_WEIGHT. Run a TOKEN CHECK before each Cycle (thresholds live in the Token Check block below).
 
 ## Routing Protocol
 ```
@@ -113,15 +113,8 @@ Required files written:
       - Write updated SESSION_TOTAL → `.sessions/session_tokens.md`
       - Missing `tokens_estimated` in any result → add 2,000 tokens flat as conservative buffer
       - Run R3 threshold check immediately after update
-**Token Check before spawning Cycle N+1:**
-- Read SESSION_TOTAL from .sessions/session_tokens.md
-- > 80k? → write compact_state.md (section + step + compact_size) → /compact immediately — do NOT spawn
-- > 60k? → TOKEN PAUSE — do not spawn next cycle until user confirms resume
-- ≤ 60k? → spawn immediately
-- **LOOP_WEIGHT per-spawn:** each Agent/Workflow spawn = +3 LOOP_WEIGHT (PostToolUse hook automatic)
-  - N parallel agents in one Cycle → LOOP_WEIGHT += N×3 · check after every Cycle:
-    - CHAT_TOTAL >80k → emit [compact-rec] strong before spawning next Cycle (PRIMARY)
-    - LOOP_WEIGHT >50 → emit [compact-rec] light hint (secondary) · forced defer only at the real ceiling SESSION>90k OR CHAT>120k → [compact-STOP] → write compact_state.md → defer next Cycle until compact-restore confirmed
+**Token Check before spawning Cycle N+1:** apply the thresholds in AGENTS.md §C0.5 (single source of truth — PRIMARY = CHAT_TOTAL · LOOP_WEIGHT secondary · soft [compact-rec] at CHAT>80k · hard [compact-STOP] only at SESSION>90k OR CHAT>120k). Read [token-state] hook values, not session_tokens.md (subagents overwrite it).
+- **LOOP_WEIGHT per-spawn:** each Agent/Workflow spawn = +3 LOOP_WEIGHT (PostToolUse hook automatic) · N parallel agents in one Cycle → LOOP_WEIGHT += N×3 · re-check after every Cycle before spawning the next.
 6. Call `<spawn_tool>` for Cycle N+1 — inject cycle_N results as `cycle_context:` in each Subagent Prompt
 7. Repeat until all Cycles done → Completion Gate:
    **[Reviewer] Spawn haiku sub-agent (read-only) — BEFORE reporting done to user:**
@@ -130,6 +123,7 @@ Required files written:
    - On FAIL → structured diff → main agent retries that section (1× max) → R13 escalate if still fails
    - Reviewer has no Edit/Write tools — read-only verification only
    - Skip Reviewer if task has ≤2 sections AND no [gate]/DB actions (lightweight tasks)
+   - **Reviewer PASS ≠ task closed** → run AGENTS.md §Phase 3 Close (session_handoff + active_thread phase:done + mece_plan PATH A clear + R8 index sync) before reporting done to user
 ```
 
 **Delegation Contract — every sub-agent prompt must include:**
@@ -233,14 +227,14 @@ Prohibited: "I'll now delegate this to..." · "Let me spawn an agent for..."
 - NEVER spawn without MECE plan declaring Cycle groupings — ad-hoc spawns skip the barrier gate
 - NEVER mix shared-file writers in the same Cycle — race condition = silent data corruption
 - NEVER spawn depth >1 — agent spawning agents prohibited · escalate to orchestrator
-- NEVER emit [cycle N] without TOKEN CHECK first — CHAT>80k = [compact-rec] strong · LOOP_WEIGHT>50 = [compact-rec] light · hard STOP only at SESSION>90k / CHAT>120k
+- NEVER emit [cycle N] without a TOKEN CHECK first (thresholds per the Token Check block / AGENTS.md C0.5)
 
 ## MECE Constraints Block (copy into mece_plan.md for sections using `agent`)
 ```
 - Pre-assign ALL T-IDs before spawning any sub-agent (INVARIANTS.md §I6)
 - Sub-agent prompts MUST include `constraints:` block (AGENTS.md §Sub-agent Rules R4)
 - Each section agent outputs `.sessions/cycle_N_<section_id>.json` — required before Cycle N+1
-- TOKEN CHECK before each Cycle spawn: >50k → compact first · >60k → TOKEN PAUSE
+- TOKEN CHECK before each Cycle spawn — thresholds live in AGENTS.md (Per-Turn Routing, C0.5); never hard-code numbers here
 - HALT all remaining Cycles if any section status = blocked (no auto-proceed)
 ```
 

@@ -77,8 +77,9 @@ HALT (emit `[symbol-index-halt]`) if:
    - usage-link → append new location to `used_in[]`
    - rename → update JSON key + trace all `used_in` files via editor skill
    - delete → erase entry from JSON
-3. Verify: `grep -c '"<symbol-name>"' knowledge/index_variables.json` → ≥1 (add) or 0 (delete)
-4. Emit `[✓ written]` with symbol name + action taken
+3. Run `python scripts/symbol_indexer.py` to sync lookup index — ALL change types (not just edit), per Behavior Contract L89
+4. Verify: `grep -c '"<symbol-name>"' knowledge/index_variables.json` → ≥1 (add) or 0 (delete)
+5. Emit `[✓ written]` with symbol name + action taken
 
 ## Output Contract
 Emit before returning: `[symbol-index] action: <create|edit|link|rename|delete|skip> · symbol: <name> · used_in: <N>`
@@ -120,5 +121,5 @@ Context Gate: new hard constraint → add to INVARIANTS.md §I2 before returning
 - python scripts/symbol_indexer.py MUST run to sync lookup index after JSON update
 - Rename: update JSON key AND emit [symbol-index] with old_name + new_name noted
 - [symbol-index] emit required before returning to calling skill
-- Do NOT update used_in[] manually — use symbol_indexer.py output to validate
+- used_in[]: symbol_indexer.py output is authoritative — manual seed at create/usage-link is OK; the script validates/corrects
 ```

@@ -10,7 +10,7 @@ description: >
 ```
 - id: 1
   name: "Build Plan"
-  steps: ["load target Skill sections[]", "M1.5 reasoning (dependency_map + risk_flags)", "map steps per section", "Verify + Rollback + Constraints per section", "write + validate mece_plan.md"]
+  steps: ["load target Skill sections[]", "S1-A.5 REASON pass (dependency_map + risk_flags)", "map steps per section", "Verify + Rollback + Constraints per section", "write + validate mece_plan.md"]
 - id: 2
   name: "Confirm & Register"
   steps: ["send plan → wait confirm", "R-Roadmap [ ] T-<N> per section", "emit [✓ MECE]"]
@@ -43,10 +43,10 @@ description: >
 - **Resume trigger** — when `.sessions/mece_plan.md` has pending `[ ]` sections from a prior session → load plan and resume from first pending section without re-running Phase 1+2
 
 ## When NOT to Use
-Additional skip condition (not in Prerequisites):
-- Single-file edit, backlinks = 0, no ERR documentation needed → emit `[mece-skip] reason: single-file`
-
-Read-only and resume cases → see Prerequisites items 3 and 4 for halt/skip behavior.
+Three skip cases — each stated in full so it is followable WITHOUT reading another section:
+- Single-file edit (backlinks = 0, no ERR doc needed) → emit `[mece-skip] reason: single-file` → return to main agent
+- Read-only / lookup task (no file create/edit/delete · no DB write · ≤3 steps) → emit `[mece-skip] reason: read-only` → return to main agent
+- Resuming (`.sessions/mece_plan.md` has pending `[ ]` sections) → do NOT re-plan · skip Phases 1+2 · load the existing plan · jump to the first pending section
 Emit format: `[mece-skip] reason: <read-only | single-file | resuming>` → return to main agent.
 → if plan has 0 parallel sections: emit `[mece-sequential] No Cycle grouping needed — all sections are sequential`
 → if plan has ≥2 independent sections: emit `[mece-cycle-required] Use Cycle block syntax (see S1-A.5 template)`
@@ -57,7 +57,7 @@ Emit format: `[mece-skip] reason: <read-only | single-file | resuming>` → retu
 Section N — <name from Skill sections[N]>:   [Cycle <N> · serial|parallel]
   Context:        <1 line: goal + why · cold-readable by a spawned agent with NO chat history>
   Skill:          <editor|coder|file_manager|variable_manager|agent|ascii_flow|harness_doctor>
-  Model:          <model_low | model_high>   (low: lookup/read/grep · high: reasoning/multi-file/edit)
+  Model:          <low | medium | high> @ <low|med|high effort>   (baseline Sonnet @ low-med · high effort only for planning/reasoning · routing: Implement/03_config)
   Tool:           <Bash|Read|Edit|Write>
   Input_From:     <none | cycle_<N>_S<M>.json>   (prior-batch output this section pulls in · none = independent)
   Constraints:    (≤5 lines from skill's MECE Constraints Block — see S1-D)
@@ -69,7 +69,8 @@ Section N — <name from Skill sections[N]>:   [Cycle <N> · serial|parallel]
   Data_Sent / Token: <optional · fill only when session >40k tokens>
 ```
 
-Rules: match section count exactly · steps = 1 atomic action · total plan ≤120 lines
+Rules: match section count exactly · steps = 1 atomic action · single-Cycle plan ≤120 lines (multi-Cycle exempt — see Hard Rule 7)
+Mandatory = every field above EXCEPT the last 3 (Expected_Traces · Refusal_Path · Data_Sent/Token) = OPTIONAL (fill only when task is complex or session >40k).
 → Full templates (Bug Fix · New Feature · Refactor · Multi-skill): `@.agents/skills/mece/SKILL_detail.md §Templates`
 
 ## Workflow
@@ -104,7 +105,7 @@ Rules: match section count exactly · steps = 1 atomic action · total plan ≤1
            → extract: refusal conditions → Refusal_Path: · required emits → Expected_Traces:
 [S1-E]   Read docs/session_templates/mece_plan_schema.md FIRST (full file — permitted ≤80L)
            → copy structure verbatim → fill task-specific content (date/task/skill/sections/Verify-N)
-           → Write .sessions/mece_plan.md — NEVER write from memory (CFP-019: simplified format)
+           → Write .sessions/mece_plan.md — NEVER write from memory (CFP-019: never build the plan from memory — copy the schema)
            → After writing: assess whether the plan is structurally complete —
                all 4 phase blocks present (Phase 0–3) · section count matches target Skill sections[]
                each section has Tool + Constraints fields · no section left as placeholder
@@ -138,12 +139,23 @@ Enforce: Phase 3 REACT loop entry without [✓ mece-valid] = [violation] BC-mece
 → Phase-Checklist Template (Phase 0–3 blocks for mece_plan.md): `@.agents/skills/mece/SKILL_detail.md §Checklist`
 → Verify Pattern Lookup table (by action type): `@.agents/skills/mece/SKILL_detail.md §VerifyPatterns`
 
+## Output Spec — Structure
+Primary artifact: `.sessions/mece_plan.md` (mandatory). It MUST contain:
+- Phase 0–3 blocks (mandatory · structure copied from mece_plan_schema.md — canonical)
+- Section count = target Skill `sections[]` count (mandatory · exact match)
+- Per section: Context · Skill · Model · Tool · Input_From · Constraints · Steps · Verify · Rollback (all mandatory)
+- `### Cycle grouping` block (mandatory)
+- `compact_checkpoint` block if sections ≥ 3 (mandatory)
+- Phase 3 Close Checklist (mandatory)
+Plan Format (above) = field-level EXAMPLE · `docs/session_templates/mece_plan_schema.md` = canonical contract (schema wins on any conflict).
+Signals: see ## Output Contract below.
+
 ## Output Contract
 
 | Action | Emit | Label |
 |---|---|---|
 | Plan ready | `[✓ MECE] Plan covers <N> sections in <M> Cycles · user confirmed · roadmap entries added` | **mandatory** |
-| Validate pass | `[✓ mece-valid]` — all 6 S1-E checks pass | **mandatory** |
+| Validate pass | `[✓ mece-valid]` — all 4 S1-E checks pass | **mandatory** |
 | Validate fail | `[mece-fail] Step: <S1-E check> · Cause: <which field missing>` | **mandatory** |
 | Plan skipped | `[mece-skip] reason: <read-only | single-file | resuming>` | **mandatory** |
 | Section done | `[MECE] ✓ Section <N> done · → Section <N+1> next` | **optional** |
@@ -156,7 +168,7 @@ Required files written:
 
 ## Hard Rules
 1. Never write mece_plan.md from memory — read `docs/session_templates/mece_plan_schema.md` first · copy structure verbatim (CFP-019).
-2. Never proceed to S2-A without `[✓ mece-valid]` emitted — all 6 S1-E grep checks must pass first.
+2. Never proceed to S2-A without `[✓ mece-valid]` emitted — all 4 S1-E grep checks must pass first.
 3. Never enter Phase 3 without `[✓ mece-valid]` — `[mece-fail]` after retry = HALT, wait user instruction.
 4. Never emit `[✓ MECE]` before `[✓ mece-valid]` is confirmed — order is: validate → confirm → emit.
 5. Match section count exactly — sections in plan = sections in target Skill `sections[]`, no additions.
@@ -176,7 +188,7 @@ Required files written:
 | DB edit detected (`src/db/` touch) | `INVARIANTS.md §I2` |
 | Error recurring ("still broken" / same ERR-XXX) | `error_index.md ERR-XXX entry` |
 | Session close ("ปิด/close/done") | `session_manager/SKILL.md §3` |
-| Token >60k | `session_manager/SKILL.md §2 TOKEN PAUSE` |
+| Token 60-80k | `session_manager/SKILL.md §2 TOKEN PAUSE` |
 | Cycle fan-out needed | ≥2 independent sections in plan with no shared file writes | Use Cycle block syntax (S1-A.5 template) |
 
 Rule: 1 lookup + 1 targeted Read = 2 tool calls max per trigger.
@@ -185,12 +197,13 @@ Rule: 1 lookup + 1 targeted Read = 2 tool calls max per trigger.
 Keep:   section names · step labels · verify commands · T-ID references · signal names
 Strip:  session IDs · token counts · internal reasoning text
 Format: `[signal] Key: value · Key: value` — single line · no prose explanation inline with signals
-Prohibited: "Presenting plan before mece_plan.md written" · "Emitting [✓ MECE] before [✓ mece-valid]"
+Prohibited (tone guardrails): hedging ("this should", "probably", "might want to") · inline prose explanation after a signal line · token counts in plan output · section names that differ from the target Skill `sections[]` names
 
 ## Routing
 - `[✓ MECE]` emitted → return to main agent → Phase 3 REACT LOOP begins
 - `[mece-fail-halt]` emitted → wait user instruction — see BC-mece-fail-halt above
-- Token >60k during Phase 2 → TOKEN PAUSE → `session_manager §2`
+- Token 60-80k during Phase 2 → TOKEN PAUSE → `session_manager §2`
+- Close & next-step offer (Type 5 — always end here so a weak model never stalls): on `[✓ MECE]`, state the successor explicitly — `Next: run /compact, then reply to start Phase 3` if a compact_checkpoint exists, else `Next: reply 'go' to start Phase 3 execution`. Never end the turn without naming the next action.
 
 ## Context Gate
 If during this task a new hard constraint was discovered → add to INVARIANTS.md §I2 before closing task

@@ -211,7 +211,8 @@ Enforce: PATH A/B/C started without close-gate check = [violation] CFP-037 → H
 ### PATH A — Task complete (typical · most common)
 ```
 SESSION: CHAT_TOTAL accumulates (never resets here)
-         SESSION_TOTAL written → will reset at NEXT B1 when phase ≠ in_progress
+         SESSION_TOTAL=0 written NOW at task-done close (condition 2: task done + session close) —
+         does NOT rely on next-boot date-match (removed in T-157) · PATH A does NOT arm session_reset (that is PATH B / /compact only)
 ```
 - [ ] active_thread.md → phase: done · next: <description>
 - [ ] SESSION_TOTAL written → .sessions/session_tokens.md
@@ -240,7 +241,9 @@ Enforce:  R8 Index Sync Invariant (AGENTS.md) · session_manager §3 (SKILL.md)
 ### PATH B — TOKEN PAUSE (SESSION_TOTAL > 60k)
 ```
 SESSION: /compact resets CHAT_TOTAL=0 · B1 at next boot reads compact_size → CHAT_TOTAL = compact_size + sys_fixed
-         SESSION_TOTAL=0 written by B1 on compact_restore
+         SESSION_TOTAL reset to 0 ONLY via consume-once marker: PATH B writes `session_reset=armed` →
+         B1 (or UserPromptSubmit hook) consumes it ONCE at next boot → SESSION_TOTAL=0, flips marker→consumed.
+         NOT unconditional on compact_restore (T-157 — prevents a stale/leftover compact_state.md from re-resetting mid-task)
 ```
 - [ ] Compute compact_size BEFORE /compact:
       `python3 scripts/compute_compact_size.py` → compact_size
@@ -250,6 +253,7 @@ SESSION: /compact resets CHAT_TOTAL=0 · B1 at next boot reads compact_size → 
       p1=done p2=done p3=<last_section> section=S<N> step=<last step desc>
       resume_at=S<N>:step:<desc>
       compact_size=<value from step above>
+      session_reset=armed   ← T-157: arms the consume-once reset · B1/hook flips →consumed at next boot · SESSION_TOTAL→0 exactly once
 - [ ] session_manager TOKEN PAUSE → emit [pre-compact-state] block → ask user confirm
 - [ ] claude-code: /compact · other platform: write compact_state.md → STOP
 

@@ -49,7 +49,7 @@ Called by R3 when SESSION_TOTAL > 60k. Runs audit before TOKEN PAUSE completes.
       → Missing: emit `[audit-refused] reason:no-jsonl` · prompt user to run token_tracker first
 
 ## Workflow
-Sequential: Run Audit Checks (1-5) → log findings to `knowledge/optimization_logs.md` → self-heal (add rule to offending SKILL.md if needed) → emit `[audit-done]` verdict.
+Sequential: Run Audit Checks (1-3) → log findings to `knowledge/optimization_logs.md` → self-heal (add rule to offending SKILL.md if needed) → emit `[audit-done]` verdict.
 Full check detail: `## Audit Checks` and `## Actions` below.
 
 ## Audit Checks
@@ -72,7 +72,7 @@ Check for full-file edits when only a small targeted change was needed → flag 
 
 ## Actions
 
-1. **Log the Lesson** → append to `docs/optimization_logs.md`:
+1. **Log the Lesson** → append to `knowledge/optimization_logs.md`:
    ```
    Date: <date> · Session: <session_id>
    Total tokens: ~<N>k
@@ -83,7 +83,7 @@ Check for full-file edits when only a small targeted change was needed → flag 
 2. **Self-Healing** → if a skill caused the waste, add a STRICT rule to that skill's SKILL.md `## Sections` steps to prevent recurrence.
    After injecting rule → run R8 index sync: `python3 scripts/knowledge_conflict_checker.py --file .agents/skills/<name>/SKILL.md --no-trigger`
 
-3. **Compact Threshold** → if SESSION_TOTAL > 80k: write compact_state.md → run /compact immediately per R3.
+3. **Compact Threshold** → if SESSION_TOTAL 80-90k: write compact_state.md → run /compact immediately per R3.
 
 4. **Halt Threshold** → if SESSION_TOTAL > 90k: set session `"status": "paused_limit_reached"` → HALT → notify user per R3.
 

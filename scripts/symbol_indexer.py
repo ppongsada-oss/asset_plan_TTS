@@ -15,16 +15,52 @@ import os
 import re
 from pathlib import Path
 
-PROJECT_ROOT = Path("/Volumes/BriteBrain/Projects/Asset Plan")
+# Resolve the target project from this script's own location (scripts/ -> project root),
+# matching repo_map_check.py. A copied-in script auto-targets whatever project it lives in
+# — no hardcoded path, no dependence on the caller's cwd.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 INDEX_VARS_PATH = PROJECT_ROOT / "knowledge/index_variables.json"
 INDEX_FILES_PATH = PROJECT_ROOT / "knowledge/index_files.json"
 SRC_ROOT = PROJECT_ROOT / "src"
 
 EXPORT_RE = re.compile(
-    r"^export\s+(?:default\s+)?(?:async\s+)?(?:function|const|let|var|type|interface|class|enum)\s+([A-Za-z_][A-Za-z0-9_]*)"
+    r"^export\s+(?:default\s+)?(?:async\s+)?(function|const|let|var|type|interface|class|enum)\s+([A-Za-z_][A-Za-z0-9_]*)"
 )
 
 CAMEL_RE = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+
+
+def classify(name: str, rel_path: str, kind: str) -> str:
+    """Infer a symbol's type from its file path + declaration keyword.
+    Path signals win over keyword signals. Returns "Unknown" only as a last resort."""
+    p = rel_path.replace("\\", "/")
+    # Path-based signals (strongest)
+    if ("/db/schema" in p or p.endswith("/schema.ts")) and kind in ("const", "let", "var"):
+        return "DBTable"
+    if p.endswith("/route.ts") or p.endswith("/route.tsx"):
+        return "APIRoute"
+    if p.endswith("/page.tsx") or p.endswith("/page.ts"):
+        return "PageComponent"
+    if p.endswith("/layout.tsx") or p.endswith("/template.tsx"):
+        return "PageComponent"
+    if p.endswith("/middleware.ts"):
+        return "Middleware"
+    # Declaration-keyword signals
+    if kind in ("interface", "type"):
+        return "Interface"
+    if kind == "enum":
+        return "Enum"
+    if kind == "class":
+        return "Class"
+    # React component: PascalCase name in a .tsx file
+    if p.endswith(".tsx") and name[:1].isupper():
+        return "ReactComponent"
+    # React hook convention: useXxx
+    if name.startswith("use") and len(name) > 3 and name[3:4].isupper():
+        return "Hook"
+    if kind in ("function", "const", "let", "var"):
+        return "Function"
+    return "Unknown"
 
 
 def split_camel(name: str) -> list[str]:
@@ -87,7 +123,8 @@ def scan_symbols() -> dict[str, dict]:
             for lineno, text in enumerate(lines, start=1):
                 m = EXPORT_RE.match(text.strip())
                 if m:
-                    name = m.group(1)
+                    kind = m.group(1)
+                    name = m.group(2)
                     if name not in result:
                         line_end = infer_line_end(lines, lineno)
                         result[name] = {
@@ -95,6 +132,7 @@ def scan_symbols() -> dict[str, dict]:
                             "line": lineno,
                             "line_end": line_end,
                             "read_hint": make_read_hint(lineno, line_end),
+                            "type": classify(name, rel, kind),
                         }
     return result
 
@@ -147,10 +185,18 @@ def merge_into_index(new_symbols: dict[str, dict]) -> None:
             existing["line_end"] = info["line_end"]
             existing["read_hint"] = info["read_hint"]
             existing.setdefault("source", info["file"])
+            # Fully auto: classify() is authoritative. Overwrite when it can tell;
+            # keep the prior type only when classify() returns Unknown (never regress a
+            # good label to Unknown). No human-curated types exist to protect — the old
+            # values were a one-time enrichment seed, so re-deriving them every run is
+            # correct and reproducible (same principle as backlink_analyzer).
+            new_type = info.get("type", "Unknown")
+            if new_type != "Unknown":
+                existing["type"] = new_type
             existing["keywords"] = extract_keywords(name, existing)
         else:
             variables[name] = {
-                "type": "Unknown",
+                "type": info.get("type", "Unknown"),
                 "source": info["file"],
                 "line": info["line"],
                 "line_end": info["line_end"],

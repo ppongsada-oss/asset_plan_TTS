@@ -16,6 +16,7 @@ BASE = "http://localhost:3000"
 EMAIL = "admin@tts-construction.com"
 PASSWORD = "password123"
 OUT = "/Volumes/BriteBrain/Projects/Asset Plan/public/docs/manual/assets"
+PROJECTS_ONLY = os.environ.get("PROJECTS_ONLY") == "1"
 
 os.makedirs(OUT, exist_ok=True)
 _ok = _skip = 0
@@ -168,7 +169,23 @@ async def main():
         await page.goto(f"{BASE}/admin/projects")
         await page.wait_for_load_state("networkidle")
         await page.wait_for_timeout(600)
+        add_project_btn = page.locator('button:has-text("เพิ่มโครงการ")').first
+        if await add_project_btn.count() > 0:
+            await add_project_btn.scroll_into_view_if_needed()
+            await page.wait_for_timeout(300)
+            await shot(page, "admin_projects_header")
         await shot(page, "admin_projects")
+
+        # Add Project modal
+        if await add_project_btn.count() > 0:
+            await add_project_btn.click()
+            await page.wait_for_timeout(800)
+            await shot(page, "admin_add_project_modal")
+            await page.keyboard.press("Escape")
+            await page.wait_for_timeout(400)
+        else:
+            print("  [SKIP] admin_add_project_modal: add project button not found")
+            _skip += 1
 
         if await click_tab(page, "ไซต์งาน"):
             await shot(page, "admin_projects_site_filter")
@@ -181,6 +198,30 @@ async def main():
             await shot(page, "admin_projects_archived")
             await archived_btn.click()
             await page.wait_for_timeout(300)
+
+        # Edit Project modal
+        try:
+            edit_project_btn = page.locator('button[title="Edit Project"]').first
+            if await edit_project_btn.count() > 0:
+                await edit_project_btn.scroll_into_view_if_needed()
+                await edit_project_btn.click()
+                await page.wait_for_timeout(800)
+                await shot(page, "admin_edit_project_modal")
+                await page.keyboard.press("Escape")
+                await page.wait_for_timeout(400)
+            else:
+                print("  [SKIP] admin_edit_project_modal: no project cards")
+                _skip += 1
+        except Exception as e:
+            print(f"  [SKIP] admin_edit_project_modal: {e}")
+            _skip += 1
+
+        if PROJECTS_ONLY:
+            await browser.close()
+            print(f"\n{'='*50}")
+            print(f"Done! {_ok} screenshots saved, {_skip} skipped")
+            print(f"Output: {OUT}")
+            return
 
         # ─── 6. Admin → Project Roles ─────────────────────────────
         print("\n--- Admin: Project Roles ---")
