@@ -36,18 +36,19 @@ export async function POST() {
   try {
     const env = getCloudflareContext().env as Env;
     const db = getDb(env);
+    const normalizedSeedEmail = seedEmail.trim().toLowerCase();
 
     const password_hash = await hashPassword(seedPassword);
 
     // Check if user exists
-    const existing = await db.select().from(users).where(eq(users.email, seedEmail)).limit(1);
+    const existing = await db.select().from(users).where(eq(users.email, normalizedSeedEmail)).limit(1);
     if (existing.length > 0) {
-      await db.update(users).set({ password_hash }).where(eq(users.email, seedEmail));
+      await db.update(users).set({ password_hash }).where(eq(users.email, normalizedSeedEmail));
       return NextResponse.json({ success: true, message: "User already seeded, password updated" });
     }
 
     await db.insert(users).values({
-      email: seedEmail,
+      email: normalizedSeedEmail,
       password_hash,
       global_role: "ADMIN"
     });

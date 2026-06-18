@@ -64,10 +64,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     const password_hash = await hashPassword(password);
 
     await db.insert(users).values({
-      email,
+      email: normalizedEmail,
       password_hash,
       global_role: global_role || "USER",
     });

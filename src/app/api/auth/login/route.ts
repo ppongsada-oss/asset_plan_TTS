@@ -5,7 +5,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { comparePassword, getPasswordTokenFingerprint, hashPassword, needsPasswordRehash } from "@/lib/password";
 import { signToken } from "@/lib/jwt";
 import { TokenPayload } from "@/lib/auth-check";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 type LoginRequestBody = {
   email?: string;
@@ -71,7 +71,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userRecords = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+    const userRecords = await db
+      .select()
+      .from(users)
+      .where(sql`lower(trim(${users.email})) = ${normalizedEmail}`)
+      .limit(1);
     const user = userRecords[0];
 
     if (!user) {

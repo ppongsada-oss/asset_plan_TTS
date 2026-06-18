@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/db";
+import { getDb, type Env } from "@/db";
 import { users } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getUserPayload } from "@/lib/auth-check";
 import { hashPassword } from "@/lib/password";
 import { eq } from "drizzle-orm";
 
+type UserUpdateBody = {
+  email?: string;
+  password?: string;
+  global_role?: "ADMIN" | "STORE_CENTER" | "USER";
+};
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -20,17 +25,23 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ success: false, error: "Invalid user ID" }, { status: 400 });
     }
 
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
-    const body = await request.json() as any;
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
+    const body = await request.json() as UserUpdateBody;
 
     const { email, password, global_role } = body;
     if (!email || !global_role) {
       return NextResponse.json({ success: false, error: "Email and role are required" }, { status: 400 });
     }
 
-    const updateData: any = {
-      email,
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    const updateData: {
+      email: string;
+      global_role: "ADMIN" | "STORE_CENTER" | "USER";
+      password_hash?: string;
+    } = {
+      email: normalizedEmail,
       global_role,
     };
 
@@ -41,11 +52,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     await db.update(users).set(updateData).where(eq(users.id, userId));
 
     return NextResponse.json({ success: true, message: "User updated successfully" });
-  } catch (error: any) {
-    if (error.message?.includes("UNIQUE constraint failed")) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    if (message.includes("UNIQUE constraint failed")) {
       return NextResponse.json({ success: false, error: "Email already exists" }, { status: 400 });
     }
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
@@ -67,13 +79,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ success: false, error: "Cannot delete your own account" }, { status: 400 });
     }
 
-    const env = getCloudflareContext().env;
-    const db = getDb(env as any);
+    const env = getCloudflareContext().env as Env;
+    const db = getDb(env);
 
     await db.delete(users).where(eq(users.id, userId));
 
     return NextResponse.json({ success: true, message: "User deleted successfully" });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
