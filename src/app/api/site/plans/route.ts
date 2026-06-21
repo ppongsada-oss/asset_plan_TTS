@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Project mismatch" }, { status: 400 });
     }
 
-    const auth = await requireProject(req, currentJob.project_id, ["SITE"]);
+    const auth = await requireProject(req, currentJob.project_id, ["STORE_SITE"]);
     if (!auth.ok) return auth.response;
     
     const planStatus = (currentJob?.status === "APPROVED" || currentJob?.status === "CLOSED") ? "APPROVED" : "DRAFT";

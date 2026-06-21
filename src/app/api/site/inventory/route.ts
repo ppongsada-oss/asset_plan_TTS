@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing fields" }, { status: 400 });
     }
 
-    const auth = await requireProject(request, body.project_id, ["SITE"]);
+    const auth = await requireProject(request, body.project_id, ["STORE_SITE"]);
     if (!auth.ok) return auth.response;
 
     for (const item of body.inventory) {

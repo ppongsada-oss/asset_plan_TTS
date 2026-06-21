@@ -97,7 +97,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ success: false, error: "Job not found" }, { status: 404 });
     }
 
-    const auth = await requireProject(req, job.project_id, ["SITE"]);
+    const auth = await requireProject(req, job.project_id, ["STORE_SITE"]);
     if (!auth.ok) return auth.response;
 
     await db.update(planning_jobs).set({

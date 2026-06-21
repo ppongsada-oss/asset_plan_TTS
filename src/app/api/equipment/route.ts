@@ -4,7 +4,7 @@ import { equipment_items, categories, sub_categories } from "@/db/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { desc, eq } from "drizzle-orm";
 import { EQUIPMENT_CACHE_KEY, invalidateCache } from "@/lib/cache";
-import { requireRole } from "@/lib/auth-check";
+import { requireRole, requireAuth, hasGlobalRole } from "@/lib/auth-check";
 
 type EquipmentMutationBody = {
   id?: number;
@@ -22,8 +22,23 @@ type EquipmentMutationBody = {
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await requireRole(request, ["ADMIN", "STORE_CENTER"]);
+    const auth = await requireAuth(request);
     if (!auth.ok) return auth.response;
+
+    // Only ADMIN / STORE_CENTER may see pricing; lower roles get the catalog
+    // with buy_price/rent_price stripped. The KV cache always stores the full
+    // (privileged) payload, so stripping is applied per-request after read.
+    const canSeePrices = hasGlobalRole(auth.payload, ["ADMIN", "STORE_CENTER"]);
+    const projectResponse = (payload: { success: true; data: unknown[] }) => {
+      if (canSeePrices) return payload;
+      const data = payload.data.map((item) => {
+        const row = { ...(item as Record<string, unknown>) };
+        delete row.buy_price;
+        delete row.rent_price;
+        return row;
+      });
+      return { ...payload, data };
+    };
 
     const env = getCloudflareContext().env as Env;
     const db = getDb(env);
@@ -31,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     const cached = await kv?.get(EQUIPMENT_CACHE_KEY, "json") as { success: true; data: unknown[] } | null;
     if (cached) {
-      return NextResponse.json(cached);
+      return NextResponse.json(projectResponse(cached));
     }
 
     // Join with categories to return human readable names
@@ -54,9 +69,9 @@ export async function GET(request: NextRequest) {
     .leftJoin(sub_categories, eq(equipment_items.sub_category_code, sub_categories.code))
     .orderBy(desc(equipment_items.id));
 
-    const payloadResponse = { success: true, data: items };
+    const payloadResponse = { success: true as const, data: items };
     await kv?.put(EQUIPMENT_CACHE_KEY, JSON.stringify(payloadResponse), { expirationTtl: 120 });
-    return NextResponse.json(payloadResponse);
+    return NextResponse.json(projectResponse(payloadResponse));
   } catch (error) {
     console.error("GET Equipment Error:", error);
     return NextResponse.json({ success: false, error: "Failed to fetch equipment" }, { status: 500 });
