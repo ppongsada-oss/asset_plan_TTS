@@ -8,7 +8,8 @@ import { getCenterRequestsCacheKey } from "@/lib/cache";
 
 
 // Helper to handle SQLite's parameter limits (usually 999)
-async function fetchInChunks(db: any, table: any, column: any, values: any[], selectedColumns?: any, additionalFilter?: any, chunkSize = 800) {
+// chunkSize kept < 100 — Cloudflare D1 rejects prepared queries above ~100 bound params (see ERR-048/ERR-058). Do NOT raise back to 800.
+async function fetchInChunks(db: any, table: any, column: any, values: any[], selectedColumns?: any, additionalFilter?: any, chunkSize = 90) {
   if (values.length === 0) return [];
   
   const results = [];
@@ -149,21 +150,20 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 6. Fetch ONLY relevant decisions (Using chunking for safety)
-    const allDecisions = await fetchInChunks(
-      db,
-      center_decisions,
-      center_decisions.plan_id,
-      allPlans.map(p => p.id),
-      {
+    // 6. Fetch decisions via a single full-table select (no bound params).
+    //    The loop below filters by d.plan_id, so passing every plan id as an IN-clause
+    //    (3600+ bound params) is both unnecessary and fatal on D1 (ERR-048 recurrence).
+    //    center_decisions is a small action-log table — full select is cheap, like alerts/route.ts.
+    const allDecisions = await db
+      .select({
         id: center_decisions.id,
         plan_id: center_decisions.plan_id,
         action_type: center_decisions.action_type,
         qty: center_decisions.qty,
         notes: center_decisions.notes,
         created_at: center_decisions.created_at
-      }
-    );
+      })
+      .from(center_decisions);
 
     // 7. Map out ALL (project, equipment) pairs that have either inventory OR a plan
     const allPairs = new Set<string>();
@@ -375,7 +375,12 @@ export async function GET(request: NextRequest) {
     };
 
     if (kv) {
-      await kv.put(cacheKey, JSON.stringify(responsePayload), { expirationTtl: 120 });
+      // A cache-write failure must never 500 the endpoint — data is already computed.
+      try {
+        await kv.put(cacheKey, JSON.stringify(responsePayload), { expirationTtl: 300 });
+      } catch (cacheErr) {
+        console.error("Center Requests cache write failed (non-fatal):", cacheErr);
+      }
     }
 
     return NextResponse.json(responsePayload);
